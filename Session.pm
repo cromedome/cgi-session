@@ -1,34 +1,111 @@
 package CGI::Session;
 
-use 5.006;
+# $Id$
+
 use strict;
 use warnings;
 
-require Exporter;
 use AutoLoader qw(AUTOLOAD);
 
-our @ISA = qw(Exporter);
+use vars qw($VERSION);
 
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-
-# This allows declaration	use CGI::Session ':all';
-# If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
-# will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(
-	
-) ] );
-
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-our @EXPORT = qw(
-	
-);
-our $VERSION = '0.01';
+($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
 
 
-# Preloaded methods go here.
+sub SYNCED   () { return 0 }
+sub MODIFIED () { return 1 }
+sub DELETED  () { return 2 }
+
+
+sub new {
+    my $class = shift;
+    $class = ref($class) || $class;
+
+    my $self = {
+        _options    => [ @_ ],
+        _data       => undef,
+        _status     => MODIFIED,
+    };
+    
+    bless ($self, $class);
+
+    $self->_init() or return;
+
+    return $self;
+}
+
+
+
+
+sub _init {
+    my $self = shift;
+    
+    my $claimed_id = $self->{_options}->[0];
+
+    if ( defined $claimed_id ) {
+        $self->_init_old_session($claimed_id);
+
+        unless ( defined $self->{_data} ) {
+            return $self->_init_new_session();
+        }
+        return 1;
+    }    
+    return $self->_init_new_session();    
+}
+
+
+
+
+
+sub _init_old_session {
+    my ($self, $claimed_id) = @_;
+
+    my $options = $self->{_options} || [];
+    my $data = $self->retrieve($options, $claimed_id);
+
+    if ( defined $data ) {
+        $self->{_data} = $data;
+        $self->{_data}->{_session_atime} = time();
+        $self->{_status} = MODIFIED,
+        return 1;
+    }
+
+    return undef;
+}
+
+
+
+
+
+
+sub _init_new_session {
+    my $self = shift;
+
+    $self->{_data} = {
+        _session_id => $self->generate_id(),
+        _session_ctime => time(),
+        _session_atime => time(),
+        _session_etime => undef,
+        _session_remote_addr => $ENV{REMOTE_ADDR} || undef
+    };
+
+    return 1;
+}
+
+
+
+
+sub id {
+    my $self = shift;
+
+    return $self->{_data}->{_session_id};
+}
+
+
+
+
+
+
 
 # Autoload methods go after =cut, and are processed by the autosplit program.
 
