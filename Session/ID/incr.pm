@@ -3,6 +3,8 @@ package CGI::Session::ID::incr;
 # $Id$
 
 use strict;
+use diagnostics;
+
 use File::Spec;
 use Carp "croak";
 use Fcntl (':DEFAULT', ':flock');

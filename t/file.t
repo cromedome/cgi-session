@@ -14,7 +14,7 @@ ok(1); # If we made it this far, we're ok.
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
-my $s = new CGI::Session("driver:File", undef, {Directory=>"t/sessiondata"} )
+my $s = new CGI::Session("driver:file", undef, {Directory=>"t/sessiondata"} )
     or die CGI::Session->errstr;
 
 ok($s);
@@ -44,7 +44,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session(undef, $sid, {Directory=>'t/sessiondata'});
+my $s2 = new CGI::Session("driver:file", $sid, {Directory=>'t/sessiondata'});
 ok($s2);
 
 ok($s2->id() eq $sid);

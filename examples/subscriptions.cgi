@@ -3,10 +3,8 @@
 # $Id$
 
 # Configurable contants
-use constant DSN        => "dr:FileX;ser:Default;id:MD5";
-use constant DSN_ARGS	=> {Dir => "../tmp"};
-#use constant DSN_ARGS   => {DataSource=>"DBI:mysql:sherzodr_shop", User=>"sherzodr_shop", Password=>"marley01"};
-# Do not modify anything below unless you know what you're doing
+use constant DSN        => "driver:DB_File;serializer:Default;id:MD5";
+use constant DSN_ARGS   => {FileName => "/home/sherzodr/tmp/sessions.db"};
 
 use strict;
 use CGI;
@@ -14,7 +12,7 @@ use CGI::Carp 'fatalsToBrowser';
 use URI::Escape;
 use vars qw($SELF_URL);
 
-use lib "/home/sherzodr/perllib";
+use lib "/home/sherzodr/tmp/CGI-Session/blib/lib";
 use CGI::Session;
 
 # Check for some non-standard Perl modules
@@ -23,17 +21,26 @@ for my $mod ( @required ) {
     eval "require $mod";
     if ( $@ ) {
         print "Content-Type: text/html\n\n";
-        print "$mod is required. If it's installed in a non-standard path, " . 
+        print "$mod is required. If it's installed in a non-standard path, " .
                 "please 'use lib' line in $0";
         exit(1);
     }
 }
 
-my $cgi     = new CGI;
-my $session = new CGI::Session(DSN, $cgi, DSN_ARGS);
-unless ( defined $session ) {
-    die $CGI::Session::errstr;
+my $cgi     = new CGI();
+my $session = CGI::Session->instance() or die CGI::Session->errstr;
+
+if ( $session->expired ) {
+    print $session->header();
+    print "Your session expired, inevitably!";
+    exit(0);
+} else {
+    $session = CGI::Session->new( $session );
 }
+
+$session->expire("+30s");
+
+
 my $cmd     = $cgi->param('cmd') || $session->param("last_cmd") || 'directions';
 
 $SELF_URL = $cgi->url() || $0;
@@ -211,6 +218,7 @@ sub step3 {
     my ($cgi, $session) = @_;
 
     $session->save_param($cgi, ["subscriptions"]);
+    $session->load_param($cgi, ["subscriptions"]);
 
     my $HTML = <<HTML;
 <h4>Step 3 out of 3 - final!</h4>
@@ -263,14 +271,14 @@ HTML
 
 
 sub finish {
-    my ($cgi, $session) = @_;    
+    my ($cgi, $session) = @_;
 
     my $to = sprintf("%s <%s>", $session->param('name'),
                                 $session->param('email'));
     my $msg = new MIME::Lite(
         From        => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
         To          => $to,
-        Subject     => 'CGI::Session Demo (source code)',
+        Subject     => 'CGI-Session Demo',
         Type        => 'multipart/mixed'
     );
 
@@ -287,7 +295,6 @@ sub finish {
     close(SENDMAIL);
 
     $session->clear();
-
     return $cgi->redirect(-uri=>$ENV{SCRIPT_NAME});
 
 }
@@ -352,16 +359,16 @@ sub template {
     $t->param(
         edit_profile  => "$SELF_URL?cmd=step1;CGISESSID=$sid",
         edit_subs     => "$SELF_URL?cmd=step2;CGISESSID=$sid",
-
         subscriptions_scrolling => $cgi->scrolling_list(
                             -name=>'subscriptions',
                             -values => \@papers,
                             -size => 5,
                             -multiple => 1),
+
         subscriptions_checkbox => scalar($cgi->checkbox_group(
                             -name=>'subscriptions',
                             -values => \@papers, -linebreak=>1)),
-        dump            => $session->dump(undef, 1),        
+        'dump'            => $session->dump(undef, 1),
     );
 
     if ( $no_html ) {

@@ -1,6 +1,8 @@
 package CGI::Session::Driver::file;
 
 use strict;
+use diagnostics;
+
 use File::Spec;
 use Fcntl qw(:DEFAULT :flock);
 use CGI::Session::Driver;

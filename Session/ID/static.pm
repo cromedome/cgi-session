@@ -1,6 +1,8 @@
 package CGI::Session::ID::static;
 
 use strict;
+use diagnostics;
+
 use Carp 'croak';
 use vars qw($VERSION);
 

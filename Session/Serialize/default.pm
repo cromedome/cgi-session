@@ -2,6 +2,8 @@ package CGI::Session::Serialize::default;
 
 # $Id$ 
 use strict;
+use diagnostics;
+
 use Safe;
 use Data::Dumper;
 

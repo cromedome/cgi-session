@@ -2,6 +2,8 @@ package CGI::Session::Serialize::freezethaw;
 
 # $Id$ 
 use strict;
+use diagnostics;
+
 use FreezeThaw;
 
 use vars qw($VERSION);

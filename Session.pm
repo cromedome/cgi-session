@@ -3,6 +3,8 @@ package CGI::Session;
 # $Id$
 
 use strict;
+use diagnostics;
+
 use Carp;
 use CGI::Session::ErrorHandler;
 
@@ -52,7 +54,7 @@ sub instance {
     my $self = bless {
         _DATA       => {
             _SESSION_ID     => undef,
-            _SESSION_CTIME  => time(),
+            _SESSION_CTIME  => undef,
             _SESSION_ATIME  => undef,
             _SESSION_ETIME  => undef,
             _SESSION_REMOTE_ADDR => $ENV{REMOTE_ADDR} || "",
@@ -66,6 +68,8 @@ sub instance {
         _QUERY      => undef,       # query object
         _errstr     => "",
     }, $class;
+
+    $self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
 
     if ( @_ == 1 ) {
         if ( ref $_[0] ){ $self->{_QUERY}       = $_[0]  }
@@ -153,9 +157,9 @@ sub init {
         return $self->error( "Invalid data structure returned from thaw()" );
     }    
     # checking for expiration ticker
-    if ( $self->{_SESSION_ETIME} ) {
-        if ( ($self->{_SESSION_ATIME} + $self->{_SESSION_ETIME}) >= time() ) {
-            $self->{_DATA} = {};                    # <-- resetting expired session data
+    if ( $self->{_DATA}->{_SESSION_ETIME} ) {
+        if ( ($self->{_DATA}->{_SESSION_ATIME} + $self->{_DATA}->{_SESSION_ETIME}) <= time() ) {
+            #$self->{_DATA} = {};                    # <-- resetting expired session data
             $self->_set_status( STATUS_EXPIRED );   # <-- so client can detect expired sessions
             $self->_set_status( STATUS_DELETED );   # <-- session should be removed from database
             return 1;
@@ -165,7 +169,7 @@ sub init {
     # checking expiration tickers of individuals parameters, if any:
     my @expired_params = ();
     while (my ($param, $etime) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
-        if ( ($self->{_SESSION_ATIME} + $etime) >= time() ) {
+        if ( ($self->{_DATA}->{_SESSION_ATIME} + $etime) <= time() ) {
             push @expired_params, $param;
         }
     }
@@ -219,6 +223,7 @@ sub dump {
 
     require Data::Dumper;
     my $d = Data::Dumper->new([$self], [ref $self]);
+    $d->Deepcopy(1);
     return $d->Dump();
 }
 
@@ -343,11 +348,11 @@ sub param {
     my $self = shift;
 
     carp "param(): attempt to read/write deleted session" if $self->_test_status(STATUS_DELETED);
-
-    my $dataref = $self->dataref();
-
-    return keys %$dataref unless @_;
-    return $dataref->{$_[0]} if @_ == 1;
+    
+    unless ( @_ ) {
+        return grep { !/^_SESSION_/ } keys %{ $self->{_DATA} };
+    }
+    return $self->{_DATA}->{$_[0]} if @_ == 1;
 
     my %args = (
         -name   => undef,
@@ -356,22 +361,34 @@ sub param {
     );
 
     if ( defined( $args{'-name'} ) && defined( $args{'-value'} ) ) {
+        if ( $args{'-name'} =~ m/^_SESSION_/ ) {
+            carp "param(): attempt to write to private parameter";
+            return undef;
+        }
         $self->_set_status(STATUS_MODIFIED);
-        return $dataref->{ $args{'-name'} } = $args{'-value'};
+        return $self->{_DATA}->{ $args{'-name'} } = $args{'-value'};
     }
 
     if ( defined $args{'-name'} ) {
-        return $dataref->{ $args{'-name'} };
+        return $self->{_DATA}->{ $args{'-name'} };
     }
 
     if ( @_ == 2 ) {
+        if ( $_[0] =~ m/^_SESSION_/ ) {
+            carp "param(): attempt to write to private parameter";
+            return undef;
+        }
         $self->_set_status(STATUS_MODIFIED);
-        return $dataref->{ $_[0] } = $_[1];
+        return $self->{_DATA}->{ $_[0] } = $_[1];
     }
 
     unless ( @_ % 2 ) {
         for ( my $i=0; $i < @_; $i += 2 ) {
-            $dataref->{ $_[$i] } = $_[$i+1];
+            if ( $_[$i] =~ m/^_SESSION_/) {
+                carp "param(): attempt to write to private parameter";
+                next;
+            }
+            $self->{_DATA}->{ $_[$i] } = $_[$i+1];
         }
         return $self->_set_status(STATUS_MODIFIED);
     }
@@ -398,11 +415,16 @@ sub save_param {
     my $self = shift;
     my ($query, $params) = @_;
 
-    $query ||= $self->query();
+    $query  ||= $self->query();
     $params ||= [ $query->param ];
 
-    for ( @$params ) {
-        $self->param($_, $query->param($_));
+    for my $p ( @$params ) {
+        my @values = $query->param($p) or next;
+        if ( @values > 1 ) {
+            $self->param($p, \@values);
+        } else {
+            $self->param($p, $values[0]);
+        }
     }
     $self->_set_status( STATUS_MODIFIED );
 }
@@ -413,11 +435,11 @@ sub load_param {
     my $self = shift;
     my ($query, $params) = @_;
 
-    $query ||= $self->query();
+    $query  ||= $self->query();
     $params ||= [ $self->param ];
 
     for ( @$params ) {
-        $query->param($_, $self->param($_));
+        $query->param(-name=>$_, -value=>$self->param($_));
     }
 }
 
@@ -427,10 +449,8 @@ sub clear {
     my ($params) = @_;
     
     $params ||= [ $self->param ];
-    my $dataref = $self->dataref();
-    
     for ( @$params ) {
-        delete $dataref->{ $_ };
+        delete $self->{_DATA}->{$_};
     }
     $self->_set_status( STATUS_MODIFIED );
 }

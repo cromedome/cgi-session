@@ -12,6 +12,8 @@ package CGI::Session::Driver::pg;
 
 
 use strict;
+use diagnostics;
+
 use CGI::Session::Driver::DBI;
 use vars qw( $VERSION @ISA );
 

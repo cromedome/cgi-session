@@ -3,6 +3,8 @@ package CGI::Session::ID::md5;
 # $Id$
 
 use strict;
+use diagnostics;
+
 use Digest::MD5;
 use vars qw($VERSION);
 

@@ -1,6 +1,8 @@
 package CGI::Session::Driver::db_file;
 
 use strict;
+use diagnostics;
+
 use Carp;
 use DB_File;
 use File::Spec;

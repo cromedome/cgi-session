@@ -1,6 +1,8 @@
 package CGI::Session::Driver::DBI;
 
 use strict;
+use diagnostics;
+
 use CGI::Session::Driver;
 use DBI;
 use vars qw( $VERSION @ISA );

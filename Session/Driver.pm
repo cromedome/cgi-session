@@ -1,6 +1,8 @@
 package CGI::Session::Driver;
 
 use strict;
+use diagnostics;
+
 use Carp "croak";
 use CGI::Session::ErrorHandler;
 use Data::Dumper;

@@ -1,6 +1,8 @@
 package CGI::Session::ErrorHandler;
 
 use strict;
+use diagnostics;
+
 use vars qw( $ERRSTR );
 
 sub error {

@@ -2,6 +2,8 @@ package CGI::Session::Serialize::storable;
 
 # $Id$ 
 use strict;
+use diagnostics;
+
 use Storable;
 use vars qw($VERSION);
 
