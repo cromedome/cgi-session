@@ -3,6 +3,8 @@ package CGI::Session;
 # $Id$
 
 use strict;
+use warnings;
+use diagnostics;
 use Carp 'confess';
 use AutoLoader 'AUTOLOAD';
 
@@ -17,6 +19,8 @@ sub MODIFIED () { 1 }
 sub DELETED  () { 2 }
 
 
+# new() - constructor.
+# Returns respective driver object
 sub new {
     my $class = shift;
     $class = ref($class) || $class;
@@ -28,26 +32,27 @@ sub new {
     };
 
     bless ($self, $class);
-
     $self->_validate_driver() && $self->_init() or return;
-
     return $self;
 }
 
 
 
 
-
+# DESTROY() - destructor.
+# Flushes the memory, and calls driver's teardown()
 sub DESTROY {
     my $self = shift;
 
-    $self->flush() && $self->teardown();
-
+    $self->flush();
+    $self->can('teardown') && $self->teardown();
 }
 
 
 
-
+# _validate_driver() - checks driver's validity.
+# Return value doesn't matter. If the driver doesn't seem
+# to be valid, it croaks
 sub _validate_driver {
     my $self = shift;
 
@@ -57,7 +62,7 @@ sub _validate_driver {
         unless ( $self->can($method) ) {
             my $class = ref($self);
             confess "$class doesn't seem to be a valid CGI::Session driver. " .
-                "At least '$method' method is missing";
+                "At least one method('$method') is missing";
         }
     }
     return 1;
@@ -66,16 +71,17 @@ sub _validate_driver {
 
 
 
-
+# _init() - object initialializer. 
+# Decides between _init_old_session() and _init_new_session()
 sub _init {
     my $self = shift;
 
     my $claimed_id = $self->{_options}->[0];
 
     if ( defined $claimed_id ) {
-        $self->_init_old_session($claimed_id);
+        my $rv = $self->_init_old_session($claimed_id);
 
-        unless ( defined $self->{_data} ) {
+        unless ( $rv ) {
             return $self->_init_new_session();
         }
         return 1;
@@ -86,40 +92,86 @@ sub _init {
 
 
 
-
+# _init_old_session() - tries to retieve the old session.
+# If suceeds, checks if the session is expirable. If so, deletes it
+# and returns undef so that _init() creates a new session. 
+# Otherwise, checks if there're any parameters to be expired, and
+# calls clear() if any. Aftewards, updates atime of the session, and
+# returns true
 sub _init_old_session {
     my ($self, $claimed_id) = @_;
 
     my $options = $self->{_options} || [];
     my $data = $self->retrieve($claimed_id, $options);
 
+    # Session was initialized successfully
     if ( defined $data ) {
-        # check if there're any parameters to be cleared out.
-        # It's also important that we do it before
-        # updating the session's access time (atime)
-        my $expire_list = $self->{_data}->{_session_expire_list};
-        while ( my ($param, $etime) = each %{$expire_list} ) {
-            if ( $etime <= $self->atime() ) {
-                $self->clear([$param]);
-            }
-        }
 
         $self->{_data} = $data;
+
+        if ( $self->_is_expired() ) {
+            $self->delete();
+            $self->flush();
+            return;
+        }
+
+        # Expring single parameters, if any
+        $self->_expire_params();
+
+        # Updating last access time for the session
         $self->{_data}->{_session_atime} = time();
+
+        # Marking the session as modified
         $self->{_status} = MODIFIED;
 
-        
         return 1;
     }
-
     return undef;
 }
 
 
 
 
+# _is_expired() - returns true if the session is to be expired.
+# Called from _init_old_session() method. 
+sub _is_expired {
+    my $self = shift;
+    
+    unless ( $self->expire() ) {
+        return undef;
+    }
+
+    return ( time() >= ($self->expire() + $self->atime() ) );
+}
 
 
+
+
+
+# _expire_params() - expires individual params. Called from within
+# _init_old_session() method on a sucessfully retrieved session
+sub _expire_params {
+    my $self = shift;    
+
+    # Expiring 
+    my $exp_list = $self->{_data}->{_session_expire_list} || {};
+    my @trash_can = ();
+    while ( my ($param, $etime) = each %{$exp_list} ) {
+        if ( time() >= ($self->atime() + $etime) ) {
+            push @trash_can, $param;
+        }
+    }
+
+    if ( @trash_can ) {
+        $self->clear(\@trash_can);
+    }
+}
+
+
+
+
+
+# _init_new_session() - initializes a new session
 sub _init_new_session {
     my $self = shift;
 
@@ -130,10 +182,7 @@ sub _init_new_session {
         _session_etime => undef,
         _session_remote_addr => $ENV{REMOTE_ADDR} || undef,
         _session_expire_list => { },
-
-    };
-
-    $self->{_status} = MODIFIED;
+    };    
 
     return 1;
 }
@@ -141,7 +190,8 @@ sub _init_new_session {
 
 
 
-
+# id() - accessor method. Returns effective id
+# for the current session. 
 sub id {
     my $self = shift;
 
@@ -150,20 +200,19 @@ sub id {
 
 
 
-
+# param() - accessor method. Reads and writes
+# session parameters ( $self->{_data} ). Decides
+# between _get_param() and _set_param() accordingly.
 sub param {
     my $self = shift;
 
-    if ( $self->{_status} == DELETED ) {
-        confess "read attempt on deleted session  ";
-    }
-
-    unless ( defined $_[0] ) {        
+    
+    unless ( defined $_[0] ) {
         return keys %{ $self->{_data} };
     }
 
     if ( @_ == 1 ) {
-        return $self->get_param(@_);
+        return $self->_get_param(@_);
     }
 
     # If it has more than one arguments, let's try to figure out
@@ -175,23 +224,23 @@ sub param {
     };
 
     if ( defined($arg->{'-name'}) && defined($arg->{'-value'}) ) {
-        return $self->set_param($arg->{'-name'}, $arg->{'-value'});
+        return $self->_set_param($arg->{'-name'}, $arg->{'-value'});
 
     }
 
     if ( defined $arg->{'-name'} ) {
-        return $self->get_param( $arg->{'-name'} );
+        return $self->_get_param( $arg->{'-name'} );
     }
 
     if ( @_ == 2 ) {
-        return $self->set_param(@_);
+        return $self->_set_param(@_);
     }
 
     unless ( @_ % 2 ) {
         my $n = 0;
         my %args = @_;
         while ( my ($key, $value) = each %args ) {
-            $self->set_param($key, $value) && ++$n;
+            $self->_set_param($key, $value) && ++$n;
         }
         return $n;
     }
@@ -201,15 +250,17 @@ sub param {
 
 
 
-
-sub set_param {
+# _set_param() - sets session parameter to the '_data' table
+sub _set_param {
     my ($self, $key, $value) = @_;
 
-    if ( $self->{_status} == DELETED ) {
-        confess "read attempt on deleted session";
+    if ( $self->{_status} == DELETED ) {        
+        return;
     }
 
-    if ( $key =~ m/^_session/ ) {
+    # session parameters starting with '_session_' are
+    # private to the class
+    if ( $key =~ m/^_session_/ ) {
         return undef;
     }
 
@@ -222,19 +273,21 @@ sub set_param {
 
 
 
-
-sub get_param {
+# _get_param() - gets a single parameter from the 
+# '_data' table
+sub _get_param {
     my ($self, $key) = @_;
 
-    if ( $self->{_status} == DELETED ) {
-        confess "read attempt on deleted session";
+    if ( $self->{_status} == DELETED ) {        
+        return;
     }
 
     return $self->{_data}->{$key};
 }
 
 
-
+# flush() - flushes the memory into the disk if necessary.
+# Usually called from within DESTROY() or close()
 sub flush {
     my $self = shift;
 
@@ -249,6 +302,8 @@ sub flush {
         return $self->remove($self->id, $self->{_options});
     }
 
+    $self->{_status} = SYNCED;
+
     return 1;
 }
 
@@ -261,74 +316,45 @@ sub flush {
 
 1;
 __END__
-# Below is stub documentation for your module. You better edit it!
-
-=head1 NAME
-
-CGI::Session - Perl extension for blah blah blah
-
-=head1 SYNOPSIS
-
-  use CGI::Session;
-  blah blah blah
-
-=head1 DESCRIPTION
-
-Stub documentation for CGI::Session, created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
-
-Blah blah blah.
-
-=head2 EXPORT
-
-None by default.
 
 
-=head1 AUTHOR
-
-A. U. Thor, E<lt>a.u.thor@a.galaxy.far.far.awayE<gt>
-
-=head1 SEE ALSO
-
-L<perl>.
-
-=cut
-
-
+# dump() - dumps the session object using Data::Dumper
 sub dump {
-    my $self = shift;
+    my ($self, $file) = @_;
 
     require Data::Dumper;
-    my $d = new Data::Dumper([$self], ["cgisession"]);
+    local $Data::Dumper::Indent = 3;
 
+    my $d = new Data::Dumper([$self], ["cgisession"]);    
+
+    if ( defined $file ) {
+        unless ( open(FH, '<' . $file) ) {
+            unless(open(FH, '>' . $file)) {
+                $self->error("Couldn't open $file: $!");
+                return undef;
+            }
+            print FH $d->Dump();
+            unless ( close(FH) ) {
+                $self->error("Couldn't dump into $file: $!");
+                return undef;
+            }
+        }
+    }
+    
     return $d->Dump();
 }
 
 
 
+sub version {   return $VERSION()   }
 
 
-
-
-
-sub version {
-    my $self = shift;
-    return $self->VERSION();
-}
-
-
-
-
-
-
-
-
-
-
+# delete() - sets the '_status' session flag to DELETED, 
+# which flush() uses to decide to call remove() method on driver.
 sub delete {
     my $self = shift;
 
+    # If it was already deleted, make a confession!
     if ( $self->{_status} == DELETED ) {
         confess "delete attempt on deleted session";
     }
@@ -340,7 +366,7 @@ sub delete {
 
 
 
-
+# clear() - clears a list of parameters off the session's '_data' table
 sub clear {
     my $self = shift;
     $class   = ref($class);
@@ -355,22 +381,28 @@ sub clear {
     } else {
         @params = $self->param();
 
-    }    
+    }
 
     my $n = 0;
     for ( @params ) {
         /^_session_/ and next;
-        $self->{_data}->{_session_expire_list}->{$_} && delete ( $self->{_data}->{_session_expire_list}->{$_} );
+        # If this particular parameter has an expiration ticker, 
+        # remove it.
+        if ( $self->{_data}->{_session_expire_list}->{$_} ) {
+            delete ( $self->{_data}->{_session_expire_list}->{$_} );
+        }
         delete ($self->{_data}->{$_}) && ++$n;
     }
 
+    # Set the session '_status' flag to MODIFIED
     $self->{_status} = MODIFIED;
 
     return $n;
 }
 
 
-
+# save_param() - copies a list of third party object parameters
+# into CGI::Session object's '_data' table
 sub save_param {
     my ($self, $cgi, $list) = @_;
 
@@ -404,10 +436,10 @@ sub save_param {
         my @values = $cgi->param($_);
 
         if ( defined $values[1] ) {
-            $self->set_param($_ => \@values);
+            $self->_set_param($_ => \@values);
 
         } else {
-            $self->set_param($_ => $values[0] );
+            $self->_set_param($_ => $values[0] );
 
         }
 
@@ -418,6 +450,8 @@ sub save_param {
 }
 
 
+# load_param() - loads a list of third party object parameters
+# such as CGI, into CGI::Session's '_data' table
 sub load_param {
     my ($self, $cgi, $list) = @_;
 
@@ -440,11 +474,11 @@ sub load_param {
     } else {
         @params = $self->param();
 
-    }    
+    }
 
     my $n = 0;
     for ( @params ) {
-        $cgi->param(-name=>$_, -value=>$self->get_param($_));        
+        $cgi->param(-name=>$_, -value=>$self->_get_param($_));
     }
     return $n;
 }
@@ -452,6 +486,8 @@ sub load_param {
 
 
 
+# another, but a less efficient alternative to undefining 
+# the object
 sub close {
     my $self = shift;
 
@@ -460,7 +496,7 @@ sub close {
 
 
 
-
+# error() returns/sets error message
 sub error {
     my ($self, $msg) = @_;
 
@@ -470,9 +506,18 @@ sub error {
 
     return $errstr;
 }
-     
 
 
+# errstr() - alias to error()
+sub errstr {
+    my $self = shift;
+    
+    return $self->error(@_);
+}
+
+
+
+# atime() - rerturns session last access time
 sub atime {
     my $self = shift;
 
@@ -484,6 +529,7 @@ sub atime {
 }
 
 
+# ctime() - returns session creation time
 sub ctime {
     my $self = shift;
 
@@ -495,41 +541,45 @@ sub ctime {
 }
 
 
+# expire() - sets/returns session/parameter expiration ticker
 sub expire {
     my $self = shift;
 
     unless ( @_ ) {
         return $self->{_data}->{_session_etime};
     }
-    
-    # If there are two arguments, the user is trying to 
-    # set an expiration date for a single parameter
-    if ( @_ == 2 ) {
-        my ($param, $etime) = @_;
-        if ( defined $self->{_data}->{$param} ) {
-            return $self->{_data}->{_session_expire_list}->{$param} 
-                                = time() + $self->_time_alias( $etime );            
-        }
 
-        return undef;
-    
-    } elsif ( @_ == 1 ) {
-        return $self->{_data}->{_session_etime} = time() + $self->_time_alias( $_[0] );
-    
+    if ( @_ == 1 ) {
+        return $self->{_data}->{_session_etime} = _time_alias( $_[0] );
     }
 
-    confess "expire(): too many arguments( @_ )";
+    # If we came this far, we'll simply assume user is trying
+    # to set an expiration date for a single session parameter. 
+    my ($param, $etime) = @_;
+
+    # Let's check if that particular session parameter exists
+    # in the '_data' table. Otherwise, return now!
+    defined ($self->{_data}->{$param} ) || return;
+
+    if ( $etime == -1 ) {
+        delete $self->{_data}->{_session_expire_list}->{$param};
+        return;
+    }
+
+    $self->{_data}->{_session_expire_list}->{$param} = _time_alias( $etime );
 }
 
 
+
+# parses such strings as '+1M', '+3w', accepted by expire()
 sub _time_alias {
-    my ($self, $str) = @_;
+    my ($str) = @_;
 
     # If $str consists of just digits, return them as they are
     if ( $str =~ m/^\d+$/ ) {
         return $str;
     }
-
+    
     my %time_map = (
         s           => 1,
         m           => 60,
@@ -548,3 +598,4 @@ sub _time_alias {
 }
 
 
+# $Id$ 
