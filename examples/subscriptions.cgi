@@ -6,6 +6,8 @@ use strict;
 use CGI;
 use CGI::Carp 'fatalsToBrowser';
 use URI::Escape;
+use vars qw($SELF_URL);
+
 use lib "/home/sherzodr/perllib";
 use CGI::Session;
 
@@ -15,13 +17,21 @@ for my $mod ( @required ) {
     eval "require $mod";
     if ( $@ ) {
         print "Content-Type: text/html\n\n";
-        print "$mod is required. If it's installed in a non-standard path, please 'use lib' line in $0";
+        print "$mod is required. If it's installed in a non-standard path, " . 
+                "please 'use lib' line in $0";
+        exit(1);
     }
 }
 
 my $cgi     = new CGI;
-my $session = new CGI::Session(undef, $cgi, {Directory=>'../tmp/'});
+my $session = new CGI::Session(undef, $cgi, {Directory=>'/tmp'});
+unless ( defined $session ) {
+    die $CGI::Session::errstr;
+}
 my $cmd     = $cgi->param('cmd') || $session->param("last_cmd") || 'directions';
+
+$SELF_URL = $cgi->url() || $0;
+
 
 # save the last executed command:
 $session->param(last_cmd => $cmd);
@@ -53,11 +63,25 @@ if ( $cmd eq "directions" ) {
 }
 
 
-#-------------------
+
+
+
+
+
+
+
+
+
+
+
+
+#--------------------------------------------------------------------
+# functions start here
+#--------------------------------------------------------------------
 sub directions {
     my ($cgi, $session) = @_;
 
-    my $HTML = <<'HTML';
+    my $HTML = <<HTML;
 <h2>Welcome to CGI::Session Demo Script</h2>
 <p>
 The tricks are endless! This script is to demonstrate basic usage of
@@ -86,7 +110,7 @@ form elements.
 
 <p>
 While somewhere in the middle of subscription, close the browser
-intentionally, and reopen the page: <a href="http://modules.ultracgis.com/cgi-bin/session2">http://modules.ultracgis.com/cgi-bin/session2</a>. Notice how the script remembers which form you were filling out before you closed the browser, and displays
+intentionally, and reopen the page: <a href="$SELF_URL">$SELF_URL</a>. Notice how the script remembers which form you were filling out before you closed the browser, and displays
 respective form, instead of taking you to the default page. Your previously
 filled in form data are also kept.
 </p>
@@ -99,7 +123,7 @@ at each step.
 
 <p>
 Should you have any suggestions or comments, feel free to send me an email:
-<a href="mailto:sherzodr@cpan.org">sherzodr@cpan.org</a>.
+<a href="mailto:sherzodr\@cpan.org">sherzodr\@cpan.org</a>.
 </p>
 
 <form>
@@ -107,9 +131,7 @@ Should you have any suggestions or comments, feel free to send me an email:
 <input type="hidden" name="cmd" value="step1" />
 <input type="submit" value="Start The Demo" />
 </form>
-
 HTML
-
     return template(\$HTML, $cgi, $session);
 }
 
@@ -118,7 +140,6 @@ HTML
 
 sub step1 {
     my ($cgi, $session) = @_;
-
     my $HTML = <<'HTML';
 <h4>Step 1 out of 3</h4>
 <p> Hi %name%! Please fill out your personal information below </p>
@@ -148,7 +169,7 @@ sub step2 {
     $session->save_param($cgi);
     $session->load_param($cgi, ["subscriptions"]);
 
-    my $HTML = <<'HTML';
+    my $HTML = <<HTML;
 <h4>Step 2 out of 3</h4>
 <p>Dear %name%.</p>
 <p>
@@ -164,7 +185,7 @@ sub step2 {
 <div>Subscriptions:</div>
     %subscriptions_scrolling%
 <br />
-<input type="button" value="&lt;&lt;Back" onClick="location='/cgi-bin/session2?cmd=step1;CGISESSID=%_session_id%'"/>
+<input type="button" value="&lt;&lt;Back" onClick="location='$SELF_URL?cmd=step1;CGISESSID=%_session_id%'"/>
 <input type="button" value="Cancel" onClick="clearTheForm(this.form)" />
 <input type="submit" value="Next &gt;&gt;" />
 </form>
@@ -179,7 +200,7 @@ sub step3 {
 
     $session->save_param($cgi, ["subscriptions"]);
 
-    my $HTML = <<'HTML';
+    my $HTML = <<HTML;
 <h4>Step 3 out of 3 - final!</h4>
 <p>Dear %name%.</p>
 <p>
@@ -217,7 +238,7 @@ When you are down, click on "Finish" button. Voila!
 
 %subscriptions_checkbox%
 
-<input type="button" value="&lt;&lt;Back" onClick="location='/cgi-bin/session2?cmd=step2;CGISESSID=%_session_id%'" />
+<input type="button" value="&lt;&lt;Back" onClick="location='$SELF_URL?cmd=step2;CGISESSID=%_session_id%'" />
     <input type="button" value="Update" onClick="updateTheForm(this.form)" />
     <input type="button" value="Cancel" onClick="clearTheForm(this.form)" />
     <input type="submit" value="Finish" />
@@ -230,9 +251,7 @@ HTML
 
 
 sub finish {
-    my ($cgi, $session) = @_;
-
-    #die "Checkpoint";
+    my ($cgi, $session) = @_;    
 
     my $to = sprintf("%s <%s>", $session->param('name'),
                                 $session->param('email'));
@@ -247,7 +266,7 @@ sub finish {
                     Data => _data($cgi, $session));
     $msg->attach(   Type => 'application/octet-stream',
                     Path => $0,
-                    Filename => 'session2.cgi'
+                    Filename => 'session.cgi'
     );
 
 
@@ -319,8 +338,8 @@ sub template {
     my $sid = $session->id();
 
     $t->param(
-        edit_profile  => "$ENV{SCRIPT_NAME}?cmd=step1;CGISESSID=$sid",
-        edit_subs     => "$ENV{SCRIPT_NAME}?cmd=step2;CGISESSID=$sid",
+        edit_profile  => "$SELF_URL?cmd=step1;CGISESSID=$sid",
+        edit_subs     => "$SELF_URL?cmd=step2;CGISESSID=$sid",
 
         subscriptions_scrolling => $cgi->scrolling_list(
                             -name=>'subscriptions',
@@ -330,8 +349,7 @@ sub template {
         subscriptions_checkbox => scalar($cgi->checkbox_group(
                             -name=>'subscriptions',
                             -values => \@papers, -linebreak=>1)),
-        dump            => $session->dump(undef, 1),
-        #subscriptions_plain => eval{join ("\n", @{$session->param('subscriptions') || []})},
+        dump            => $session->dump(undef, 1),        
     );
 
     if ( $no_html ) {
@@ -340,7 +358,7 @@ sub template {
 
     my $cookie = $cgi->cookie(-name=>CGI::Session->name(), -value=>$sid, -expires=>"+10h");
 
-    my $HTML = $cgi->header(-cookie=>$cookie) .
+    $HTML = $cgi->header(-cookie=>$cookie) .
         $cgi->start_html(-title=>"CGI::Session Test Script", -script=>{code=>_js()},
         -style => {code=>_css()} ) .
         $t->output();
@@ -350,7 +368,7 @@ sub template {
     }
 
     my $dump_url = sprintf("%s?cmd=show-dump;CGISESSID=%s;ref=%s",
-            $ENV{SCRIPT_NAME}, $sid, uri_escape($cgi->self_url()));
+            $SELF_URL, $sid, uri_escape($cgi->self_url()));
 
     if ( $session->param("_display_dump") ) {
         $HTML .= $cgi->a({-href=>$dump_url}, "hide-dump");
