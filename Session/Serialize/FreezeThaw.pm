@@ -20,7 +20,7 @@ sub freeze {
 sub thaw {
     my ($self, $string) = @_;
 
-    return (FreezeThaw::thaw($string))[0];   
+    return (FreezeThaw::thaw($string))[0];
 }
 
 

@@ -46,7 +46,7 @@ sub retrieve {
     unless ( -e $self->{_file_path} ) {
         return undef;
     }
-
+    
     unless ( sysopen(FH, $self->{_file_path}, O_RDONLY) ) {
         $self->error("Couldn't open $self->{_file_path}: $!");
         return undef;
@@ -55,10 +55,9 @@ sub retrieve {
         $self->error("Couldn't lock the file: $!");
         return undef;
     }
-    my $data = '';
-    while ( <FH> ) {
-        $data .= $_;
-    }
+    my $data = undef;
+    $data .= $_ while <FH>;
+    
     close(FH);
     return $self->thaw($data);
 }

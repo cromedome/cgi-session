@@ -13,11 +13,17 @@ use vars qw($VERSION);
 sub freeze {
     my ($self, $data) = @_;
     
-    my $d = Data::Dumper->new([$data], ["data"]);
-    # To disable indenting to create the most compact string.
-    $d->Indent(0);
-    $d->Useqq(1);    
-    return $d->Dump();
+    local $Data::Dumper::Indent   = 0;
+    local $Data::Dumper::Purity   = 1;
+    local $Data::Dumper::Useqq    = 0;
+    local $Data::Dumper::Deepcopy = 1;
+    local $Data::Dumper::Terse    = 0;
+    local $Data::Dumper::Quotekeys= 0;
+    local $Data::Dumper::Maxdepth = 5;
+
+    
+    my $d = new Data::Dumper([$data], ["D"]);
+    return $d->Dump();    
 }
 
 
@@ -27,9 +33,14 @@ sub thaw {
 
     # To make -T happy
     my ($safe_string) = $string =~ m/^(.*)$/;
+    
+    my $D = undef;
+    $D = eval ("$safe_string");
+    if ( $@ ) {
+        die $@;
+    }
 
-    my $cpt = Safe->new();
-    return $cpt->reval($safe_string);
+    return $D;
 }
 
 

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+perl Makefile.PL LIB=~/public_html/modules/lib
+make
+make test
+make install
+make realclean
