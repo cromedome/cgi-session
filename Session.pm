@@ -6,8 +6,9 @@ use strict;
 use Carp ('confess', 'croak');
 use AutoLoader 'AUTOLOAD';
 
-use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3 $TOUCH);
+use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3 $TOUCH $REVISION);
 
+($REVISION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
 $VERSION    = '3.91';
 $NAME       = 'CGISESSID';
 
