@@ -9,7 +9,7 @@ use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3 $TOUCH);
 
-$VERSION    = '3.10';
+$VERSION    = '3.11';
 $NAME       = 'CGISESSID';
 
 # import() - we do not import anything into the callers namespace, however,

@@ -18,7 +18,6 @@ Session/Serialize/Default.pm
 Session/Serialize/FreezeThaw.pm
 Session/Serialize/Storable.pm
 Session/Tutorial.pm
-examples/expire.pl
 examples/subscriptions.cgi
 rfc2965.txt
 t/api3_db_file.t
