@@ -1,6 +1,6 @@
 package CGI::Session::DB_File;
 
-# $sid: DB_File.pm,v 1.2 2002/11/03 08:27:04 sherzodr Exp $
+# $Id$
 
 use DB_File;
 use File::Spec;
