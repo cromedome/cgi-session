@@ -33,7 +33,6 @@ sub store {
     untie(%db) or die $!;
 
     return 1;
-
 }
 
 
@@ -47,6 +46,9 @@ sub retrieve {
     my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
 
     tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0600 or die $!;
+    unless ( $db{$sid} ) {
+        return undef;
+    }
     my $data = $self->thaw($db{$sid});
     untie(%db);
 
@@ -68,8 +70,6 @@ sub remove {
     untie(%db) or die $!;
 
     return 1;
-
-
 }
 
 

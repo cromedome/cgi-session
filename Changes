@@ -1,3 +1,10 @@
+What is new in 3.12?
+
+	* cache() method introduced, which is normally used
+          by library drivers to cache certain value within the single process
+	* Apache::Session-like tie interface supported (EXPERIMENTAL!)
+	* trace() and tracemsg() methods added for debugging purposes
+
 What is new in 3.8?
 
 	* Abbreviations in DSN parameters are supported via Text::Abbrev.

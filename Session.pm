@@ -9,7 +9,7 @@ use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3 $TOUCH);
 
-$VERSION    = '3.11';
+$VERSION    = '3.12';
 $NAME       = 'CGISESSID';
 
 # import() - we do not import anything into the callers namespace, however,
@@ -19,7 +19,7 @@ sub import {
     @_ or return;
     for ( my $i=0; $i < @_; $i++ ) {
         $IP_MATCH   = ( $_[$i] eq '-ip_match'   ) and next;
-        $API_3      = ( $_[$i] eq '-api3'       ) and next;        
+        $API_3      = ( $_[$i] eq '-api3'       ) and next;
     }
 }
 
@@ -44,10 +44,15 @@ sub new {
         _CACHE      => { },
     };
 
-    if ( $API_3 || (@_ == 3 ) ) {
+    if ( $TOUCH ) {
+        $class->_touch_init(@_);
+        bless($self, $class);
+
+    } elsif ( $API_3 || (@_ == 3 ) ) {
         return $class->api_3(@_);
+
     }
-    
+
     bless ($self, $class);
     $self->_validate_driver() && $self->_init() or return;
     return $self;
@@ -92,13 +97,14 @@ sub api_3 {
     }
 
     my $driver = "CGI::Session::$self->{_API_3}->{DRIVER}";
-    eval "require $driver" or carp $@;
+    eval "require $driver" or $self->error($@), carp $@;
 
-    my $serializer = "CGI::Session::Serialize::$self->{_API_3}->{SERIALIZER}";
-    eval "require $serializer" or carp $@;
+
+    my $serializer = "CGI::Session::Serialize::$self->{_API_3}->{SERIALIZER}";  
+    eval "require $serializer" or $self->error($@), carp $@;
 
     my $id = "CGI::Session::ID::$self->{_API_3}->{ID}";
-    eval "require $id" or carp $@;
+    eval "require $id" or $self->error($@), carp $@;
 
 
     # Now re-defining ISA according to what we have above
@@ -119,7 +125,7 @@ sub api_3 {
 
 sub touch {
     my $class = shift;
-    
+
     $CGI::Session::TOUCH = 1;
     return $class->new(@_);
 }
@@ -139,11 +145,18 @@ sub DESTROY {
 
     $self->flush();
     $self->can('teardown') && $self->teardown();
+
+    my $fh = $self->{_TRACE_FH};
+
+    if ( defined $fh ) {
+        print $fh "-" x 36, "\n";
+        CORE::close( $fh );
+    }
 }
 
 
 # options() - used by drivers only. Returns the driver
-# specific options. To be used in the future releases of the 
+# specific options. To be used in the future releases of the
 # library, may be. Experimental!
 sub driver_options {
     my $self = shift;
@@ -192,19 +205,19 @@ sub _init {
         if ( $arg->isa('CGI') ) {
             # .. in which case, try to retrieve the claimed session id
             # from either HTTP cookie or query string.
-            $claimed_id = $arg->cookie($NAME) || $arg->param($NAME) || undef;            
+            $claimed_id = $arg->cookie($NAME) || $arg->param($NAME) || undef;
 
         # Otherwise check if we're getting a reference to some code...
         } elsif ( ref($arg) eq 'CODE' ) {
 
-            # ... and try to call that code and use its return value as a 
+            # ... and try to call that code and use its return value as a
             # claimed id.
             $claimed_id = $arg->($self) || undef;
         }
 
-    # If the argument is defined, but not a reference, treat it literally as 
+    # If the argument is defined, but not a reference, treat it literally as
     # claimed session id
-    } elsif ( defined($arg) ) {        
+    } elsif ( defined($arg) ) {
         $claimed_id = $arg;
     }
 
@@ -472,6 +485,52 @@ sub flush {
 
 
 
+# delete() - sets the '_STATUS' session flag to DELETED,
+# which flush() uses to decide to call remove() method on driver.
+sub delete {
+    my $self = shift;
+
+    # If it was already deleted, make a confession!
+    if ( $self->{_STATUS} == DELETED ) {
+        confess "delete attempt on deleted session";
+    }
+
+    $self->{_STATUS} = DELETED;
+}
+
+
+
+
+
+# clear() - clears a list of parameters off the session's '_DATA' table
+sub clear {
+    my $self = shift;
+    my $class   = ref($self);
+
+    my @params = $self->param();
+    if ( defined $_[0] ) {
+        unless ( ref($_[0]) eq 'ARRAY' ) {
+            confess "Usage: $class->clear([\@array])";
+        }
+        @params = @{ $_[0] };
+    }
+
+    my $n = 0;
+    for ( @params ) {
+        /^_SESSION_/ and next;
+        # If this particular parameter has an expiration ticker,
+        # remove it.
+        if ( $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$_} ) {
+            delete ( $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$_} );
+        }
+        delete ($self->{_DATA}->{$_}) && ++$n;
+    }
+
+    # Set the session '_STATUS' flag to MODIFIED
+    $self->{_STATUS} = MODIFIED;
+
+    return $n;
+}
 
 
 
@@ -626,7 +685,7 @@ Constructor. Used in cleanup scripts. Example:
 
 touch() accepts the same arguments as new() does, but it doesn't necessarily
 returns object instance. It simply expires old sessions without updating their
-last access time parameter. 
+last access time parameter.
 
 =item C<id()>
 
@@ -773,7 +832,7 @@ value of $CGI::Session::errstr. Example:
 creates a dump of the session object. The first argument, if passed,
 will be interperated as the name of the file dump should be written into.
 The second argument, if true, creates a dump of only the B<_DATA> table.
-This table contains only the session data that is stored in to the file. 
+This table contains only the session data that is stored in to the file.
 Otherwise, dump() will return the whole objecet dump, including object's
 run time attributes, in addition to B<_DATA> table.
 
@@ -801,7 +860,7 @@ Now, $session->header() uses "MY_SID" as a name for the session cookie.
 =item C<cache()>
 
 a way of caching certain values in session object during the process.
-This is normally used exclusively from within CGI::Session drivers to 
+This is normally used exclusively from within CGI::Session drivers to
 pass certain values from a method to another. It used to be done by setting
 a new object attribute from within the driver like so:
 
@@ -812,14 +871,123 @@ driver. cache() method prevents against such unpleasant surprises:
 
     $self->cache(DBH => $dbh);
 
+=item trace()
+
+Note: this is an experimental feature
+
+Turns debugging mode on. Expects two arguments; the first is a boolean
+value indicating if debugging mode is on or off. Default is 0, which denotes
+off. The second argument is the path to a file trace/debugging messages
+should be written into:
+
+    $session->trace(1, "logs/trace.log");
+
+=item tracemsg()
+
+Note: this is an experimental feature
+
+If, for any reason, you want to write your own message into the trace file,
+this is the message you need. Expects a single argument, message to be logged:
+
+    $self->tracemsg("Initializing the old session");
+
 =back
+
+
+=head1 TIE INTERFACE
+
+In addition to the above described Object Oriented, method-call interface,
+CGI::Session supports Apache::Session-like tie() interface as well.
+According to this syntax, you first tie() a hash variable with the
+library, and use that hash to read and write session data to it.
+After tying the hash, that hash becomes a magick variable, and each
+your action on that hash triggers disk access accordingly:
+
+    tie %session, "CGI::Session", undef, undef, {Directory=>"/tmp"};
+
+After tying the above %session hash to "CGI::Session", we can now
+use it as an ordinary Perl's built-in hash, and guaranteed that Perl
+tranparently will be calling respective syntaxes of CGI::Session->param()
+as we do
+
+Here are some other operation in the above two syntaxes (OO vs TIE):
+
+=head2 READING FROM THE SESSION
+
+Simply read the key from the %session hash:
+
+    print qq~Hello <a href="mailto:$session{email}">$session{name}</a>~;
+
+=head2 STORING IN THE SESSION
+
+    # In OO:
+    $session->param(name=>"Sherzod Ruzmetov",
+                    email => 'sherzodr@cpan.org');
+
+    # In tie:
+    $session{name} = "Sherzod Ruzmetov";
+    $session{email} = 'sherzodr@cpan.org';
+
+=head2 CLEARING CERTAIN SESSION PARAMETERS:
+
+    # In OO:
+    $session->clear(["some_param"])
+
+    # In tie:
+    delete $session{some_param}
+
+=head2 CLEARING ALL THE SESSION PARAMETERS:
+
+    # In OO:
+    $session->clear()
+
+    # In tie:
+    %session = ();
+
+=head2 TO DELETE THE SESSION:
+
+    # In OO:
+    $session->delete();
+
+    # In tie:
+    tied(%session)->delete();
+
+=head2 TO SET EXPIRATION ON SESSION
+
+    # In OO:
+    $session->expire("+10m");
+    $session->expire(_logged_in=>"+10h");
+
+    # In tie:
+    tied(%session)->expire("+10m");
+    tied(%session)->expire(_logged_in=>"+10h");
+
+=head2 TO GET SESSION ID
+
+    # In OO:
+    $session->id()
+
+    # In tie:
+    $session{_SESSION_ID}
+
+For more information on getting the session's private records
+such as session id, last access time, remote_addr and such, refer
+to the next section L<DATA TABLE>.
+
+=head2 SAVING CGI PARAMETERS
+
+    # In OO:
+    $session->save_param($cgi);
+
+    # In tie:
+    tied(%session)->save_param($cgi);
 
 =head1 DATA TABLE
 
 Session data is stored in the form of hash table, in key value pairs.
-All the parameter names you assign through param() method become keys 
+All the parameter names you assign through param() method become keys
 in the table, and whatever value you assign become a value associated with
-that key. Every key/value pair is also called a record. 
+that key. Every key/value pair is also called a record.
 
 All the data you save through param() method are called public records.
 These records are both readable and writable by the programmer implementing
@@ -845,10 +1013,10 @@ Session's expiration time, if any. Accessible through expire() method.
 
 =item _SESSION_REMOTE_ADDR
 
-IP address of the user who create that session. Accessible through remote_addr() 
+IP address of the user who create that session. Accessible through remote_addr()
 method
 
-=item _SESSION_EXPIRE_LIST 
+=item _SESSION_EXPIRE_LIST
 
 Another internal hash table that holds the expiration information for each
 expirable public record, if any. This table is updated with the two-argument-syntax of expires() method.
@@ -1031,52 +1199,6 @@ sub dump {
 sub version {   return $VERSION()   }
 
 
-# delete() - sets the '_STATUS' session flag to DELETED,
-# which flush() uses to decide to call remove() method on driver.
-sub delete {
-    my $self = shift;
-
-    # If it was already deleted, make a confession!
-    if ( $self->{_STATUS} == DELETED ) {
-        confess "delete attempt on deleted session";
-    }
-
-    $self->{_STATUS} = DELETED;
-}
-
-
-
-
-
-# clear() - clears a list of parameters off the session's '_DATA' table
-sub clear {
-    my $self = shift;
-    $class   = ref($self);
-
-    my @params = $self->param();
-    if ( defined $_[0] ) {
-        unless ( ref($_[0]) eq 'ARRAY' ) {
-            confess "Usage: $class->clear([\@array])";
-        }
-        @params = @{ $_[0] };
-    }
-
-    my $n = 0;
-    for ( @params ) {
-        /^_SESSION_/ and next;
-        # If this particular parameter has an expiration ticker,
-        # remove it.
-        if ( $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$_} ) {
-            delete ( $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$_} );
-        }
-        delete ($self->{_DATA}->{$_}) && ++$n;
-    }
-
-    # Set the session '_STATUS' flag to MODIFIED
-    $self->{_STATUS} = MODIFIED;
-
-    return $n;
-}
 
 
 # save_param() - copies a list of third party object parameters
@@ -1250,7 +1372,7 @@ sub expire {
 
 # expires() - alias to expire(). For backward compatibility with older releases.
 sub expires {
-	return expire(@_);
+    return expire(@_);
 }
 
 
@@ -1380,6 +1502,100 @@ sub cache {
     }
 
     return $n;
+}
+
+
+
+
+
+
+# trace() - to debug the libarary.
+sub trace {
+    my ($self, $bool, $file) = @_;
+
+    $self->{_TRACE_MODE} = $bool;
+    $self->{_TRACE_FILE} = $file;
+
+    open(TRACE, ">>" . $file) or croak $!;
+    $self->{_TRACE_FH} = \*TRACE;
+
+    return 1;
+}
+
+
+
+
+
+
+# tracemsg() - logs a message in a trace log
+sub tracemsg {
+    my ($self, $msg) = @_;
+
+    unless ( $self->{_TRACE_MODE} ) {
+        return;
+    }
+
+    my $fh = $self->{_TRACE_FH} or croak "'_TRACE_FH' is not defined";
+    print $fh $msg, "\n";
+}
+
+
+
+#--------------------------------------------------------------------
+# tie() interface - EXPERIMENTAL!
+#--------------------------------------------------------------------
+
+sub TIEHASH {
+    my $class = shift;
+    return $class->new(@_);
+}
+
+
+sub FETCH {
+    my ($self, $param) = @_;
+    return $self->param(-name=>$param);
+}
+
+
+
+sub STORE {
+    my ($self, $param, $value) = @_;
+    return $self->param(-name=>$param, -value=>$value);
+}
+
+
+
+# This does NOT implement delete(), but clear() instead
+sub DELETE {
+    my ($self, $param) = @_;
+    return $self->clear([$param]);
+}
+
+
+# This does implement clear, but with no arguments
+sub CLEAR {
+    my $self = shift;
+    return $self->clear();
+}
+
+
+sub EXISTS {
+    my ($self, $param) = @_;
+    return $self->param($param);
+}
+
+
+sub FIRSTKEY {
+    my $self = shift;
+    my $temp = keys %{$self->{_DATA}};
+    return scalar each %{$self->{_DATA}};
+}
+
+
+
+sub NEXTKEY {
+    my $self = shift;
+    return scalar each %{$self->{_DATA}};
 }
 
 # $Id$

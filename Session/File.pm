@@ -115,7 +115,7 @@ This manual refers to $Revision$
 
 =head1 SYNOPSIS
     
-    use CGI::Session qw/-api3/ 
+    use CGI::Session;
     $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
 
 For more examples, consult L<CGI::Session> manual

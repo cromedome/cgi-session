@@ -24,6 +24,8 @@ ok(1); # If we made it this far, we're ok.
 my $s = new CGI::Session("dr:File;ser:Default;id:MD5", undef, {Directory=>"t"} );
 
 ok($s);
+
+$s->trace(1, "t/trace.log");
     
 ok($s->id);
 
