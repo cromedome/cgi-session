@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+# $Id$
+
 use Test;
 BEGIN { plan tests => 6 };
 use CGI::Session;
@@ -36,4 +38,4 @@ ok($session1);
 ok($session1->param('fname'), 'Sherzod');
 ok($session1->param('email'), 'sherzodr@cpan.org');
 
-
+$session1->delete();
