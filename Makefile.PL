@@ -3,11 +3,11 @@
 use strict;
 use ExtUtils::MakeMaker;
 
-#print "-" x 35, "\n";
-#print ".::WARNING::.\n";
-#print "-" x 35, "\n";
-#print "This is the development release\n";
-#print "-" x 35, "\n";
+print "-" x 35, "\n";
+print ".::WARNING::.\n";
+print "-" x 35, "\n";
+print "This is the development release\n";
+print "-" x 35, "\n";
 
 sub MY::postamble {
     return <<'TAG';

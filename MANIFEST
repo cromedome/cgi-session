@@ -1,6 +1,7 @@
 Changes
 MANIFEST
 MANIFEST.SKIP
+MANIFEST.bak
 Makefile.PL
 README
 Session.pm
@@ -12,6 +13,7 @@ Session/ID/Incr.pm
 Session/ID/MD5.pm
 Session/ID/Static.pm
 Session/MySQL.pm
+Session/PostgreSQL.pm
 Session/Serialize/Default.pm
 Session/Serialize/FreezeThaw.pm
 Session/Serialize/Storable.pm

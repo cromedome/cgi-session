@@ -10,9 +10,9 @@ BEGIN {
 
     # If you want to run MySQL tests, uncomment the following two
     # lines, create a table called "sessions" according to the
-    # CGI::Session::MySQL table in the test database. 
-    #print "1..0\n";
-    #exit();
+    # CGI::Session::MySQL, and modify %options hash
+    print "1..0\n";
+    exit();
 
 
     # Check if DB_File is avaialble. Otherwise, skip this test
@@ -88,6 +88,6 @@ ok($s2->param('author'));
 ok($s2->expire());
 
 
-#$s2->delete();
+$s2->delete();
 
 
