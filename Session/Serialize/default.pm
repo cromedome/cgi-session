@@ -7,7 +7,9 @@ use strict;
 
 use Safe;
 use Data::Dumper;
+use CGI::Session::ErrorHandler;
 
+@CGI::Session::Serialize::default::ISA = qw( CGI::Session::ErrorHandler );
 $CGI::Session::Serialize::default::VERSION = '1.4';
 
 
@@ -29,7 +31,11 @@ sub thaw {
 
     # To make -T happy
     my ($safe_string) = $string =~ m/^(.*)$/;
-    Safe->new()->reval( $safe_string );
+    my $rv = Safe->new()->reval( $safe_string );
+    if ( my $errmsg = $@ ) {
+        return $class->set_error("thaw(): couldn't thaw. $@");
+    }
+    return $rv;
 }
 
 

@@ -1,3 +1,9 @@
+What is new in 4.00_03 - Friday, February 11, 2005
+
+    * NEW: CGI::Session::find() introduced
+    * NEW: traverse() introduced into drivers to support CGI::Session::find()
+    * DOCS: More complete driver specs documented
+
 What is new in 4.00_02 - Wednesday, February 09, 2005
 
     * FIX: race conditions in Driver/file.pm pointed out by Martin Bartosch

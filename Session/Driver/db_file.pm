@@ -109,6 +109,33 @@ sub _tie_db_file {
     return (\%db, $unlock);
 }
 
+
+
+sub traverse {
+    my $self = shift;
+    my ($coderef) = @_;
+
+    unless ( $coderef && ref($coderef) && (ref $coderef eq 'CODE') ) {
+        croak "traverse(): usage error";
+    }
+
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR, LOCK_SH);
+    unless ( $dbhash ) {
+        return $self->set_error( "traverse(): couldn't get db handle, " . $self->errstr );
+    }
+    while ( my ($sid, undef) = each %$dbhash ) {
+        $coderef->( $sid );
+    }
+    untie(%$dbhash);
+    $unlock->();
+    return 1;
+}
+
+
+
+
+
+
 1;
 
 __END__;

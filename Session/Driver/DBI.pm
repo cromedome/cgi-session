@@ -26,18 +26,21 @@ sub init {
         }
         $self->{_disconnect} = 1;
     }
-    $self->{TableName} ||= $self->table_name || "sessions";
 }
 
 sub table_name {
-    my $class = shift;
-    $class = ref( $class ) || $class;
+    my $self = shift;
+    my $class = ref( $self ) || $self;
+
+    if ( (@_ == 0) && ref($self) && ($self->{TableName}) ) {
+        return $self->{TableName};
+    }
 
     no strict 'refs';
     if ( @_ ) {
         ${ $class . "::TABLE_NAME" } = $_[0];
     }
-    return ${ $class . "::TABLE_NAME" };
+    return ${ $class . "::TABLE_NAME" } || "sessions";
 }
 
 
@@ -47,7 +50,7 @@ sub retrieve {
     croak "retrieve(): usage error" unless $sid;
 
     my $dbh = $self->{Handle};
-    my $sth = $dbh->prepare("SELECT a_session FROM " . $self->{TableName} . " WHERE id=?");
+    my $sth = $dbh->prepare("SELECT a_session FROM " . $self->table_name . " WHERE id=?");
     unless ( $sth ) {
         return $self->set_error( "retrieve(): DBI->prepare failed with error message " . $dbh->errstr );
     }
@@ -65,17 +68,17 @@ sub store {
     croak "store(): usage error" unless $sid && $datastr;
 
     my $dbh = $self->{Handle};
-    my $sth = $dbh->prepare("SELECT COUNT(*) FROM " . $self->{TableName} . " WHERE id=?");
+    my $sth = $dbh->prepare("SELECT COUNT(*) FROM " . $self->table_name . " WHERE id=?");
     unless ( defined $sth ) {
         return $self->set_error( "store(): \$sth->prepare failed with message " . $dbh->errstr );
     }
 
     $sth->execute( $sid ) or return $self->set_error( "store(): \$sth->execute failed with message " . $dbh->errstr );
     if ( $sth->fetchrow_array ) {
-        $dbh->do("UPDATE " . $self->{TableName} . " SET a_session=? WHERE id=?", undef, $datastr, $sid)
+        $dbh->do("UPDATE " . $self->table_name . " SET a_session=? WHERE id=?", undef, $datastr, $sid)
             or return $self->set_error( "store(): \$dbh->do failed " . $dbh->errstr );
     } else {
-        $dbh->do("INSERT INTO " . $self->{TableName} . " (id, a_session) VALUES(?, ?)", undef, $sid, $datastr) 
+        $dbh->do("INSERT INTO " . $self->table_name . " (id, a_session) VALUES(?, ?)", undef, $sid, $datastr) 
             or return $self->set_error( "store(): \$dbh->do failed " . $dbh->errstr );
     }
     return 1;
@@ -88,7 +91,7 @@ sub remove {
     croak "remove(): usage error" unless $sid;
 
     my $dbh = $self->{Handle};
-    $dbh->do("DELETE FROM " . $self->{TableName} . " WHERE id=?", undef, $sid) 
+    $dbh->do("DELETE FROM " . $self->table_name . " WHERE id=?", undef, $sid) 
         or return $self->set_error( "remove(): \$dbh->do failed " . $dbh->errstr );
     return 1;
 }
@@ -100,6 +103,26 @@ sub DESTROY {
     if ( $self->{_disconnect} ) {
         $self->{Handle}->disconnect();
     }
+}
+
+
+sub traverse {
+    my $self = shift;
+    my ($coderef) = @_;
+
+    unless ( $coderef && ref( $coderef ) && (ref $coderef eq 'CODE') ) {
+        croak "traverse(): usage error";
+    }
+
+    my $tablename = $self->table_name();
+    my $sth = $self->{Handle}->prepare("SELECT id FROM $tablename") 
+        or return $self->set_error("traverse(): couldn't prepare SQL statement. " . $self->{Handle}->errstr);
+    $sth->execute() or return $self->set_error("traverse(): couldn't execute statement $sth->{Statement}. " . $sth->errstr);
+
+    while ( my ($sid) = $sth->fetchrow_array ) {
+        $coderef->($sid);
+    }
+    return 1;
 }
 
 

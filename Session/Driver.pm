@@ -27,7 +27,7 @@ sub new {
     return $self->init ? $self : undef;
 }
 
-sub init {}
+sub init { 1 }
 
 sub retrieve {
     croak "retrieve(): " . ref($_[0]) . " failed to implement this method!";
@@ -39,6 +39,10 @@ sub store {
 
 sub remove {
     croak "remove(): " . ref($_[0]) . " failed to implement this method!";
+}
+
+sub traverse {
+    croak "traverse(): " . ref($_[0]) . " failed to implement this method!";
 }
 
 sub dump {
@@ -103,23 +107,27 @@ The best way of learning the specs is to look at a blueprint of a driver:
     sub store {
         my ($self, $sid, $datastr) = @_;
         # Store $datastr, which is an already serialized string of data.
-        # Return any true value on success, undef failure.
-        # Set error message using $self->set_error()
     }
     
     sub retrieve {
         my ($self, $sid) = @_;
         # Return $datastr, which was previously stored using above store() method.
         # Return $datastr if $sid was found. Return 0 or "" if $sid doesn't exist
-        # in the datastore. Return undef to indicate failure. Set error message
-        # using $self->set_error()
-    }
+        }
 
     sub remove {
         my ($self, $sid) = @_;
-        # Remove storage associated for $sid. Return any true value indicating success,
-        # or undef on failure. Set error message using $self->set_error()
+        # Remove storage associated with $sid. Return any true value indicating success,
+        # or undef on failure.
     }
+
+    sub traverse {
+        my ($self, $coderef) = @_;
+        # execute $coderef for each session id passing session id as the first and the only
+        # argument
+    }
+
+    1;
 
 All the attributes passed as the second argument to CGI::Session's new() or load() methods will automatically
 be made driver's object attributes. For example, if session object was initialized as following:
@@ -137,6 +145,61 @@ Optionally, you can define C<init()> method within your driver to do driver spec
 will be envoked only once during the lifecycle of your driver, which is the same as the lifecycle of a session object.
 
 For examples of C<init()> look into the source code of native CGI::Session drivers.
+
+=head1 METHODS
+
+This section lists and describes all driver methods. All the driver methods will receive driver object ($self)
+as the first argument. Methods that pertain to an individual session (such as C<retrieve()>, C<store()> and C<remove()>)
+will also receive session id ($sid) as the second argument.
+
+Following list describes every driver method, including its argument list and what step of session's life they will be
+envoked. Understanding this may help driver authors.
+
+=over 4
+
+=item retrieve($self, $sid)
+
+Called whenever a specific session is requested either via C<< CGI::Session->new() >> or C<< CGI::Session->load() >> syntax.
+Method should try to retrieve data associated with C< $sid > and return it. In case no data could be retrieved for C< $sid >
+0 (zero) or "" should be returned. undef must be returned only to signal error. Error message should be set via set_error(),
+which can be inherited from L<CGI::Session::ErrorHandler|CGI::Session::ErrorHandler>. 
+
+Tip: set_error() always returns undef. Use it for your advantage.
+
+=item store($self, $sid, $datastring)
+
+Called whenever modified session data is to be stored back to disk. This happens whenever CGI::Session->flush() is called on modified
+session. Since CGI::Session->DESTROY() calls flush(), store() gets requested each time session object is to be terminated.
+
+C< store() > is called both to store new sessions and to update already stored sessions. It's driver author's job to figure out which 
+operation needs to be performed.
+
+$datastring, which is passed as the third argument to represents B<already serialized> session data that needs to be
+saved.
+
+store() can return any true value indicating success or undef on failure. Error message should be passed to set_error()
+
+=item remove($self, $sid)
+
+Called whenever session data is to be deleted, which is when CGI::Session->delete() is called. Should return any true value
+indicating success, undef on failure. Error message should be logged in set_error().
+
+=item traverse($self, \&coderef)
+
+Called only from within CGI::Session->find(). Job of traverse() is to call \&coderef for every single session stored in disk
+passing session's id as the first and only argument: C<< $coderef->( $sid ) >>
+
+=item init($self)
+
+Optional. Called whenever driver object is to be initialized, which happens only once during the lifecycle of CGI::Session object.
+Here you can do driver-wide initialization, such as to open connection to a database server.
+
+=item DESTROY($self)
+
+Optional. Perl automatically calls this method on objects just before they are to be terminated. This gives your driver chance
+to close any database connections or close any open file handles.
+
+=back
 
 =head2 NOTES
 

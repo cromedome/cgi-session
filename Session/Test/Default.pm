@@ -14,7 +14,7 @@ sub new {
     my $self    = bless {
             dsn     => undef,
             args    => undef,
-            tests   => 51,
+            tests   => 54,
             @_
     }, $class;
 
@@ -45,7 +45,14 @@ sub run {
     my $sid = undef;
     FIRST: {
         ok(1, "=== 1 ===");
-        my $session = CGI::Session->new($self->{dsn}, '_DOESN\'T EXIST_', $self->{args}) or die CGI::Session->errstr;
+        my $session = CGI::Session->load() or die CGI::Session->errstr;
+        ok($session, "empty session should be created");
+        ok($session->is_empty);
+        ok(!$session->is_expired);
+
+        undef $session;
+
+        $session = CGI::Session->new($self->{dsn}, '_DOESN\'T EXIST_', $self->{args}) or die CGI::Session->errstr;
         ok( $session, "Session created successfully!");
 
         ok( $session->ctime && $session->atime, "ctime & atime are set");

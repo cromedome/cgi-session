@@ -25,7 +25,7 @@ sub store {
     croak "store(): usage error" unless $sid && $datastr;
 
     my $dbh = $self->{Handle};
-    $dbh->do("REPLACE INTO " . $self->{TableName} . " (id, a_session) VALUES(?, ?)", undef, $sid, $datastr)
+    $dbh->do("REPLACE INTO " . $self->table_name . " (id, a_session) VALUES(?, ?)", undef, $sid, $datastr)
         or return $self->set_error( "store(): \$dbh->do failed " . $dbh->errstr );
     return 1;
 }

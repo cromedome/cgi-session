@@ -5,8 +5,9 @@ package CGI::Session::Driver::file;
 use strict;
 #use diagnostics;
 
+use Carp;
 use File::Spec;
-use Fcntl qw(:DEFAULT :flock);
+use Fcntl qw( :DEFAULT :flock :mode );
 use CGI::Session::Driver;
 use vars qw( $FileName);
 
@@ -79,6 +80,34 @@ sub remove {
     return 1;
 }
 
+
+sub traverse {
+    my $self = shift;
+    my ($coderef) = @_;
+
+    unless ( $coderef && ref($coderef) && (ref $coderef eq 'CODE') ) {
+        croak "traverse(): usage error";
+    }
+
+    opendir( DIRHANDLE, $self->{Directory} ) 
+        or return $self->set_error( "traverse(): couldn't open $self->{Directory}, " . $! );
+
+    my $filename_pattern = $FileName;
+    $filename_pattern =~ s/\./\\./g;
+    $filename_pattern =~ s/\%s/(\.\+)/g;
+    while ( my $filename = readdir(DIRHANDLE) ) {
+        next if $filename =~ m/^\.\.?$/;
+        my $full_path = File::Spec->catfile($self->{Directory}, $filename);
+        my $mode = (stat($full_path))[2] 
+            or return $self->set_error( "traverse(): stat failed for $full_path: " . $! );
+        next if S_ISDIR($mode);
+        if ( $filename =~ /^$filename_pattern$/ ) {
+            $coderef->($1);
+        }
+    }
+    closedir( DIRHANDLE );
+    return 1;
+}
 
 
 
