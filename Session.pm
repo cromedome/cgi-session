@@ -7,9 +7,10 @@ use strict;
 use Carp ('confess', 'croak')   ;
 use AutoLoader 'AUTOLOAD';
 
-use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3);
+use vars qw($VERSION $REVISION $errstr $IP_MATCH $NAME $API_3);
 
-($VERSION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
+($REVISION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
+$VERSION = '3.2';
 $NAME     = 'CGISESSID';
 
 # import() - we do not import anything into the callers namespace, however,
@@ -437,6 +438,10 @@ __END__;
 
 CGI-Session - persistent session in CGI applications
 
+=head1 WARNING
+
+This is the development release ($Revision$)
+
 =head1 SYNOPSIS
 
     # Object initialization:
@@ -690,6 +695,24 @@ creates a dump of the session object. Argument, if passed, will be
 interpreted as the name of the file object should be dumped in. Used
 mostly for debugging.
 
+=item C<header()>
+
+header() is simply a replacement for L<CGI.pm|CGI>'s header() method. Without this method, you usually need to create a CGI::Cookie object and send it as part of the HTTP header:
+	
+	$cookie = new CGI::Cookie(-name=>'CGISESSID', -value=>$session->id);
+	print $cgi->header(-cookie=>$cookie);
+
+You can minimize the above into:
+
+	$session->header()
+
+It will retrieve the name of the session cookie from $CGI::Session::NAME variable, which can also be accessed via CGI::Session->name() method. If you want to use a different name for your session cookie, do something like following before creating session object:
+
+	CGI::Session->name("MY_SID");
+	$session = new CGI::Session(undef, $cgi, \%attrs);
+
+Now, $session->header() uses "MY_SID" as a name for the session cookie.
+
 =back
 
 =head1 DISTRIBUTION
@@ -788,8 +811,9 @@ L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
 
 =cut
 
-# dump() - dumps the session object using Data::Dumper
-sub dump {
+# dump() - dumps the session object using Data::Dumper.
+# during development it defines global dump(). 
+sub UNIVERSAL::dump {
     my ($self, $file, $data_only) = @_;
 
     require Data::Dumper;
@@ -1097,14 +1121,24 @@ sub name {
 }
 
 
-# cookie() - returns CGI::Cookie object
-sub cookie {
+# header() - replacement for CGI::header() method
+sub header {
     my $self = shift;
-    confess "cookie(): don't use me! I'm broken";
+
+	my $cgi = $self->{_SESSION_OBJ};
+	unless ( defined $cgi ) {
+		require CGI;		
+		$self->{_SESSION_OBJ} = CGI->new();
+		return $self->header();
+	}
+
+	my $cookie = $cgi->cookie($self->name(), $self->id() );
+	
+	return $cgi->header(
+		-type	=> 'text/html', 
+		-cookie	=> $cookie,
+		@_
+	);    
 }
-
-
-
-
 
 # $Id$
