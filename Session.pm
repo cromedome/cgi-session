@@ -9,8 +9,7 @@ use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $REVISION $errstr $IP_MATCH $NAME $API_3);
 
-($REVISION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
-$VERSION = '3.2-dev';
+($VERSION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
 $NAME     = 'CGISESSID';
 
 # import() - we do not import anything into the callers namespace, however,
@@ -64,8 +63,7 @@ sub new {
 
 sub api_3 {
     my $class = shift;
-    $class = ref($class) || $class;
-
+    $class = ref($class) || $class;	
 
     my $self = {
         _OPTIONS    => [ $_[1], $_[2] ], # for now settle for empty option
@@ -99,7 +97,7 @@ sub api_3 {
     # Now re-defining ISA according to what we have above
     {
         no strict 'refs';
-        @{$driver . "::ISA"} = ( 'CGI::Session', $serializer, $id );
+        @{$driver . "::ISA"} = ( $class, $serializer, $id );
     }
 
     bless ($self, $driver);
@@ -604,6 +602,12 @@ to be either CGI.pm object, or any other object which can provide
 param() method. If second argument is present and is a reference to an
 array, only the parameters found in that array will be loaded to CGI
 object.
+
+=item C<sync_param($cgi)>
+
+=item C<sync_param($cgi, $arrayref)>
+
+experimental feature. Synchronizes CGI and session objects. In other words, it's the same as calling respective syntaxes of save_param() and load_param().
 
 =item C<clear()>
 
@@ -1136,5 +1140,28 @@ sub header {
 		@_
 	);    
 }
+
+
+# sync_param() - synchronizes CGI and Session parameters.
+sub sync_param {
+	my ($self, $cgi, $list) = @_;
+	
+	unless ( ref($cgi) ) {
+		confess("$cgi doesn't look like an object");
+	}
+
+	unless ( $cgi->UNIVERSAL::can('param') ) {
+		confess(ref($cgi) . " doesn't support param() method");
+	}
+	
+	# we first need to save all the available CGI parameters to the
+	# object
+	$self->save_param($cgi, $list);
+
+	# we now need to load all the parameters back to the CGI object
+	return $self->load_param($cgi, $list);
+}
+
+
 
 # $Id$
