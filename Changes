@@ -1,1 +1,28 @@
-Under Construction
+What is new in 3.8?
+
+	* Abbreviations in DSN parameters are supported via Text::Abbrev.
+	* Automatic api3 detection makes "-api3" switch obsolete
+	* Experimental "-frozen" switch added, but not yet functional.
+	* sync_param() utility function added
+	* header() replacement to CGI::header() added, which outputs
+	  proper HTTP headers with session information
+
+
+
+What is new in 3.x?
+
+	* Ability to choose between serializers, drivers and id generators
+	  while creating the constructor. Supported via '-api3' switch.
+	* New serializers added: Storable, FreezeThaw in addition to Default.
+	* New ID generator added: Incr, which generates auto incrementing
+	  id numbers, in addition to MD5
+	* -ip_match switch enabled for additional security
+	* Expire() method is fully functional
+	* Ability to expire certain session parameters added
+	* Better documented drivers specifications
+	* Main documentation is split into two: 
+		CGI::Session and CGI::Session::Tutorial
+	* Bug in POD documentation is fixed. (Thanks to Graham Barr)	
+	
+
+$Id$
