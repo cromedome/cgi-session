@@ -13,14 +13,14 @@ BEGIN {
     plan(tests => 14); 
 };
 
-use CGI::Session qw/-api3/;
+use CGI::Session;
 ok(1); # If we made it this far, we're ok.
 
 #########################
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
-my $s = new CGI::Session(undef, undef, {Directory=>"t"} );
+my $s = new CGI::Session("dr:File;ser:Default;id:MD5", undef, {Directory=>"t"} );
 
 ok($s);
     

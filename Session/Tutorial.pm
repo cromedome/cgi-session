@@ -78,16 +78,15 @@ Server side session management system might be seeming awfully convoluted if you
 
 =head1 WHAT YOU NEED TO KNOW FIRST
 
-The syntax of the CGI::Session 3.x has changed from previous releases. But we still keep supporting the old syntax for backward compatibility. To help us do this, you will always need to "use" CGI::Session with "-api3" switch:
+The syntax of the CGI::Session 3.x has changed from previous releases. But we still keep supporting the old syntax for backward compatibility. To help us do this, in the initial releases of 3.x interface we introduced an '-api3' switch:
 
     use CGI::Session qw/-api3/;
 
-It tells the library that you will be using the new syntax. Please don't ask us anything about the old syntax if you have never used it. We won't tell you!
+It tells the library that you will be using the new syntax. But in latest releases of the library, it will detect and turn it out automaticly. So no "-api3" switch is necessary any longer. Please don't ask us anything about the old, 2.x api if you have never used it. We won't tell you!
 
 But before you start using the library, you will need to decide where and how you want the session data to be stored in disk. In other words, you will need to tell what driver to use. You can choose either of "File", "DB_File" and "MySQL" drivers, which are shipped with the distribution by default. Examples in this document will be using "File" driver exclusively to make sure the examples are accessible in all machines with the least requirements. To do this, we create the session object like so:
 
-    use CGI::Session qw/-api3/;
-
+    use CGI::Session;
     $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
 
 The first argument is called Data Source Name (DSN in short). If it's undef, the library will use the default driver, which is "File". So instead of being explicit about the driver as in the above example, we could simply say:
@@ -316,7 +315,7 @@ Consider the scenario, where you just give someone either via email or an instan
 
 Even if you're solely using cookies as the session id transporters, it's not that difficult to plant a cookie in the cookie file with the same id and trick the web browser to send that particular session id to the server. So key for security is to check if the person who's asking us to retrieve a session data is indeed the person who initially created the session data. CGI::Session helps you to watch out for such cases by enabling "-ip_match" switch while "use"ing the library:
 
-    use CGI::Session qw/-ip-match -api3/;
+    use CGI::Session qw/-ip-match/;
 
 or alternatively, setting $CGI::Session::IP_MATCH to a true value, say to 1. This makes sure that before initializing a previously stored session, it checks if the ip address stored in the session matches the ip address of the user asking for that session. In which case the library returns the session, otherwise it dies with a proper error message.
 
