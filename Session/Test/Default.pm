@@ -4,35 +4,29 @@ use strict;
 use diagnostics;
 
 use Carp;
-use Test::More qw(no_plan);
-
-use_ok("CGI::Session");
+use Test::More;
 
 sub new {
     my $class   = shift;
     my $self    = bless {
-            dsn     => {},
-            args    => {},
+            dsn     => undef,
+            args    => undef,
+            tests   => 50,
             @_
     }, $class;
 
     return $self;
 }
 
-
-
-sub dsn_as_string {
+sub number_of_tests {
     my $self = shift;
 
-    my @pairs = ();
-    while (my($k, $v) = each %{ $self->{dsn} } ) {
-        push @pairs, $k . ':' . $v;
+    if ( @_ ) {
+        $self->{tests} = $_[0];
     }
 
-    return "" unless @pairs;
-    return join (';', @pairs);
+    return $self->{tests};
 }
-
 
 
 
@@ -40,14 +34,18 @@ sub dsn_as_string {
 
 sub run {
     my $self = shift;
+    
+    plan(tests => $self->{tests});
+
+    use_ok("CGI::Session");
 
     my $sid = undef;
     FIRST: {
-        my $session = CGI::Session->new($self->dsn_as_string, undef, $self->{args});
-        ok( $session, "session created");
+        ok(1, "=== 1 ===");
+        my $session = CGI::Session->new($self->{dsn}, '_DOESN\'T EXIST_', $self->{args}) or die CGI::Session->errstr;
+        ok( $session, "Session created successfully!" . $session->dump);
 
-        ok( $session->ctime, "ctime set");
-        ok( $session->atime, "atime not set yet");
+        ok( $session->ctime && $session->atime, "ctime & atime are set");
         ok( $session->atime == $session->ctime, "ctime == atime");
         ok( !$session->etime, "etime not set yet");
 
@@ -65,12 +63,12 @@ sub run {
 
         ok( ref ($session->param('emails')) eq 'ARRAY', "'emails' holds list of values" );
         ok( @{ $session->param('emails') } == 2, "'emails' holds list of two values");
-        ok( $session->param('emails')->[0] eq 'sherzodr@cpan.org', "first value of 'emails' is 'sherzodr\@cpan.org'");
-        ok( $session->param('emails')->[1] eq 'sherzodr@handalak.com', "second value of 'emails' is 'sherzodr\@handalak.com'");
+        ok( $session->param('emails')->[0] eq 'sherzodr@cpan.org', "first value of 'emails' is correct!");
+        ok( $session->param('emails')->[1] eq 'sherzodr@handalak.com', "second value of 'emails' is correct!");
 
         ok( ref( $session->param('blogs') ) eq 'HASH', "'blogs' holds a hash");
-        ok( $session->param('blogs')->{'./lost+found'} eq 'http://author.handalak.com/', "address of './lost+found' is correct");
-        ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "Yigitlik sarguzashtlari");
+        ok( $session->param('blogs')->{'./lost+found'} eq 'http://author.handalak.com/', "first blog is correct");
+        ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "second blog is correct");
 
         $sid = $session->id;
     }
@@ -78,46 +76,87 @@ sub run {
     sleep(1);
 
     SECOND: {
-        my $session = CGI::Session->instance($self->dsn_as_string, $sid, $self->{args});
-        ok($session, "session was retreived successfully");
-        ok(!$session->expired, "Session isn't expired yet");
+        ok(1, "=== 2 ===");
+        my $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
+        ok($session, "Session was retreived successfully");
+        ok(!$session->expired, "session isn't expired yet");
 
-        ok($session->id eq $sid, "session IDs are consistent");
-        ok($session->atime > $session->ctime, "ctime is older than atime");
-        ok(!$session->etime, "etime still not set");
+        ok($session->id eq $sid, "session IDs are consistent: " . $session->id);
+        ok($session->atime > $session->ctime, "ctime should be older than atime");
+        ok(!$session->etime, "etime shouldn't be set yet");
 
-        ok( ($session->param) == 3, "session holds 3 params" );
-        ok( $session->param('author') eq "Sherzod Ruzmetov", "My name's correct");
+        ok( ($session->param) == 3, "session should hold params" );
+        ok( $session->param('author') eq "Sherzod Ruzmetov", "my name's correct");
 
-        ok( ref ($session->param('emails')) eq 'ARRAY', "'emails' holds list of values" );
-        ok( @{ $session->param('emails') } == 2, "'emails' holds list of two values");
-        ok( $session->param('emails')->[0] eq 'sherzodr@cpan.org', "first value of 'emails' is 'sherzodr\@cpan.org'");
-        ok( $session->param('emails')->[1] eq 'sherzodr@handalak.com', "second value of 'emails' is 'sherzodr\@handalak.com'");
+        ok( ref ($session->param('emails')) eq 'ARRAY', "'emails' should hold list of values" );
+        ok( @{ $session->param('emails') } == 2, "'emails' should hold list of two values");
+        ok( $session->param('emails')->[0] eq 'sherzodr@cpan.org', "first value is correct!");
+        ok( $session->param('emails')->[1] eq 'sherzodr@handalak.com', "second value is correct!");
 
         ok( ref( $session->param('blogs') ) eq 'HASH', "'blogs' holds a hash");
-        ok( $session->param('blogs')->{'./lost+found'} eq 'http://author.handalak.com/', "address of './lost+found' is correct");
-        ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/');
+        ok( $session->param('blogs')->{'./lost+found'} eq 'http://author.handalak.com/', "first blog is correct!");
+        ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "second blog is correct!");
 
-        $session->expire('5s');
+        $session->expire('1s');
         ok($session->etime, "etime set");
     }
 
 
-    sleep(6);   # <-- have to wait untill the session expires!
+    sleep(2);   # <-- have to wait untill the session expires!
 
+    my $driver;
     THREE: {
-        my $session = CGI::Session->instance($self->dsn_as_string, $sid, $self->{args});
-        ok($session, "session instance loaded");
+        ok(1, "=== 3 ===");
+        my $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
+        ok($session, "Session instance loaded");
+        ok(!$session->id, "session doesn't have ID");
+        ok($session->empty, "session is empty, which is the same as above");
         #print $session->dump;
         ok($session->expired, "session was expired");
 
-        $session = CGI::Session->new( $session );
+        sleep(1);
+
+        $session = $session->new() or die CGI::Session->errstr;
+        #print $session->dump();
         ok($session, "new session created");
-        ok($session->id, "session has id");
+        ok($session->id, "session has id :" . $session->id );
         ok(!$session->expired, "session isn't expired");
         ok(!$session->empty, "session isn't empty");
+        ok($session->atime == $session->ctime, "access and creation times are same");
 
         ok($session->id ne $sid, "it's a completely different session than above");
+
+        $driver     = $session->_driver();
+        $sid        = $session->id;
+    }
+
+
+
+    FOUR: {
+        # We are intentionally removing the session stored in the datastore and will be requesting
+        # re-initilization of that id. This test is necessary since I noticed weird behaviours in
+        # some of my web applications that kept creating new sessions when the object requested
+        # wasn't in the datastore.
+        ok(1, "=== 4 ===");
+
+        ok($driver->remove( $sid ), "Session '$sid' removed from datastore successfully");
+
+        my $session = CGI::Session->new($self->{dsn}, $sid, $self->{args} ) or die CGI::Session->errstr;
+        ok($session, "session object created successfully");
+        ok($session->id ne $sid, "claimed ID ($sid) couldn't be recovered. New ID is: " . $session->id);
+        $sid = $session->id;
+    }
+
+
+    
+    FIVE: {
+        ok(1, "=== 5 ===");
+        my $session = CGI::Session->new($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
+        ok($session, "Session object created successfully");
+        ok($session->id eq $sid, "claimed id ($sid) was recovered successfully!");
+
+        # Remove the object, finally!
+        $session->delete();
     }
 
 }
