@@ -5,8 +5,6 @@ use vars ('$VERSION');
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/
 
-croak "CGI::Session::Tutorial is NOT a library";
-
 
 # $Id$
 
@@ -14,7 +12,7 @@ croak "CGI::Session::Tutorial is NOT a library";
 
 =head1 NAME
 
-CGI-Session-Tutorial - persistent storage of complex data in CGI applications
+CGI-Session-Tutorial - extended CGI::Session manual
 
 =head1 STATE MAINTANANCE OVERVIEW
 
@@ -716,36 +714,25 @@ make my day :-)
 
 =over 4
 
-=item CGI::Session Drivers
+=item *
 
-=over 4
+L<CGI::Session|CGI::Session> - CGI::Session manual
 
-=item L<CGI::Session::File>
+=item *
 
-=item L<CGI::Session::DB_File>
+L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
 
-=item L<CGI::Session::MySQL>
+=item *
 
-=item L<CGI::Session::BerkelyDB>
+B<RFC 2965> - "HTTP State Management Mechanism" found at ftp://ftp.isi.edu/in-notes/rfc2965.txt
 
-=back
+=item *
 
-=item CGI Session Cook Book
+L<CGI|CGI> - standard CGI library
 
-L<cgisesscook> - Cook Book which is a part of the library distribution
+=item *
 
-=item CGI.pm
-
-Perl's Simple Common Gateway Interface class by Lincoln Stein
-
-=item Apache::Session
-
-Another fine session library by Jeffrey Baker <jwbaker@acm.org>
-
-=item RFC 2965
-
-"HTTP State Management Mechanism" found at 
-ftp://ftp.isi.edu/in-notes/rfc2965.txt
+L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
 
 =back
 
