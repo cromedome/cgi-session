@@ -15,14 +15,8 @@ sub freeze {
     
     my $d = Data::Dumper->new([$data], ["data"]);
     # To disable indenting to create the most compact string.
-    $d->Indent(0);  
-    
-    # to save a little bit of space
-    $d->Terse(1);   
-
-    # to save a little more space :-)
-    $d->Quotekeys(0);
-    
+    $d->Indent(0);
+    $d->Useqq(1);    
     return $d->Dump();
 }
 
