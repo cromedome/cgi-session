@@ -29,7 +29,7 @@ CGI::Session::ID::Static - CGI::Session ID Driver for Caching
 
 =head1 SYNOPSIS
 
-    use CGI::Session qw/-api3/;
+    use CGI::Session;
 
     $session = new CGI::Session("driver:SomeDriver;id:Static", "my_id", \%attrs);
 
@@ -52,15 +52,20 @@ Sherzod Ruzmetov <sherzodr@cpan.org>. All rights reserved.
 This library is free software. You can modify and distribute it under the same
 terms as Perl itself.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Adam Jacob <adam@sysadminsith.org> and Sherzod Ruzmetov <sherzodr@cpan.org>
+Adam Jacob <adam@sysadminsith.org>, 
+Sherzod Ruzmetov <sherzodr@cpan.org>
 
 Feedbacks, suggestions and patches are welcome.
 
 =head1 SEE ALSO
 
 =over 4
+
+=item *
+
+L<Incr|CGI::Session::ID::MD5> - Random 32 character long hexidecimal ID generator
 
 =item *
 
