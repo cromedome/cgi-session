@@ -2,18 +2,19 @@ package CGI::Session::MySQL;
 
 # $Id$
 
+use strict;
 # Inheriting necessary functionalities from the 
 # following libraries. Do not change it unless you know
 # what you are doing
 use base qw(
     CGI::Session
     CGI::Session::ID::MD5
-    CGI::Session::Serialize::Storable    
+    CGI::Session::Serialize::Default
 );
 
 
 # driver specific libraries should go below
-use Carp "croak";
+
 use vars qw($VERSION $TABLE_NAME);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
@@ -32,7 +33,9 @@ sub store {
     my $dbh = $self->MySQL_dbh($options);
     my $lck_status = $dbh->selectrow_array(qq|SELECT GET_LOCK("$sid", 10)|);
     unless ( $lck_status == 1 ) {
-        croak "Couldn't acquire lock on id '$sid'. Lock status: $lck_status";    }
+        $self->error("Couldn't acquire lock on id '$sid'. Lock status: $lck_status");
+        return undef;
+    }
 
     $dbh->do(qq|REPLACE INTO $TABLE_NAME (id, a_session) VALUES(?,?)|, 
                 undef, $sid, $self->freeze($data));
@@ -51,13 +54,15 @@ sub retrieve {
     my $dbh = $self->MySQL_dbh($options);
     my $lck_status  = $dbh->selectrow_array(qq|SELECT GET_LOCK("$sid", 10)|);
     unless ( $lck_status == 1 ) {
-        croak "Couldn't acquire lock on is '$sid'. Lock status: $lck_status";
+        $self->error("Couldn't acquire lock on is '$sid'. Lock status: $lck_status");
+        return undef;
     }
 
     my $data = $dbh->selectrow_array(qq|SELECT a_session FROM $TABLE_NAME WHERE id=?|, undef, $sid);
     $lck_status = $dbh->selectrow_array(qq|SELECT RELEASE_LOCK("$sid")|);
     unless ( $lck_status == 1 ) {
-        croak "Couldn't release lock of '$sid'. Lock status: $lck_status";
+        $self->error("Couldn't release lock of '$sid'. Lock status: $lck_status");
+        return undef;
     }
 
     return $self->thaw($data);
@@ -68,16 +73,18 @@ sub retrieve {
 sub remove {
     my ($self, $sid, $options) = @_;
 
-    $dbh = $self->MySQL_dbh($options);
+    my $dbh = $self->MySQL_dbh($options);
     my $lck_status = $dbh->selectrow_array(qq|SELECT GET_LOCK("$sid", 10)|);
     unless ( $lck_status == 1 ) {
-        croak "Couldn't acquire lock on id '$sid'. Lock status; $lck_status";
+        $self->error("Couldn't acquire lock on id '$sid'. Lock status; $lck_status");
+        return undef;
     }
 
     $dbh->do(qq|DELETE FROM $TABLE_NAME WHERE id=?|, undef, $sid);
     $lck_status = $dbh->selectrow_array(qq|SELECT RELEASE_LOCK("$sid")|);
     unless ( $lck_status == 1 ) {
-        croak "Couldn't release lock of '$sid'. Lock status: $lck_status";
+        $self->error("Couldn't release lock of '$sid'. Lock status: $lck_status");
+        return undef;
     }
     
     return 1;    
@@ -113,30 +120,26 @@ sub MySQL_dbh {
     my ($self, $options) = @_;
 
     my $args = $options->[1] || {};
-
-    if ( defined $args->{Handle} ) {
-        return $args->{Handle};
-    }
-
+    
     if ( defined $self->{MySQL_dbh} ) {
         return $self->{MySQL_dbh};
 
-    }
+    }   
 
     require DBI;
 
-    my $dbh = DBI->connect(
-        $args->{DataSource}, 
-        $args->{User}, 
-        $args->{Password}, 
-        { RaiseError=>1, PrintError=>1, AutoCommit=>1 } );
+    $self->{MySQL_dbh} = DBI->connect(
+                    $args->{DataSource},
+                    $args->{User}       || undef, 
+                    $args->{Password}   || undef, 
+                    { RaiseError=>1, PrintError=>1, AutoCommit=>1 } );
 
-    # If we're the one connected, we should be the one who closes
-    # the connection
+    # If we're the one established the connection, 
+    # we should be the one who closes it    
     $self->{MySQL_disconnect} = 1;
-    $self->{MySQL_dbh} = $dbh;
+    return $self->{MySQL_dbh};
 
-    return $dbh;
+    
 }
 
 

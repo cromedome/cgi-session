@@ -1,8 +1,9 @@
-package CGI::Session::Serialize::Storable;
+package CGI::Session::Serialize::FreezeThaw;
 
 # $Id$ 
 use strict;
-use Storable;
+use FreezeThaw;
+
 use vars qw($VERSION);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
@@ -10,18 +11,18 @@ use vars qw($VERSION);
 
 sub freeze {
     my ($self, $data) = @_;
-
-    return Storable::freeze($data);
+    
+    return FreezeThaw::freeze($data);
 }
+
 
 
 sub thaw {
     my ($self, $string) = @_;
 
-    return Storable::thaw($string);
+    return (FreezeThaw::thaw($string))[0];   
 }
 
-# $Id$
 
 1;
 
@@ -29,12 +30,12 @@ sub thaw {
 
 =head1 NAME
 
-CGI::Session::Serialize::Storable - serializer for CGI::Session
+CGI::Session::Serialize::FreezeThaw - serializer for CGI::Session
 
 =head1 DESCRIPTION
 
 This library is used by CGI::Session driver to serialize session data before storing
-it in disk. Uses Storable
+it in disk. Uses FreezeThaw.
 
 =head1 METHODS
 
@@ -69,9 +70,8 @@ All bug reports should be directed to Sherzod Ruzmetov <sherzodr@cpan.org>.
 =head1 SEE ALSO
 
 L<CGI::Session>
-L<CGI::Session::Serialize::Default>
-L<CGI::Session::Serialize::FreezeThaw>
+L<CGI::Session::Default>
+L<CGI::Session::Storable>
 
 =cut
 
-# $Id$

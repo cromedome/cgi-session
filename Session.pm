@@ -11,9 +11,8 @@ use vars qw($VERSION $errstr $IP_MATCH $NAME);
 ($VERSION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
 $NAME     = 'CGISESSID';
 
-# import() - we do not import anything into the callers
-# namespace, however, we enable the user to specify
-# hooks at compile time
+# import() - we do not import anything into the callers namespace, however, 
+# we enable the user to specify hooks at compile time
 sub import {
     my $class = shift;
     @_ or return;
@@ -42,6 +41,15 @@ sub new {
         _QUERY_OBJ  => undef,
     };
 
+    # The following test is important to understand how to 
+    # treat the arguments passed to the constructor, to be
+    # able to return a proper driver object. Checking if
+    # the second argument is not a hashref is enough to assume
+    # new api-3 syntax
+    unless ( ref($_[1]) eq 'HASH' ) {
+        return api3(@_);
+    }
+
     bless ($self, $class);
     $self->_validate_driver() && $self->_init() or return;
     return $self;
@@ -56,7 +64,7 @@ sub DESTROY {
     my $self = shift;
 
     $self->flush();
-    $self->teardown();
+    $self->can('teardown') && $self->teardown();
 }
 
 
@@ -153,7 +161,7 @@ sub _init_old_session {
         $self->_expire_params();
 
         # Updating last access time for the session
-        $self->{_DATA}->{_session_atime} = time();
+        $self->{_DATA}->{_SESSION_ATIME} = time();
 
         # Marking the session as modified
         $self->{_STATUS} = MODIFIED;
@@ -168,7 +176,7 @@ sub _init_old_session {
 
 
 sub _ip_matches {
-    return ( $_[0]->{_DATA}->{_session_remote_addr} eq $ENV{REMOTE_ADDR} );
+    return ( $_[0]->{_DATA}->{_SESSION_REMOTE_ADDR} eq $ENV{REMOTE_ADDR} );
 }
 
 
@@ -197,7 +205,7 @@ sub _expire_params {
     my $self = shift;
 
     # Expiring
-    my $exp_list = $self->{_DATA}->{_session_expire_list} || {};
+    my $exp_list = $self->{_DATA}->{_SESSION_EXPIRE_LIST} || {};
     my @trash_can = ();
     while ( my ($param, $etime) = each %{$exp_list} ) {
         if ( time() >= ($self->atime() + $etime) ) {
@@ -219,12 +227,12 @@ sub _init_new_session {
     my $self = shift;
 
     $self->{_DATA} = {
-        _session_id => $self->generate_id($self->{_OPTIONS}),
-        _session_ctime => time(),
-        _session_atime => time(),
-        _session_etime => undef,
-        _session_remote_addr => $ENV{REMOTE_ADDR} || undef,
-        _session_expire_list => { },
+        _SESSION_ID => $self->generate_id($self->{_OPTIONS}),
+        _SESSION_CTIME => time(),
+        _SESSION_ATIME => time(),
+        _SESSION_ETIME => undef,
+        _SESSION_REMOTE_ADDR => $ENV{REMOTE_ADDR} || undef,
+        _SESSION_EXPIRE_LIST => { },
     };
 
     $self->{_STATUS} = MODIFIED;
@@ -247,7 +255,7 @@ sub _init_new_session {
 sub id {
     my $self = shift;
 
-    return $self->{_DATA}->{_session_id};
+    return $self->{_DATA}->{_SESSION_ID};
 }
 
 
@@ -426,9 +434,10 @@ this despair situation HTTP was putting them in.
 
 For our rescue come such technologies as HTTP Cookies and QUERY_STRINGs 
 that help us save the users' session for a certain period. Since cookies 
-and query_strings alone cannot take us too far [RFC 2965, Section 5, "Implementation Limitations"], 
-several other  libraries/technologies have been developed to extend their capabilities 
-and promise a more reliable and a more persistent system. CGI::Session is one of them.
+and query_strings alone cannot take us too far [RFC 2965, Section 5, 
+"Implementation Limitations"], several other  libraries/technologies have been 
+developed to extend their capabilities and promise a more reliable and a more 
+persistent system. CGI::Session is one of them.
 
 =head2 COOOKIE
 
@@ -1412,8 +1421,8 @@ sub clear {
         /^_session_/ and next;
         # If this particular parameter has an expiration ticker,
         # remove it.
-        if ( $self->{_DATA}->{_session_expire_list}->{$_} ) {
-            delete ( $self->{_DATA}->{_session_expire_list}->{$_} );
+        if ( $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$_} ) {
+            delete ( $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$_} );
         }
         delete ($self->{_DATA}->{$_}) && ++$n;
     }
@@ -1546,10 +1555,10 @@ sub atime {
     my $self = shift;
 
     if ( @_ ) {
-        confess "_session_atime - read-only value";
+        confess "_SESSION_ATIME - read-only value";
     }
 
-    return $self->{_DATA}->{_session_atime};
+    return $self->{_DATA}->{_SESSION_ATIME};
 }
 
 
@@ -1558,10 +1567,10 @@ sub ctime {
     my $self = shift;
 
     if ( defined @_ ) {
-        confess "_session_atime - read-only value";
+        confess "_SESSION_ATIME - read-only value";
     }
 
-    return $self->{_DATA}->{_session_ctime};
+    return $self->{_DATA}->{_SESSION_CTIME};
 }
 
 
@@ -1570,11 +1579,11 @@ sub expire {
     my $self = shift;
 
     unless ( @_ ) {
-        return $self->{_DATA}->{_session_etime};
+        return $self->{_DATA}->{_SESSION_ETIME};
     }
 
     if ( @_ == 1 ) {
-        return $self->{_DATA}->{_session_etime} = _time_alias( $_[0] );
+        return $self->{_DATA}->{_SESSION_ETIME} = _time_alias( $_[0] );
     }
 
     # If we came this far, we'll simply assume user is trying
@@ -1586,11 +1595,11 @@ sub expire {
     defined ($self->{_DATA}->{$param} ) || return;
 
     if ( $etime == -1 ) {
-        delete $self->{_DATA}->{_session_expire_list}->{$param};
+        delete $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$param};
         return;
     }
 
-    $self->{_DATA}->{_session_expire_list}->{$param} = _time_alias( $etime );
+    $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$param} = _time_alias( $etime );
 }
 
 
@@ -1626,7 +1635,7 @@ sub _time_alias {
 sub remote_addr {
     my $self = shift;
 
-    return $self->{_DATA}->{_session_remote_addr};
+    return $self->{_DATA}->{_SESSION_REMOTE_ADDR};
 }
 
 
@@ -1636,6 +1645,21 @@ sub param_hashref {
 
     return $self->{_DATA};
 }
+
+
+# name() - returns the cookie name associated with the session id
+sub name {
+    return $CGI::Session::NAME;
+}
+
+
+# cookie() - returns CGI::Cookie object 
+sub cookie {
+    my $self = shift;
+    confess "cookie(): don't use me! I'm broken";
+}
+
+
 
 
 # $Id$

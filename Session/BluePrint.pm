@@ -2,13 +2,15 @@ package CGI::Session::BluePrint;
 
 # $Id$
 
+use strict;
+
 # Inheriting necessary functionalities from the 
 # following libraries. Do not change it unless you know
 # what you are doing
 use base qw(
     CGI::Session
     CGI::Session::ID::MD5
-    CGI::Session::Serialize::Storable    
+    CGI::Session::Serialize::Default
 );
 
 

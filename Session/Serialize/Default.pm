@@ -1,8 +1,10 @@
-package CGI::Session::Serialize::Storable;
+package CGI::Session::Serialize::Default;
 
 # $Id$ 
 use strict;
-use Storable;
+use Safe;
+use Data::Dumper;
+
 use vars qw($VERSION);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
@@ -10,18 +12,32 @@ use vars qw($VERSION);
 
 sub freeze {
     my ($self, $data) = @_;
+    
+    my $d = Data::Dumper->new([$data], ["data"]);
+    # To disable indenting to create the most compact string.
+    $d->Indent(0);  
+    
+    # to save a little bit of space
+    $d->Terse(1);   
 
-    return Storable::freeze($data);
+    # to save a little more space :-)
+    $d->Quotekeys(0);
+    
+    return $d->Dump();
 }
+
 
 
 sub thaw {
-    my ($self, $string) = @_;
+    my ($self, $string) = @_;    
 
-    return Storable::thaw($string);
+    # To make -T happy
+    my ($safe_string) = $string =~ m/^(.*)$/;
+
+    my $cpt = Safe->new();
+    return $cpt->reval($safe_string);
 }
 
-# $Id$
 
 1;
 
@@ -29,12 +45,12 @@ sub thaw {
 
 =head1 NAME
 
-CGI::Session::Serialize::Storable - serializer for CGI::Session
+CGI::Session::Serialize::Default - default serializer for CGI::Session
 
 =head1 DESCRIPTION
 
 This library is used by CGI::Session driver to serialize session data before storing
-it in disk. Uses Storable
+it in disk. 
 
 =head1 METHODS
 
@@ -54,6 +70,11 @@ passing the error message with as much details as possible to $self->error().
 
 =back
 
+=head1 WARNING
+
+If you want to be able to store objects, consider using L<CGI::Session::Serialize::Storable> or
+L<CGI::Session::Serialize::FreezeThaw> instead.
+
 =head1 COPYRIGHT
 
 Copyright (C) 2002 Sherzod Ruzmetov. All rights reserved.
@@ -69,9 +90,8 @@ All bug reports should be directed to Sherzod Ruzmetov <sherzodr@cpan.org>.
 =head1 SEE ALSO
 
 L<CGI::Session>
-L<CGI::Session::Serialize::Default>
+L<CGI::Session::Serialize::Storable>
 L<CGI::Session::Serialize::FreezeThaw>
 
 =cut
 
-# $Id$

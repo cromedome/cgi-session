@@ -7,7 +7,7 @@ use File::Spec;
 use base qw(
     CGI::Session
     CGI::Session::ID::MD5
-    CGI::Session::Serialize::Storable );
+    CGI::Session::Serialize::Default );
 
 use vars qw($VERSION $NAME);
 

@@ -2,12 +2,13 @@ package CGI::Session::File;
 
 # $Id$
 
+use strict;
 use File::Spec;
 use Fcntl (':DEFAULT', ':flock');
 use base qw(
     CGI::Session
     CGI::Session::ID::MD5
-    CGI::Session::Serialize::Storable    
+    CGI::Session::Serialize::Default
 );
 
 use vars qw($FileName $VERSION);
