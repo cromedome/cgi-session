@@ -1,63 +1,80 @@
 package CGI::Session::DB_File;
 
-# $Id$
+# $sid: DB_File.pm,v 1.2 2002/11/03 08:27:04 sherzodr Exp $
 
 use strict;
+use warnings;
 use DB_File;
 use File::Spec;
 use Carp 'croak';
-use base qw(CGI::Session 
+use base qw(
+        CGI::Session
         CGI::Session::Serialize::Storable 
         CGI::Session::ID::MD5);
 
+use vars qw($VERSION);
+
+($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
+
 
 sub retrieve {
-    my ($self, $id, $options) = @_;
-
-    die "retrieve...";
-    my $directory = $options->[1]->{Directory}
-                or croak "Directory option missing";
+    my ($self, $sid, $options) = @_;
     
-    my $file      = $options->[1]->{FileName} || 'cgisession.db';
+    my $db = $self->DB_File_init($options);
     
-    my $filename = File::Spec->catfile($directory, $file);
-
-    tie (my %db, "DB_File", $filename, O_RDWR, 0644, $DB_HASH) or die $!;
-
-    my $data = undef;
-    if ( exists $db{$id} ) {
-        return $self->thaw( $db{$id} );
-
-    } else {
-        return undef;
+    if ( defined $db->{$sid} ) {
+        return $self->thaw($db->{$sid});
     }
 
+    return undef;
 }
 
 
 sub store {
-    my ($self, $id, $data, $options) = @_;
+    my ($self, $sid, $options, $data) = @_;    
 
-    my $directory = $options->[1]->{Directory}
-                or croak "Directory option missing";
-    
-    my $file      = $options->[1]->{FileName} || 'cgisession.db';
-    
-    my $filename = File::Spec->catfile($directory, $file);
-
-    tie (my %db, "DB_File", $filename, O_RDWR|O_CREAT, 0644, $DB_HASH) or die $!;
-    $db{$id} = $self->freeze($data);
-    untie (%db);
-
-    return 1;
+    my $db = $self->DB_File_init($options) or return;
+    return $db->{$sid} = $self->freeze($data);    
 }
 
 
 
 
+sub remove {
+    my ($self, $sid, $options) = @_;
+
+    my $db = $self->DB_File_init($options);
+    return $db->{$sid};
+}
+
+sub teardown {
+    my ($self, $sid, $options) = @_;
+
+    if ( defined $self->{_db_file_hash} ) {
+        untie(%{$self->{_db_file_hash}} );
+    }    
+}
 
 
-    
+
+sub DB_File_init {
+    my ($self, $options) = @_;
+
+    if ( defined $self->{_db_file_hash} ) {
+        return $self->{_db_file_hash};
+    }
+
+    my $dir = $options->[1]->{Directory};
+    my $file= $options->[1]->{FileName} || 'cgisession.db';
+    my $path= File::Spec->catfile($dir, $file);
+
+    tie (my %db, "DB_File", $path, O_RDWR|O_CREAT, 0664, $DB_HASH) or die $!;
+
+    $self->{_db_file_hash} = \%db;
+    $self->{_db_file_path} = $path;
+
+    return $self->{_db_file_hash};
+}
 
 
 
