@@ -78,7 +78,7 @@ sub api_3 {
         }
     };
 
-    # supporting DSN namme abbreviations:
+    # supporting DSN name abbreviations:
     require Text::Abbrev;
     my $dsn_abbrev = Text::Abbrev::abbrev('driver', 'serializer', 'id');
 
@@ -683,9 +683,9 @@ time aliases are also supported for your convenience:
 
 Examples:
 
-    $session->expires("+1y");   # expires in one year
-    $session->expires(0);       # cancel expiration
-    $session->expires("~logged-in", "+10m");# expires ~logged-in flag in 10 mins
+    $session->expire("+1y");   # expires in one year
+    $session->expire(0);       # cancel expiration
+    $session->expire("~logged-in", "+10m");# expires ~logged-in flag in 10 mins
 
 Note: all the expiration times are relative to session's last access time, not to its creation time. To expire a session immediately, call C<delete()>. To expire a specific session parameter immediately, call C<clear()> on that parameter.
 
@@ -855,18 +855,39 @@ Requires L<Digest::MD5|Digest::MD5>. Full name: B<CGI::Session::ID::MD5>.
 
 L<Incr|CGI::Session::ID::Incr> - generates auto-incrementing ids. Full name: B<CGI::Session::ID::Incr>
 
+=item *
+
+L<Static|CGI::Session::ID::Static> - generates static, session ids. B<CGI::Session::ID::Static>
+
+
+=back
+
+=head1 CREDITS
+
+Following people contributed with their patches and/or suggestions to the development of CGI::Session. Names are in chronological order:
+
+=over 4
+
+=item Andy Lester E<lt>alester@flr.follett.comE<gt>
+
+=item Brian King E<lt>mrbbking@mac.comE<gt>
+
+=item Olivier Dragon E<lt>dragon@shadnet.shad.caE<gt>
+
+=item Adam Jacob E<lt>adam@sysadminsith.orgE<gt>
+
 =back
 
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2002 Sherzod Ruzmetov <sherzodr@cpan.org>. All rights reserved.
+Copyright (C) 2001, 2002 Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>. All rights reserved.
 
 This library is free software. You can modify and or distribute it under the same terms as Perl itself.
 
 =head1 AUTHOR
 
-Sherzod Ruzmetov <sherzodr@cpan.org>. Feedbacks, suggestions are welcome.
+Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>. Feedbacks, suggestions are welcome.
 
 =head1 SEE ALSO
 
@@ -1146,7 +1167,7 @@ sub expire {
 }
 
 
-# expires() - alias to expire(). For backward compatibility
+# expires() - alias to expire(). For backward compatibility with older releases.
 sub expires {
 	return expire(@_);
 }
