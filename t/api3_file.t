@@ -6,9 +6,14 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test;
-BEGIN { plan tests => 14  };
-use CGI::Session qw/-api_3/;
+BEGIN {     
+    require Test;
+    Test->import();
+    
+    plan(tests => 14); 
+};
+
+use CGI::Session qw/-api3/;
 ok(1); # If we made it this far, we're ok.
 
 #########################

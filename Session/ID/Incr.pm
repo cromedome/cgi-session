@@ -7,7 +7,7 @@ use File::Spec;
 use Carp "croak";
 use Fcntl (':DEFAULT', ':flock');
 
-use vars ($VERSION);
+use vars qw($VERSION);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
 

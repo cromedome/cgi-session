@@ -7,24 +7,33 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 BEGIN { 
+
+    # If you want to run MySQL tests, uncomment the following two
+    # lines, create a table called "sessions" according to the
+    # CGI::Session::MySQL table in the test database. 
+    print "1..0\n";
+    exit();
+
+
     # Check if DB_File is avaialble. Otherwise, skip this test
-    eval 'require DB_File';    
+    eval 'require DBI';    
     if ( $@ ) {
         print "1..0\n";
         exit(0);
     }
 
-    eval 'require FreezeThaw';
+    eval 'require DBD::mysql';
     if ( $@ ) {
         print "1..0\n";
         exit(0);
-    }    
+    }
 
     require Test;
     Test->import();
     
     plan(tests => 14); 
 };
+
 
 use CGI::Session qw/-api3/;
 ok(1); # If we made it this far, we're ok.
@@ -33,7 +42,14 @@ ok(1); # If we made it this far, we're ok.
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
-my $s = new CGI::Session("driver:DB_File;serializer:FreezeThaw", undef, {Directory=>"t"} );
+
+my %options = (
+    DataSource => "DBI:mysql:sherzodr_shop",
+    User        => "sherzodr_shop",
+    Password    => "marley01"
+);
+
+my $s = new CGI::Session("driver:MySQL", undef, \%options );
 
 ok($s);
     
@@ -62,7 +78,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session("driver:DB_File;serializer:FreezeThaw", $sid, {Directory=>'t'});
+my $s2 = new CGI::Session("driver:MySQL", $sid, \%options);
 ok($s2);
 
 ok($s2->id() eq $sid);

@@ -3,7 +3,8 @@ package CGI::Session;
 # $Id$
 
 use strict;
-use Carp 'confess';
+#use diagnostics;
+use Carp ('confess', 'croak')   ;
 use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3);
@@ -17,8 +18,8 @@ sub import {
     my $class = shift;
     @_ or return;
     for ( my $i=0; $i < @_; $i++ ) {
-        $IP_MATCH   = ( $_[$i] eq '-ip_match'   ) and next;
-        $API_3      = ( $_[$i] eq '-api_3'      ) and next;
+        $IP_MATCH   = ( $_[$i] eq '-ip_match'   ) and next;        
+        $API_3      = ( $_[$i] eq '-api3'       ) and next;
     }
 }
 
@@ -39,11 +40,11 @@ sub new {
         _OPTIONS    => [ @_ ],
         _DATA       => undef,
         _STATUS     => MODIFIED,
-        _QUERY_OBJ  => undef,
+        _API3       => { },
     };
 
     if ( $API_3 ) {
-        return api3(@_);
+        return $class->api_3(@_);
     }
 
     bless ($self, $class);
@@ -52,9 +53,57 @@ sub new {
 }
 
 
-sub api3 {
+
+
+
+
+
+
+
+
+sub api_3 {
+    my $class = shift;
+    $class = ref($class) || $class;
+
+
+    my $self = {
+        _OPTIONS    => [ $_[1], $_[2] ], # for now settle for empty option
+        _DATA       => undef,
+        _STATUS     => MODIFIED,
+        _API_3      => {
+            DRIVER      => 'File',
+            SERIALIZER  => 'Default',
+            ID          => 'MD5',
+        }
+    };
     
-    die "api3(): Do not use me yet! Use your head, use your head";
+    if ( defined $_[0] ) {
+        my @arg_pairs = split (/;/, $_[0]);        
+        for my $arg ( @arg_pairs ) {
+            my ($key, $value) = split (/:/, $arg) or next;
+            $self->{_API_3}->{ uc($key) } = $value || $self->{_API_3}->{uc($key)};            
+        }
+    }
+    
+    my $driver = "CGI::Session::$self->{_API_3}->{DRIVER}";
+    eval "require $driver" or die $@;
+    
+    my $serializer = "CGI::Session::Serialize::$self->{_API_3}->{SERIALIZER}";
+    eval "require $serializer" or die $@;
+
+    my $id = "CGI::Session::ID::$self->{_API_3}->{ID}";
+    eval "require $id" or die $@;
+
+
+    # Now re-defining ISA according to what we have above
+    {
+        no strict 'refs';
+        @{$driver . "::ISA"} = ( 'CGI::Session', $serializer, $id );
+    }
+    
+    bless ($self, $driver);
+    $self->_validate_driver() && $self->_init() or return;
+    return $self;    
 }
 
 
@@ -379,66 +428,109 @@ sub flush {
 
 __END__;
 
+
+# $Id$
+
 =pod
 
 =head1 NAME
 
 CGI-Session - persistent storage of complex data in CGI applications
 
-=head1 REVISION
-
-This manual referes to $Revision$
-
 =head1 SYNOPSIS
 
-    $sess = new CGI::Session::File(undef, {Directory=>"/tmp"} );
+    # Object initialization:
+    # api 2 syntax
+    use CGI::Session::File;
+    my $session = new CGI::Session::File(undef, {Directory=>'/tmp'});
+
+    # or using api 3 syntax
+    use CGI::Session qw/-api3/;
+    my $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
+
+    # getting the effective session id:
+    my $CGISESSID = $session->id();
+        
+    # storing data in the session
+    $session->param('f_name', 'Sherzod');
     # or
-    $sess = new CGI::Session::DB_File($sid, {Directory=>"/tmp"});
-    
-    # storing user's login name in the session
-    $sess->param("login", $login_name);
+    $session->param(-name=>'l_name', -value=>'Ruzmetov');
 
-    # storing selected parameters from the CGI object
-    $sess->save_param($cgi, ["keyword", "category", "limit"]);
+    # retrieving data
+    my $f_name = $session->param('f_name');
+    # or
+    my $l_name = $session->param(-name=>'l_name');
 
-    # greeting the user with previously stored login name
-    print "Hello, ", $sess->param("login");
+    # clearing a certain session parameter
+    $session->clear(["_IS_LOGGED_IN"]);
 
-    # clearing the login name from the session object for good
-    $sess->clear(["login"]);
+    # expire '_IS_LOGGED_IN' flag after 10 idle minutes:
+    $session->expire(_IS_LOGGED_IN => '+10m')
 
-    # clearing all the params from the login name for good
-    $sess->clear();
+    # expire the session itself after 1 idle hour
+    $session->expire('+1h');
 
-    # deleting the session itself from both the  disk and the
-    # object
-    $sess->delete();
+    # delete the session for good
+    $session->delete();
+
+=head1 WARNING
+
+This is the alpha - test release
 
 =head1 DESCRIPTION
 
-CGI-Session is a Perl5 class that provides an easy, reliable, modular 
-and of course persistent session management system across HTTP requests. 
-Persistency is a key feature for such applications as shopping carts, 
-login/authentication routines, applications that need to collect 
-web-site usage statistics and traffic tracking systems. CGI-Session 
-provides with just that.
+CGI-Session is a Perl5 library that provides an easy, reliable and modular 
+session management system across HTTP requests. Persistency is a key feature for 
+such applications as shopping carts, login/authentication routines, and 
+application that need to carry data accross HTTP requests. CGI::Session 
+does that and many more
+
+=head1 TO LEARN MORE
+
+If you want to learn more about the usage of the library and its 
+application in the production environment, we can suggest you several 
+resources you can take advantage of:
+
+=over 4
+
+=item B<cgi-session mailing list>
+
+To subscribe to the list send an email to 
+Cgi-session-request@ultracgis.com with the word "subscribe" in the body 
+of the email.
+
+To browse mailing list archives visit 
+http://ultracgis.com/mailman/listinfo/cgi-session_ultracgis.com
+
+=item B<SessionCook>
+
+In other words, CGI::Session cook book to get solutions for most of your 
+daily problems and challenges. Being developed constantly.
+
+=item B<http://cgi-session.sourceforge.net>
+
+Home of CGI::Session hosted by SourceForge.net. The web site was under 
+construction as of Fri, Nov 22, 2002.
+
+=back
 
 =head1 STATE MAINTANANCE OVERVIEW
 
 Since HTTP is a stateless protocol, each subsequent click to a web site 
 is treated as brand new by the web server, and the server does not 
-relate them with previous visits. Thus all the state information from the 
-previous requests are lost. This makes creating such applications as 
+relate them with previous visits, and all the state information from the 
+previous requests are lost. This will make creating such applications as 
 shopping carts, login/authentication routines, secure restricted 
-services in the web near impossible. So people had to do something against 
-this despair situation HTTP was putting them in.
+services in the web impossible. So people had to do something against 
+this despair situation HTTP was putting us in.
 
 For our rescue come such technologies as HTTP Cookies and QUERY_STRINGs 
 that help us save the users' session for a certain period. Since cookies 
-and query_strings alone cannot take us too far [RFC 2965, Section 5, 
-"Implementation Limitations"], several other  libraries/technologies have been 
-developed to extend their capabilities and promise a more reliable and a more 
-persistent system. CGI::Session is one of them.
+and query_strings alone cannot take us too deep into our fantasies [RFC 
+2965, Section 5, "Implementation Limitations"], several other 
+libraries/technologies have been developed to extend their capabilities 
+and promise a more reliable and a more persistent system. CGI::Session 
+is one of them.
 
 =head2 COOOKIE
 
@@ -450,9 +542,10 @@ part of the HTTP request. This way the server application ( CGI ) will
 have a way of relating previous requests by the same user agent, thus 
 overcoming statelessness of HTTP.
 
-Although cookies seem to be promising solution, they do carry certain limitations, 
-such as limited number of cookies per domain and per user agent and limited size 
-on each cookie. User Agents are required to store at least 300 cookies at a time, 20 
+Although cookies seem to be promising solutions for the statelessness of 
+HTTP, they do carry certain limitations, such as limited number of 
+cookies per domain and per user agent and limited size on each cookie. 
+User Agents are required to store at least 300 cookies at a time, 20 
 cookies per domain and allow 4096 bytes of storage for each cookie. They 
 also arise several Privacy and Security concerns, the lists of which can 
 be found on the sections 6-"Privacy"  and 7-"Security Considerations" of 
@@ -468,8 +561,8 @@ such as:
 As you probably guessed already, it can also help you to pass state 
 information from a click to another, but how secure is it do you think? 
 Considering these URLs tend to get cached by most of the user agents and 
-also logged in the servers access log, to which everyone in the machine can 
-have access to, it is not secure.
+also logged in the servers access log, to which everyone can have access 
+to, it is not secure.
 
 =head2 HIDDEN FIELDS
 
@@ -483,7 +576,7 @@ of ( for instance, a shopping cart ). Hidden fields also get lost once
 the user agent closes the session or when the user chooses to click on 
 the "Back" button of the browser. Considering the information being sent 
 back and forth between the server and the user, the probability of bad 
-guys intercepting the request is higher.
+guys intercepting the request hence a private data is higher.
 
 =head2 SERVER SIDE SESSION MANAGEMENT
 
@@ -492,33 +585,7 @@ server-side storage, which saves the state data for a particular
 session. Each session has a unique id associated with the data in the 
 server. This id is also associated with the user agent in either the 
 form of a cookie, a query_string parameter, a hidden field or all at the 
-same time. Consider the following story board:
-
-=over  4
-
-=item 1
-
-Mr A requests a page from a program in Server X
-
-=item 2
-
-Program running in Server X generates a unique id "ID-1234", and sends 
-the id as a cookie to Mr A's browser. After sending the id, program also 
-generates a file or an entry in the database with the name "ID-1234" to 
-store all the necessary information such as user preferences, 
-logged-in/not flags,  username/email or the list of the products Mr. A 
-added to his "shopping cart", etc.
-
-=item 3
-
-When Mr A requests from that program again by clicking on a link, Mr A's 
-browser sends the session id back to the program from the cookie file. 
-The program running in Server X matches the cookie with the file 
-associated file in the server, gets the name of the user previously 
-stored ( if it was stored of course ) and says "Hello Mr A. I know it's 
-you, confess!".
-
-=back
+same time. 
 
 Advantages:
 
@@ -552,49 +619,78 @@ Server side session management system might be seeming awfully
 convoluted if you have never dealt with it.  Fortunately, with 
 CGI::Session this cumbersome task can be achieved in much elegent way 
 and handled by the library transparently. This section of the manual can 
-be treated as a introductory tutorial to  both logic behind session 
-management, and to CGI::Session programming style as well. 
+be treated as an introductory tutorial to  both logic behind session 
+management, and to CGI::Session programming style as well.
 
-You need to note that you interact with CGI::Session via drivers alone, 
-and  as of this distribution the library comes with drivers for File, 
-DB_File and MySQL storage devices. For example, to use MySQL driver you 
-do:
+=head1 WHAT YOU NEED TO KNOW FIRST
 
-    use CGI::Session::MySQL;
-    my $session = new CGI::Session::MySQL(undef, {Handle=>$dbh});
+The syntax of the CGI::Session 3.x has changed from previous releases.
+But we at the same time keep supporting the old syntax for backward 
+compatibility. To help us do this, you will always need to "use" CGI::Session
+with "-api3" switch:
 
-Only the second argument passed to the driver differs depending on the 
-driver you're using. The rest of the code, method calls and the logic 
-remain absolutely unaltered. We'll be using File driver to ensure the 
-examples will be accessible to any user with the least requirements.
+    use CGI::Session qw/-api3/;
 
-=head2 CREATING A SESSION
+It tells the library that you will be using the new syntax.
+Please don't ask us anything about the old syntax if you have never used it.
+We won't tell you anyway :-).
 
-When a new user visits our site, we should:
+But before you start using the library, you will need to decide where
+and how you want the session data to be stored in disk. In other words,
+you will need to tell what driver to use. You can choose either of "File",
+"DB_File" and "MySQL" drivers, which are shipped with the distribution by 
+default. Examples in this document will be using "File" driver exclusively
+to make sure the examples are accessible in all machines with the least
+requirements. To do this, we create the session object like so:
+
+    use CGI::Session qw/-api3/;
+
+    $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
+
+The first argument is called Data Source Name (DSN in short). If it's undef,
+the library will use the default driver, which is "File". So instead of 
+being explicit about the driver as in the above example, we could simply say:
+
+    $session = new CGI::Session(undef, undef, {Directory=>'/tmp'});
+
+and we're guaranteed it will fall back to default driver.
+
+The second argument is session id to be initialized. If it's undef, it will
+force CGI::Session to create new session. 
+
+The third argument should be in the form of hashref. This will be used by 
+specific CGI::Session driver only. For the list of all the available attributes,
+consult respective CGI::Session driver. Following drivers come with the 
+distribution by default:
 
 =over 4
 
-=item 1
+=item *
 
-Create a new id for the user
+B<File> - used for storing session data in plain files. Full name: 
+L<CGI::Session::File>
 
-=item 2
+=item *
 
-Associate a storage device in the server with the newly generated id
+B<DB_File> - used for storing session data in berkely db files. Full name:
+L<CGI::Session::DB_File>
 
-=item 3
+=item *
 
-Send the ID to the user's computer either as a cookie or as a 
-query_string parameters
+B<MySQL> - to store session data in MySQL table. Full name: 
+L<CGI::Session::MySQL>
 
 =back
 
-To generate a brand new id for the user, just pass an undefined value as 
-the first argument to CGI::Session driver. For the list of all the 
-arguments refer to the driver manual. With the File driver it looks 
-like:
+Note: You can also write your own driver for the library. Consult respective 
+section of this manual for details.
 
-    $session = new CGI::Session::File(undef, {Directory=>"/tmp"});
+=head1 CREATING NEW SESSION
+
+To generate a brand new session for a user, just pass an undefined value 
+as the second argument to the constructor - new():
+
+    $session = new CGI::Session("driver:File", undef, {Directory=>"/tmp"});
 
 Directory refers to a place where the session files and their locks will 
 be stored in the form of separate files. When you generate the session 
@@ -617,17 +713,14 @@ just do:
 
     $sid = $session->id();
 
-It returns a string something similar to 
-B<bcd22cb2111125fdffaad97d809647e5> which you can now send as a cookie. 
-Using CGI.pm of Lincoln Stein you can achieve it with the following 
-syntax:
+It returns a string something similar to B<bcd22cb2111125fdffaad97d809647e5> 
+which you can now send as a cookie. Using standard L<CGI> class we can send the session id as a cookie to the user's browser like so:
 
-    $sid_cookie = $cgi->cookie(-name=>"CGISESSID", -value=>$sid, 
--expires=>"+30m");
-    print $cgi->header( -cookie=>$sid_cookie );
+    $cookie = $cgi->cookie(CGISESSID => $session->id);
+    print $cgi->header( -cookie=>$cookie );
 
-If you're not familiar with CGI.pm usage, please come back here after 
-reading the library's manual (L<CGI>).
+If anything in the above example doesn't make sense, please consult L<CGI> 
+for the details. 
 
 =head2 INITIALIZING EXISTING SESSIONS
 
@@ -637,28 +730,27 @@ would defeat the whole purpose of state maintenance. Since we already
 send the id as a cookie, all we need is to pass that id as the first 
 argument while creating a session object:
 
-    $sid_cookie = $cgi->cookie("CGISESSID") || undef;
-    $session    = new CGI::Session::File($sid_cookie, 
-{Directory=>"/tmp"});
+    $sid = $cgi->cookie("CGISESSID") || undef;
+    $session    = new CGI::Session(undef, $sid, {Directory=>'/tmp'});
 
 The above syntax will first try to initialize an existing session data, 
 if it fails ( if the session doesn't exist ) creates a new session: 
-exactly what we want.
+just what we want.
 
 You can also achieve the functionality of the above two lines with the 
-following syntax. This is new in CGI::Session 3.x:
+following syntax. This is new to CGI::Session 3.x:
 
-    $session = new CGI::Session::File($cgi, {Directory=>"/tmp"});
+    $session = new CGI::Session(undef, $cgi, {Directory=>"/tmp"});
 
 This will try to get the session id either from the cookie or from the 
 query_string parameter. If it succeeds, initializes the old session from 
 the disk or creates a new session. Name of the cookie and query_string 
 parameter the library looks for is B<CGISESSID>. If you'd rather assign 
-a different name update the value of B<$CGI::Session::NAME> variable 
+a different name update the value of $CGI::Session::COOKIENAME variable 
 before creating the object:
 
-    $CGI::Session::NAME = "SID";
-    $session = new CGI::Session::File($cgi, {Directory=>"/tmp"});
+    $CGI::Session::COOKIENAME = "SID";
+    $session = new CGI::Session(undef, $cgi, {Directory=>"/tmp"});
 
 =head2 STORING DATA IN THE SESSION
 
@@ -667,19 +759,27 @@ To store a single variable in the object use C<param()> method:
     $session->param("my_name", $name);
 
 You can use C<param()> method to store complex data such as arrays, 
-hashes, objects and so forth. While storing arrays and or hashes, make 
+hashes, objects and so forth. While storing arrays and hashes, make 
 sure to pass them as a reference:
 
     @my_array = ("apple", "grapes", "melon", "casaba");
     $session->param("fruits", \@my_array);
 
-You can store objects as well.
+You can store objects as well, and retrieve them later
 
     $session->param("cgi", $cgi);   # stores CGI.pm object
 
+Note: default serializer does not support storing objects. You will need to
+configure the serializer to either "FreezeThaw" or "Storable":
+
+    $session = new CGI::Session("serializer:Storable", undef,             
+                                            { Directory=>'/tmp' } );
+
+    $session->param("cgi", $cgi);
+
 Sometimes you wish there was a way of storing all the CGI parameters in 
 the session object. You would start dreaming of this feature after 
-having to save dozens of query parameters from each form to your session 
+having to save dozens of query parameters from each form element to your session 
 object. Consider the following syntax:
 
     $session->save_param($cgi, ["keyword", "category", "author", "orderby"]);
@@ -696,7 +796,7 @@ argument to C<save_param()>:
 
     $session->save_param($cgi);
 
-The above saves all the available/accessible CGI parameters
+The above syntax saves all the available/accessible CGI parameters
 
 =head2 ACCESSING STORED DATA
 
@@ -711,41 +811,28 @@ The above syntax retrieves session parameter previously stored as
 
     $my_array = $session->param("fruits");
 
-It will return a reference to the array, and can be de referenced as 
+It will return a reference to the array, and can be dereferenced as 
 @{$my_array}.
 
 Frequently, especially when you find yourself creating drop down menus, 
 scrolling lists and checkboxes, you tend to use CGI.pm for its sticky 
 behavior that pre-selects default values. To have it preselect the 
-values, those selections must be present in the CGI object. 
+values those selections must be present in the CGI object. 
 C<load_param()> method does just that:
 
-    $session->load_param($cgi, ["gender", "q", "subscriptions"]);
+    $session->load_param($cgi, ["checkboxes"]);
 
-It's the same as saying:
-
-    $cgi->param('gender',        $session->param('gender'));
-    $cgi->param('q',             $session->param('q') );
-    $cgi->param('subscriptions', $session->param('subscriptions'));
-
-but a lot more cleaner?! The above code loads mentioned parameters to the CGI 
-object so that they also become available via
+The above code loads mentioned parameters to the CGI object so that they 
+also become available via
 
     @selected = $cgi->param("checkboxes");
 
-syntax. This triggers sticky behavior of CGI.pm if checkbox 
+syntax. This allows automatic selection behavior of CGI.pm if checkbox 
 and scrolling lists are being generated using CGI.pm. If you'd rather 
 load all the session parameters to CGI.pm just omit the second parameter 
 to C<load_param()>:
 
     $session->load_param($cgi);
-
-This is the same as doing:
-
-    my @all_params = $session->param();
-    for my $param ( @all_params ) {
-        $cgi->param($param, $session->param($param));
-    }   
 
 This makes sure that all the available and accessible session parameters 
 will also be available via CGI object.
@@ -755,7 +842,7 @@ skins, you can as well associate CGI::Session object with HTML::Template
 and access all the parameters from within HTML files. We love this 
 trick!
 
-    $template = new HTML::Template(filename=>"some.tmpl", associate=>$session );
+    $template = new HTML::Template(filename=>"some.tmpl", associate=>$session);
     print $template->output();
 
 Assuming the session object stored "first_name" and "email" parameters 
@@ -765,7 +852,7 @@ from within your "some.tmpl" file:
     Hello <a href="mailto:<TMPL_VAR email>"> <TMPL_VAR first_name> </a>!
 
 For more tricks with HTML::Template, please refer to the library's 
-manual (L<HTML::Template>) and CGI Session Cook Book that comes with the 
+manual (L<HTML::Template>) and CGI Session CookBook that comes with the 
 library distribution.
 
 =head2 CLOSING THE SESSION
@@ -782,15 +869,15 @@ or calling close() method explicitly.
 
 In some circumstances you might want to close the session but at the 
 same time don't want to terminate the process for a while. Might be the 
-case in GUI and in services. In this case close() is what you 
+case in GUI and in daemon applications. In this case close() is what you 
 want.
 
 If you want to keep the session object but for any reason want to 
 synchronize the data in the buffer with the one in the disk, C<flush()> 
 method is what you need.
 
-Note: undefining an object produces the same effect as close does, 
-but is more efficient than calling close()
+Note: close() calls flush() as well. So there's no need to call flush() 
+before calling close()
 
 =head2 CLEARING SESSION DATA
 
@@ -803,7 +890,7 @@ parameters should be deleted from the session object:
     $session->clear(["~logged-in", "email"]);
 
 Above line deletes "~logged-in" and "email" session parameters from the 
-session. And next time you say
+session. And next time you say:
 
     $email = $session->param("email");
 
@@ -841,20 +928,21 @@ can optionally set values to before creating a session object:
 =item B<$CGI::Session::NAME>
 
 Denotes a name of the cookie that holds the session ID of the user. This 
-variable is used only if you pass CGI object as the first argument to 
-new(). Defaults to "CGISESSID".
+variable is used only if you pass CGI object to new() instead of passing a 
+session id. Default is "CGISESSID".
 
 =item B<$CGI::Session::IP_MATCH>
 
-Should the library should try to match IP address of the user while 
-retrieving an old session. Defaults to "0", which denotes "no"
+Should the library try to match IP address of the user while 
+retrieving an old session? Defaults to "0", which denotes "no". You can optionaly enable this with the "-ip_match" switch while "use"ing the library:
+
+    use CGI::Session qw/-api3 -ip_match/;otes "no".
 
 =item B<$CGI::Session::errstr>
 
 This read-only variable holds the last error message.
 
 =back
-
 
 =head1 METHODS
 
@@ -863,25 +951,43 @@ CGI::Session object.
 
 =over 4
 
-=item C<new( undef, $hashref )>
+=item C<new( DSN, SID, HASHREF )>
 
-=item C<new( $sid, $hashref )>
+Requires three arguments. First is the Data Source Name, second should be
+the session id to be initialized or an object which provides either of 'param()'
+or 'cookie()' mehods. If Data Source Name is undef, it will fall back
+to default values, which are "driver:File;serializer:Default;id:MD5".
 
-=item C<new( $cgi, $hashref )>
-
-Object constructor. Requires two arguments: first is either claimed 
-session id, or a CGI.pm object. If the first argument is undef, library 
-will be forced to create a new session id. Second argument is a 
-references to a hash variable, and is driver dependant. For information 
-on the contents of the second argument refer to respective driver 
-manual. Returns driver object on success, undef on failure. Consult 
-$CGI::Session::errstr for an error message
+If session id is missing, it will force the library to generate a new session
+id, which will be accessible through C<id()> method.
 
 Examples:
 
-    $session = new CGI::Session::File(undef,    { Directory=>"/tmp" });
-    $session = new CGI::Session::MySQL($cgi,    { Handle=>$dbh } );
-    $session = new CGI::Session::DB_File($sid,  { Directory=>"/tmp" });
+    $session = new CGI::Session(undef, undef, {Directory=>'/tmp'});
+    $session = new CGI::Session("driver:File;serializer:Storable", undef,  {Directory=>'/tmp'})
+    $session = new CGI::Session("driver:MySQL;id:Incr", undef, {Handle=>$dbh});
+
+Following data source variables are supported:
+
+=over 4
+
+=item *
+
+C<driver> - CGI::Session driver. Available drivers are "File", "DB_File" and 
+"MySQL". Default is "File".
+
+=item *
+
+C<serializer> - serializer to be used to encode the data structure before saving 
+in the disk. Available serializers are "Storable", "FreezeThaw" and "Default". 
+Default is "Default", which uses standard L<Data::Dumper>
+
+=item *
+
+C<id> - ID generator to use when new session is to be created. Available ID generators are "MD5" and "Incr". Default is "MD5".
+
+=back
+
 
 =item C<id()>
 
@@ -911,18 +1017,17 @@ returns all the session parameters as a reference to a hash
 
 =item C<save_param($cgi)>
 
-=item C<save_param($cgi, [@list])>
+=item C<save_param($cgi, $arrayref)>
 
 Saves CGI parameters to session object. In otherwords, it's calling 
 C<param($name, $value)> for every single CGI parameter. The first 
-argument should be either CGI object or any object which can provide an 
-alternative to a param() method. If second argument is present and is a 
-reference to an array, only those CGI parameters found in the array will 
+argument should be either CGI object or any object which can provide
+param() method. If second argument is present and is a reference to an array, only those CGI parameters found in the array will 
 be stored in the session
 
 =item C<load_param($cgi)>
 
-=item C<load_param($cgi, [@list])>
+=item C<load_param($cgi, $arrayref)>
 
 loads session parameters to CGI object. The first argument is required 
 to be either CGI.pm object, or any other object which can provide 
@@ -965,13 +1070,13 @@ denoting the date when session was created for the first time.
 =item C<expires($param, $time)>
 
 Sets expiration date relative to atime(). If used with no arguments, 
-returns the expiration date if it was ever set for a whole object. If
-the session is non-expiring, returns undef.
+returns the expiration date if it was ever set for a whole object. If no 
+expiration was ever set, returns undef.
 
 Second form sets an expiration date for a whole session. This value is 
 checked when previously stored session is asked to be retrieved, and if 
 its expiration date has passed will be expunged from the disk 
-immediately and new session is created accordingly. Passing -1 would 
+immediately and new session is created accordingly. Passing 0 would 
 cancel expiration date
 
 By using the third syntax you can also set an expiration date for a 
@@ -996,12 +1101,11 @@ Examples:
 
     $session->expires("+1y");   # expires in one year
     $session->expires(0);       # cancel expiration
-    $session->expires("~logged-in", "+10m");
-                    # expires ~logged-in flag in 10 mins
+    $session->expires("~logged-in", "+10m");# expires ~logged-in flag in 10 mins
 
 Note: all the expiration times are relative to session's last access 
 time, not to its creation time. To expire a session immediately, call 
-delete().
+C<delete()>. To expire a specific session parameter immediately, call C<clear()>
 
 =item C<remote_addr()>
 
@@ -1029,80 +1133,45 @@ creates a dump of the session object. Argument, if passed, will be
 interpreted as the name of the file object should be dumped in. Used 
 mostly for debugging.
 
-=item C<trace("logs/trace.txt")>
-
-creates a trace log file of the method calls. Used for debugging only. 
-To turn off tracing pass undef as an argument.
-
-=item C<traverse()>
-
-walks through the list of all the session data available in the disk. 
-This method is driver dependant, so consult with driver's manual first. 
-Returns object for next session in the disk. Suitable for while() loops
-
-Example:
-
-    use constant YEAR => 3600 * 24 * 365;
-
-    while ( my $tmp_sess = $session->traverse ) {
-        # expire if it wasn't accessed for the last one year
-        if ( $tmp_sess->atime() > YEAR ) {
-            $tmp_sess->delete() and next;
-        }
-
-        my $etime = $tmp_sess->expires() or next;
-        my $atime = $tmp_sess->atime();
-
-        if ( ($atime+$etime) <= time() ) {
-            $tmp_sess->delete();
-        }
-    }
-
-This example might be suitable to be part of your program logic if your 
-site is not way to crowded. Otherwise consider setting up a cron tab.
-
 =back
 
 =head1 SECURITY
 
-How secure is using CGI::Session? Can others hack down people's sessions 
-using another browser if they can get the session id of the user? Are 
-the session ids guessable? - are the questions I find myself answering 
+"How secure is using CGI::Session?", "Can others hack down people's sessions 
+using another browser if they can get the session id of the user?", "Are 
+the session ids guessable?" are the questions I find myself answering 
 over and over again.
 
 =head2 STORAGE
 
-Security of the library does in many aspects depend on the 
-implementation of the library. After making use of this library, you 
-longer have to send all the information to the user's cookie except for 
-the session id. But, you still have to store the data in the server 
-side. So another set of questions arise, can an evil person have access 
-to session data in your server, even if they do, can they make sense of 
-the data in the session file, and even if they can, can they reuse the 
-information against a person who created that session. As you see, the 
-answer depends on yourself who is implementing it.
+Security of the library does in many aspects depend on the implementation. After 
+making use of this library, you no longer have to send all the information to 
+the user's cookie except for the session id. But, you still have to store the 
+data in the server side. So another set of questions arise, can an evil person 
+have access to session data in your server, even if they do, can they make sense 
+out of the data in the session file, and even if they can, can they reuse the 
+information against a person who created that session. As you see, the answer 
+depends on yourself who is implementing it.
 
-First rule of thumb, please do not save the users password or his credit 
-card number in the session. If you can persuade your conscious that this 
-is necessary, make sure that evil eyes don't have access to session 
-files in your server. If you're using RDBMS driver such as MySQL, the 
-database will be protected with a username/password pair. But if it will 
-be storing in the file system in the form of plain files, make sure no 
-one except you can have access to those files.
+First rule of thumb, do not save the users' passwords or other sensitive data in 
+the session. If you can persuade yourself that this is necessary, make sure that evil 
+eyes don't have access to session files in your server. If you're using RDBMS driver 
+such as MySQL, the database will be protected with a username/password pair. But if 
+it will be storing in the file system in the form of plain files, make sure no one 
+except you can have access to those files.
 
-Default configuration of the driver makes use of Data::Dumper class to 
-serialize data to make it possible to save it in the disk. 
-Data::Dumper's result is a human readable data structure, which if 
-opened, can be interpreted by an evil creature against you. If you 
-configure your CGI::Session implementation to use either Storable or 
-FreezeThaw as a serializer, this would make more difficult for bad guys 
-to interpolate the data. But don't use this as the only precaution for 
-security. Since evil fingers can type a quick program using Storable or 
-FreezeThaw which deciphers that session file very easily.
+Default configuration of the driver makes use of Data::Dumper class to serialize 
+data to make it possible to save it in the disk. Data::Dumper's result is a 
+human readable data structure, which if opened, can be interpreted against you. 
+If you configure your session object to use either Storable or FreezeThaw as a 
+serializer, this would make more difficult for bad guys to make sense out of the 
+data. But don't use this as the only precaution for security. Since evil fingers 
+can type a quick program using Storable or FreezeThaw which deciphers that 
+session file very easily.
 
-Also, do not allow evil and sick minds to update the contents of session 
-files. Of course CGI::Session makes sure it doesn't happen, but your 
-cautiousness does no harm either.
+Also, do not allow sick minds to update the contents of session files. Of course 
+CGI::Session makes sure it doesn't happen, but your cautiousness does no harm 
+either.
 
 =head2 SESSION IDs
 
@@ -1119,38 +1188,35 @@ id as part of a query_string. If your application was initializing the
 id solely using query_string parameter, after clicking on that link that 
 person now appears to that site as you, and might have access to all of 
 your private data instantly. How scary and how unwise implementation and 
-what a poor kid who didn't know that pasting URLs with session ids is 
-not a good idea.
+what a poor kid who didn't know that pasting URLs with session ids was
+an accident waiting to happen
 
 Even if you're solely using cookies as the session id transporters, it's 
 not that difficult to plant a cookie in the cookie file with the same id 
-and trick the application  this way. So key for security is to check if 
+and trick the application this way. So key for security is to check if 
 the person who's asking us to retrieve a session data is indeed the 
 person who initially created the session data. CGI::Session helps you to 
-watch out for such cases by setting a special variable, 
-$CGI::Session::IP_MATCH to a true value, say to 1. This makes sure that 
-before initializing a previously stored session, it checks if the ip 
-address stored in the session matches the ip address of the user asking 
-for that session. In which case the library returns the session, 
+watch out for such cases by enabling "-ip_match" switch while "use"ing the 
+library:
+
+    use CGI::Session qw/-ip-match -api3/;
+
+or alternatively, setting $CGI::Session::IP_MATCH to a true value, say to 1.
+This makes sure that before initializing a previously stored session, it checks 
+if the ip address stored in the session matches the ip address of the user 
+sking for that session. In which case the library returns the session, 
 otherwise it dies with a proper error message. You can also set 
-$CGI::Session::HOST_MATCH instead, or both at the same time. These 
-variable updates should take place before creating the session object:
-
-    require CGI::Session::File;
-
-    $CGI::Session::IP_MATCH     = 1;    # default is 0    
-    $session = new CGI::Session::File($cgi, {Directory=>"/tmp"});
 
 =head1 DRIVER SPECIFICATIONS
 
 This section is for driver authors who want to implement their own 
 storing mechanism for the library. Those who enjoy sub-classing stuff 
 should find this section useful as well. Here we discuss the 
-architecture of the library.
+architecture of CGI::Session and its drivers.
 
 =head2 LIBRARY OVERVIEW
 
-Library provides all the base methods listed in the L</METHODS> section. 
+Library provides all the base methods listed in the L<METHODS> section. 
 The only methods CGI::Session doesn't bother providing are the ones that 
 need to deal with writing the session data in the disk, retrieving the 
 data from the disk, and deleting the data. These are the methods 
@@ -1189,16 +1255,15 @@ Example:
     # $data is a hashref that needs to be stored
     my $storable_data = $self->freeze($data)
 
-$storable_data can now be saved in the disk
+$storable_data can now be saved in the disk.
 
 When the driver is asked to retrieve the data from the disk, that 
 serialized data should be accordingly de-serialized. The aforementioned 
-serializer also provide thaw() method, which takes serialized data as 
+serializer also provides thaw() method, which takes serialized data as 
 the first argument, and returns Perl data structure, as it was before 
 saved. Example:
 
     return $self->thaw($stored_data);
-
 
 =head2 DRIVER METHODS
 
@@ -1222,7 +1287,7 @@ error message to error() and returning undef:
         return undef;
     }
 
-=item C<store($self, $sid, $data, $options)>
+=item C<store($self, $sid, $options, $data)>
 
 this method is called by CGI::Session when session data needs to be 
 stored. Data to be stored is passed as the third argument to the method, 
@@ -1244,14 +1309,13 @@ or implicitly when the program terminates
 
 =head2 GENERATING ID
 
-CGI::Session also requires the driver to provide a generate_id() method, 
-which returns an id for a new session. So CGI::Session distribution 
-comes with libraries that provide you with generate_id() and you can 
-simply inherit from them. Following libraries are available:
+CGI::Session also requires the driver to provide a generate_id() method, which returns an
+id for a new session. So CGI::Session distribution comes with libraries that provide you 
+with generate_id() and you can simply inherit from them. Following libraries are available:
 
 =over 4
 
-=item B<CGI::Session::ID::Default>
+=item B<CGI::Session::ID::MD5>
 
 =item B<CGI::Session::ID::Incr>
 
@@ -1261,7 +1325,11 @@ Refer to their respective manuals for more details.
 
 In case you want to have your own style of ids, you can define a 
 generate_id() method explicitly without inheriting from the above 
-libraries.
+libraries. Or write your own B<CGI::Session::ID::YourID> library,
+that simply defines "generate_id()" method, which returns a session id, 
+then give the name to the constructor:
+
+    $session = new CGI::Session("id:YourID", undef, {Neccessary=>Attrs});
 
 =head2 BLUEPRINT
 
@@ -1287,20 +1355,26 @@ following blueprint:
 
 
     }
+
     sub store {
         my ($self, $sid, $data, $options) = @_;
         my $storable_data = $self->freeze($data);
 
     }
+
     sub remove {
         my ($self, $sid, $options) = @_;
 
     }
+
     sub teardown {
         my ($self, $sid, $options) = @_;
 
     }
+
+
     1;
+
     __END__;
 
 
@@ -1313,15 +1387,15 @@ and use the library according to this manual.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001, 2002 Sherzod Ruzmetov <sherzodr@cpan.org>
-
 This library is free software. You can modify and or distribute it under 
 the same terms as Perl itself.
 
 =head1 AUTHOR
 
 Sherzod Ruzmetov <sherzodr@cpan.org>.
-http://author.ultracgis.com
+
+Using this library? Find it useful in any way? Just drop me an email and 
+make my day :-)
 
 =head1 SEE ALSO
 
@@ -1355,12 +1429,14 @@ ftp://ftp.isi.edu/in-notes/rfc2965.txt
 
 # dump() - dumps the session object using Data::Dumper
 sub dump {
-    my ($self, $file) = @_;
+    my ($self, $file, $data_only) = @_;
 
     require Data::Dumper;
     local $Data::Dumper::Indent = 1;
 
-    my $d = new Data::Dumper([$self], ["cgisession"]);
+    my $ds = $data_only ? $self->{_DATA} : $self;
+
+    my $d = new Data::Dumper([$ds], ["cgisession"]);
 
     if ( defined $file ) {
         unless ( open(FH, '<' . $file) ) {

@@ -6,8 +6,14 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test;
-BEGIN { plan tests => 14  };
+BEGIN { 
+    # Check if DB_File is avaialble. Otherwise, skip this test
+
+    require Test;
+    Test->import();
+    
+    plan(tests => 14); 
+};
 use CGI::Session::File;
 ok(1); # If we made it this far, we're ok.
 

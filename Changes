@@ -1,6 +1,5 @@
-Revision history for Perl extension CGI::Session.
+.::What is new in CGI::Session 3.0-alpha?::.
 
-0.01  Sun Nov  3 00:42:38 2002
-	- original version; created by h2xs 1.21 with options
-		-X -n CGI::Session
+
+under construction
 

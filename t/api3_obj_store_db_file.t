@@ -8,7 +8,7 @@
 
 
 use CGI;
-use CGI::Session qw/-api_3/;
+use CGI::Session qw/-api3/;
 
 my @mods = qw(Storable FreezeThaw);
 

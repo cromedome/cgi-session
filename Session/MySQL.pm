@@ -148,41 +148,86 @@ sub MySQL_dbh {
 # $Id$
 
 1;       
-
 =pod
 
 =head1 NAME
 
-CGI::Session::BluePrint - BluePrint for your driver. Your better edit it!
-
-=head1 REVISION
-
-This manual refers to $Revision$
+CGI::Session::MySQL - MySQL driver for  CGI::Session
 
 =head1 SYNOPSIS
     
-    use CGI::Session::BluePrint;    
-    $session = new CGI::Session::BluePrint(undef, {});
+    use CGI::Session qw/-api3/;
+    $session = new CGI::Session("driver:MySQL", undef, {Handle=>$dbh});
 
-    # For more examples, consult L<CGI::Session> manual
+For more examples, consult L<CGI::Session> manual
 
 =head1 DESCRIPTION
 
-It looks like the author of of the driver was negligent enough to leave the stub undefined.
+CGI::Session::MySQL is a CGI::Session driver to store session data in MySQL table.
+To write your own drivers for B<CGI::Session> refere L<CGI::Session> manual.
+
+
+=head1 STORAGE
+
+To store session data in MySQL database, you first need to create a suitable table for it
+with the following command:
+
+    CREATE TABLE sessions (
+        id CHAR(32) NOT NULL,
+        a_session TEXT NOT NULL
+    );
+
+
+You can also add any number of additional columns to the table, but the above "id"
+and "a_session" are required. 
+
+If you want to store the session data in other table than "sessions", before creating
+the session object you need to set the special variable B<$CGI::Session::MySQL::TABLE_NAME>
+to the name of the table:
+
+    use CGI::Session qw/-api3/;
+
+    $CGI::Session::MySQL::TABLE_NAME = 'my_sessions';
+    $session = new CGI::Session("driver:MySQL", undef, {Handle=>$dbh});
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2002 Your Name. All rights reserved.
+Copyright (C) 2001, 2002 Sherzod Ruzmetov. All rights reserved.
 
 This library is free software and can be modified and distributed under the same
 terms as Perl itself. 
 
-Bug reports should be directed to sherzodr@cpan.org, or posted to Cgi-session@ultracgis.com
-mailing list.
+=head1 AUTHOR
+
+Your name=pod
+
+=head1 NAME
+
+CGI::Session::BluePrint - Default CGI::Session driver BluePrint
+
+=head1 SYNOPSIS
+    
+    use CGI::Session::BluePrint
+    $session = new CGI::Session("driver:BluePrint", undef, {...});
+
+For more examples, consult L<CGI::Session> manual
+
+=head1 DESCRIPTION
+
+CGI::Session::BluePrint is a CGI::Session driver.
+To write your own drivers for B<CGI::Session> refere L<CGI::Session> manual.
+
+=head1 COPYRIGHT
+
+Copyright (C) 2002 Your Name. All rights reserved.
+
+This library is free software and can be modified and distributed under the same
+terms as Perl itself. 
 
 =head1 AUTHOR
 
-Names
+Sherzod Ruzmetov <sherzodr@cpan.org>. All the bug reports should be sent to the author
+to sherzodr@cpan.org>
 
 =head1 SEE ALSO
 
@@ -192,6 +237,7 @@ L<CGI::Session::DB_File>
 L<CGI::Session::BerkelyDB>
 
 =cut
+
 
 
 # $Id$

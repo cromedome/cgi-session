@@ -115,8 +115,8 @@ This manual refers to $Revision$
 
 =head1 SYNOPSIS
     
-    use CGI::Session::File;    
-    $session = new CGI::Session::File(undef, {Directory=>'/tmp'});
+    use CGI::Session qw/-api3/ 
+    $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
 
 For more examples, consult L<CGI::Session> manual
 
@@ -138,7 +138,7 @@ session files are stored in.
 
 Example:
 
-    $session = new CGI::Session::File(undef, {Directory=>'some/directory'});
+    $session = new CGI::Session("driver:File", undef, {Directory=>'some/directory'});
 
 =head1 COPYRIGHT
 
@@ -152,7 +152,7 @@ mailing list.
 
 =head1 AUTHOR
 
-CGI::Session::DB_File is written and maintained by Sherzod Ruzmetov <sherzodr@cpan.org>
+CGI::Session::File is written and maintained by Sherzod Ruzmetov <sherzodr@cpan.org>
 
 =head1 SEE ALSO
 

@@ -90,15 +90,15 @@ CGI::Session::DB_File - DB_File driver for CGI::Session
 
 =head1 SYNOPSIS
 
-    use CGI::Session::DB_File;
-    $session = new CGI::Session::DB_File(undef, {Directory=>'/tmp'});
+    use CGI::Session;
+    $session = new CGI::Session("driver:DB_File", undef, {Directory=>'/tmp'});
 
 For more details, refer to L<CGI::Session> manual
 
 =head1 DESCRIPTION
 
 CGI::Session::DB_File is a CGI::Session driver to store session data in BerkeleyDB.
-Filename to store the session data is by default 'cgisess.db'. If you want a different
+Filename to store the session data is by default 'cgisess.db'. If you want different
 name, you can either specify it with the "FileName" option as below:
 
     $s = new CGI::Session::DB_File(undef, {Directory=>'/tmp', FileName=>'sessions.db'});
@@ -107,7 +107,7 @@ or by setting the value of the $CGI::Session::DB_File::NAME variable before crea
 the session object:
 
     $CGI::Session::DB_File::NAME = 'sessions.db';
-    $s = new CGI::Session::DB_File(undef, {Directory=>'/tmp'});
+    $s = new CGI::Session("driver:DB_File", undef, {Directory=>'/tmp'});
 
 The only driver option required, as in the above examples, is "Directory", which tells the
 driver where the session file and lock files should be created.

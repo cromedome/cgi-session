@@ -6,8 +6,34 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test;
-BEGIN { plan tests => 14  };
+BEGIN { 
+    # Skip the test all together
+    
+    # If you want to run MySQL tests, uncomment the following two
+    # lines, create a table called "sessions" according to the
+    # CGI::Session::MySQL table in the test database. 
+    print "1..0\n";
+    exit();
+
+
+    # Check if DB_File is avaialble. Otherwise, skip this test
+    eval 'require DBI';    
+    if ( $@ ) {
+        print "1..0\n";
+        exit(0);
+    }
+
+    eval 'require DBD::mysql';
+    if ( $@ ) {
+        print "1..0\n";
+        exit(0);
+    }
+
+    require Test;
+    Test->import();
+    
+    plan(tests => 14); 
+};
 use CGI::Session::MySQL;
 ok(1); # If we made it this far, we're ok.
 

@@ -3,10 +3,6 @@ package CGI::Session::BluePrint;
 # $Id$
 
 use strict;
-
-# Inheriting necessary functionalities from the 
-# following libraries. Do not change it unless you know
-# what you are doing
 use base qw(
     CGI::Session
     CGI::Session::ID::MD5
@@ -14,55 +10,46 @@ use base qw(
 );
 
 
-# driver specific libraries should go below
-
-
+# Load neccessary libraries below
 
 use vars qw($VERSION);
 
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
+$VERSION = '0.1';
 
-
-########################
-# driver methods follow
-########################
-
-
-# stores the serialized data. Returns 1 for sucess, undef otherwise
 sub store {
     my ($self, $sid, $options, $data) = @_;
-    
-    my $serialized_data = $self->freeze($data);
+
+    my $storable_data = $self->freeze($data);
+
+    #now you need to store the $storable_data into the disk
 
 }
 
 
-
-# retrieves the serialized data and deserializes it
 sub retrieve {
     my ($self, $sid, $options) = @_;
 
-    # after you get the data, deserialize it using
-    # $self->thaw(), and return it
-    
-
+    # you will need to retrieve the stored data, and 
+    # deserialize it using $self->thaw() method
 }
 
 
-# removes the given data and all the disk space associated with it
+
 sub remove {
     my ($self, $sid, $options) = @_;
+
+    # you simply need to remove the data associated 
+    # with the id
+    
     
 }
 
 
 
-
-# called right before the object is destroyed to do cleanup
 sub teardown {
     my ($self, $sid, $options) = @_;
 
-    return 1;
+    # this is called just before session object is destroyed
 }
 
 
@@ -76,36 +63,30 @@ sub teardown {
 
 =head1 NAME
 
-CGI::Session::BluePrint - BluePrint for your driver. Your better edit it!
-
-=head1 REVISION
-
-This manual refers to $Revision$
+CGI::Session::BluePrint - Default CGI::Session driver BluePrint
 
 =head1 SYNOPSIS
     
-    use CGI::Session::BluePrint;    
-    $session = new CGI::Session::BluePrint(undef, {});
+    use CGI::Session::BluePrint
+    $session = new CGI::Session("driver:BluePrint", undef, {...});
 
-    # For more examples, consult L<CGI::Session> manual
+For more examples, consult L<CGI::Session> manual
 
 =head1 DESCRIPTION
 
-It looks like the author of of the driver was negligent enough to leave the stub undefined.
+CGI::Session::BluePrint is a CGI::Session driver.
+To write your own drivers for B<CGI::Session> refere L<CGI::Session> manual.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2002 Your Name. All rights reserved.
+Copyright (C) 2002 Your Name. All rights reserved.
 
 This library is free software and can be modified and distributed under the same
 terms as Perl itself. 
 
-Bug reports should be directed to sherzodr@cpan.org, or posted to Cgi-session@ultracgis.com
-mailing list.
-
 =head1 AUTHOR
 
-Names
+Your name
 
 =head1 SEE ALSO
 

@@ -3,9 +3,8 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 
 print "WARNING\n";
-print "=" x 30, "\n";
+print "=" x 50, "\n";
 print "This is alpha release!\n\n";
-	
 
 WriteMakefile(
 

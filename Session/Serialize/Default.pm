@@ -14,13 +14,9 @@ sub freeze {
     my ($self, $data) = @_;
     
     local $Data::Dumper::Indent   = 0;
-    local $Data::Dumper::Purity   = 1;
-    local $Data::Dumper::Useqq    = 0;
-    local $Data::Dumper::Deepcopy = 1;
-    local $Data::Dumper::Terse    = 0;
-    local $Data::Dumper::Quotekeys= 0;
-    local $Data::Dumper::Maxdepth = 5;
-
+    local $Data::Dumper::Purity   = 0;
+    local $Data::Dumper::Useqq    = 1;
+    local $Data::Dumper::Deepcopy = 0;   
     
     my $d = new Data::Dumper([$data], ["D"]);
     return $d->Dump();    
@@ -35,7 +31,8 @@ sub thaw {
     my ($safe_string) = $string =~ m/^(.*)$/;
     
     my $D = undef;
-    $D = eval ("$safe_string");
+    my $cpt = new Safe();
+    $D = $cpt->reval ($safe_string );
     if ( $@ ) {
         die $@;
     }
