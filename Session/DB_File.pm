@@ -28,7 +28,7 @@ sub store {
     my $args = $options->[1];
     my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
 
-    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0644 or die $!;
+    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0600 or die $!;
     $db{$sid} = $storable_data;
     untie(%db) or die $!;
 
@@ -46,7 +46,7 @@ sub retrieve {
     my $args = $options->[1];
     my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
 
-    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0644 or die $!;
+    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0600 or die $!;
     my $data = $self->thaw($db{$sid});
     untie(%db);
 
@@ -63,7 +63,7 @@ sub remove {
 
     my $args = $options->[1];
     my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
-    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0644 or die $!;
+    tie my %db, "DB_File", $file, O_RDWR or die $!;
     delete $db{$sid};
     untie(%db) or die $!;
 

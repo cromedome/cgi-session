@@ -2,6 +2,11 @@
 
 # $Id$
 
+# Configurable contants
+use constant DSN        => "dr:MySQL;ser:Default;id:MD5";
+use constant DSN_ARGS   => {DataSource=>"DBI:mysql:sherzodr_shop", User=>"sherzodr_shop", Password=>"marley01"};
+# Do not modify anything below unless you know what you're doing
+
 use strict;
 use CGI;
 use CGI::Carp 'fatalsToBrowser';
@@ -24,7 +29,7 @@ for my $mod ( @required ) {
 }
 
 my $cgi     = new CGI;
-my $session = new CGI::Session(undef, $cgi, {Directory=>'/tmp'});
+my $session = new CGI::Session(DSN, $cgi, DSN_ARGS);
 unless ( defined $session ) {
     die $CGI::Session::errstr;
 }
