@@ -1,15 +1,14 @@
 package CGI::Session::Serialize::default;
 
 # $Id$ 
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Safe;
 use Data::Dumper;
 
-use vars qw($VERSION);
-
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
+$CGI::Session::Serialize::default::VERSION = '1.4';
 
 
 sub freeze {

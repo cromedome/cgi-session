@@ -1,10 +1,13 @@
 package CGI::Session::Test::Default;
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Carp;
 use Test::More;
+
+$CGI::Session::Test::Default::VERSION = '1.0';
+
 
 sub new {
     my $class   = shift;
@@ -110,7 +113,7 @@ sub run {
         my $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
         ok($session, "Session instance loaded");
         ok(!$session->id, "session doesn't have ID");
-        ok($session->empty, "session is empty, which is the same as above");
+        ok($session->is_empty, "session is empty, which is the same as above");
         #print $session->dump;
         ok($session->is_expired, "session was expired");
         ok(!$session->param('author'), "session data cleared");
@@ -122,7 +125,7 @@ sub run {
         ok($session, "new session created");
         ok($session->id, "session has id :" . $session->id );
         ok(!$session->is_expired, "session isn't expired");
-        ok(!$session->empty, "session isn't empty");
+        ok(!$session->is_empty, "session isn't empty");
         ok($session->atime == $session->ctime, "access and creation times are same");
 
         ok($session->id ne $sid, "it's a completely different session than above");

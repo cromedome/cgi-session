@@ -1,15 +1,13 @@
 package CGI::Session::Serialize::freezethaw;
 
 # $Id$ 
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use FreezeThaw;
 
-use vars qw($VERSION);
-
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
-
+$CGI::Session::Serialize::freezethaw::VERSION = '1.4';
 
 sub freeze {
     my ($self, $data) = @_;

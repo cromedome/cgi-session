@@ -1,13 +1,13 @@
 package CGI::Session::Serialize::storable;
 
 # $Id$ 
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Storable;
-use vars qw($VERSION);
 
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
+$CGI::Session::Serialize::storable::VERSION = '1.4';
 
 
 sub freeze {

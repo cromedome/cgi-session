@@ -9,10 +9,6 @@ use URI::Escape;
 use vars qw($SELF_URL);
 
 use lib '/home/sherzodr/perllib';
-BEGIN {
-    unshift @INC, '/home/sherzodr/tmp/CGI-Session/blib/lib';
-}
-
 
 # Check for some non-standard Perl modules
 my @required = qw(MIME::Lite HTML::Template CGI::Session);
@@ -27,13 +23,13 @@ for my $mod ( @required ) {
 }
 
 my $cgi     = new CGI();
-my $session = CGI::Session->load("driver:sqlite", undef) or die CGI::Session->errstr;
+my $session = CGI::Session->load() or die CGI::Session->errstr;
 
-if ( $session->expired ) {
+if ( $session->is_expired ) {
     print $session->header();
     print "Your session expired, inevitably!";
     exit(0);
-} elsif ( $session->empty ) {
+} elsif ( $session->is_empty ) {
     $session = $session->new();
 }
 

@@ -3,12 +3,11 @@ package CGI::Session::ID::md5;
 # $Id$
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Digest::MD5;
-use vars qw( $VERSION );
 
-$VERSION = '1.01';
+$CGI::Session::ID::md5::VERSION = '1.2';
 
 *generate = \&generate_id;
 sub generate_id {

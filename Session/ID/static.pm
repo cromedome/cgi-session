@@ -1,22 +1,21 @@
 package CGI::Session::ID::static;
 
+# $Id$
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
-use Carp 'croak';
-use vars qw($VERSION);
+use Carp;
 
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
+$CGI::Session::ID::static::VERSION = '1.5';
 
 # Preloaded methods go here.
 
 sub generate_id {
     my ($self, $args, $claimed_id ) = @_;
-
     unless ( defined $claimed_id ) {
         croak "'CGI::Session::ID::Static::generate_id()' requires static id";
     }
-
     return $claimed_id;
 }
 
