@@ -10,7 +10,7 @@ BEGIN {
     require Test;
     Test->import();
     
-    plan(tests => 14); 
+    plan(tests => 16); 
 };
 
 use CGI::Session;
@@ -49,6 +49,14 @@ $s->expire("+10s");
 ok($s->expire());
 
 my $sid = $s->id();
+
+########
+# testing againts 'undef values problem in param() w/ multiple paired args'
+# as reported by Kamil
+#
+$s->param(name1 => undef, name2 => 'value2');
+ok( not defined $s->param('name1') );
+ok($s->param('name2') eq 'value2');
 
 $s->flush();
 
