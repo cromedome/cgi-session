@@ -38,4 +38,4 @@ ok($session1);
 ok($session1->param('fname'), 'Sherzod');
 ok($session1->param('email'), 'sherzodr@cpan.org');
 
-$session1->delete();
+#$session1->delete();

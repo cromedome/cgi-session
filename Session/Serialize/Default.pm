@@ -5,8 +5,9 @@ use strict;
 use Safe;
 use Data::Dumper;
 
-use vars qw($VERSION);
+use vars qw($VERSION $SIGNATURE);
 
+$SIGNATURE = '';
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
 
 
@@ -15,11 +16,12 @@ sub freeze {
     
     local $Data::Dumper::Indent   = 0;
     local $Data::Dumper::Purity   = 0;
-    local $Data::Dumper::Useqq    = 1;
+    local $Data::Dumper::Useqq    = 0;
     local $Data::Dumper::Deepcopy = 0;   
+    local $Data::Dumper::Quotekeys= 0;    
     
     my $d = new Data::Dumper([$data], ["D"]);
-    return $d->Dump();    
+    return $SIGNATURE . ';' . $d->Dump();
 }
 
 
@@ -28,16 +30,10 @@ sub thaw {
     my ($self, $string) = @_;    
 
     # To make -T happy
-    my ($safe_string) = $string =~ m/^(.*)$/;
+    my ($safe_string) = $string =~ m/^$SIGNATURE;(.*)$/;    
     
-    my $D = undef;
     my $cpt = new Safe();
-    $D = $cpt->reval ($safe_string );
-    if ( $@ ) {
-        die $@;
-    }
-
-    return $D;
+    return $cpt->reval ($safe_string );
 }
 
 

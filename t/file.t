@@ -21,7 +21,6 @@ ok(1); # If we made it this far, we're ok.
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
-$CGI::Session::File::FileName = 'cgisession_%s.txt';
 my $s = new CGI::Session::File(undef, {Directory=>"t"} )
     or die $CGI::Session::errstr;
 
@@ -62,6 +61,6 @@ ok($s2->param('author'));
 ok($s2->expire());
 
 
-$s2->delete();
+#$s2->delete();
 
 

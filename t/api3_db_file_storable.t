@@ -26,7 +26,7 @@ BEGIN {
     
     plan(tests => 14); 
 };
-use CGI::Session qw/-api3/;
+use CGI::Session;
 ok(1); # If we made it this far, we're ok.
 
 #########################
@@ -50,7 +50,7 @@ $s->param(-name=>'email', -value=>'sherzodr@cpan.org');
 ok($s->param(-name=>'email'));
 ok(!$s->expire() );
 
-$s->expire("+10m");
+$s->expire("+10s");
 
 ok($s->expire());
 
@@ -66,5 +66,5 @@ ok($s2->param('email'));
 ok($s2->param('author'));
 ok($s2->expire());
 
-$s2->delete();
+#$s2->delete();
 

@@ -13,7 +13,7 @@ sub MY::postamble {
     return <<'TAG';
 realclean::
 	$(RM_RF) blib/
-	$(RM_F) Makefile Makefile.old t/cgisess.*
+	$(RM_F) Makefile Makefile.old t/cgisess*
 
 upload: dist
 	cpan-upload $(DISTVNAME).tar$(SUFFIX)

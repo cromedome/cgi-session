@@ -48,7 +48,7 @@ ok($s->param(-name=>'email'));
 
 ok(!$s->expire() );
 
-$s->expire("+10m");
+$s->expire("+10s");
 
 ok($s->expire());
 
@@ -65,5 +65,5 @@ ok($s2->param('email'));
 ok($s2->param('author'));
 ok($s2->expire());
 
-$s2->delete();
+#$s2->delete();
 

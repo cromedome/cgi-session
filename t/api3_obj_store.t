@@ -8,7 +8,7 @@
 
 
 use CGI;
-use CGI::Session qw/-api3/;
+use CGI::Session;
 
 my @mods = qw(Storable FreezeThaw);
 
@@ -58,7 +58,7 @@ print ref($old_cgi) ? "ok\n" : "not ok\n";
 
 print $old_cgi->param('name') eq 'Sherzod' ? "ok\n" : "not ok\n";
 
-$s2->delete();
+#$s2->delete();
 
 
 
