@@ -12,7 +12,6 @@ use vars qw( $VERSION @ISA );
 $VERSION = "2.01";
 @ISA     = qw(CGI::Session::ErrorHandler);
 
-
 sub new {
     my $class = shift;
     my ($args) = @_;
@@ -29,7 +28,6 @@ sub new {
     return $self->init ? $self : undef;
 }
 
-
 sub init {}
 
 sub retrieve {
@@ -40,11 +38,9 @@ sub store {
     croak "store(): " . ref($_[0]) . " failed to implement this method!";
 }
 
-
 sub remove {
     croak "remove(): " . ref($_[0]) . " failed to implement this method!";
 }
-
 
 sub dump {
     require Data::Dumper;
@@ -95,6 +91,16 @@ The best way of learning the specs is to look at a blueprint of a driver:
     use strict;
     use base qw( CGI::Session::Driver CGI::Session::ErrorHandler );
 
+    sub init {
+        my ($self) = @_;
+        # optional
+    }
+
+    sub DESTROY {
+        my ($self) = @_;
+        # optional
+    }
+
     sub store {
         my ($self, $sid, $datastr) = @_;
         # Store $datastr, which is an already serialized string of data.
@@ -129,9 +135,9 @@ You can access value of 'Directory' from within your driver like so:
     }
 
 Optionally, you can define C<init()> method within your driver to do driver specific global initialization. C<init()> method
-will be envoked only ones during the lifecycle of your driver, which is the same as the lifecycle of a session object.
+will be envoked only once during the lifecycle of your driver, which is the same as the lifecycle of a session object.
 
-For examples of C<init()> look into native CGI::Session drivers.
+For examples of C<init()> look into the source code of native CGI::Session drivers.
 
 =head2 NOTES
 
@@ -149,6 +155,6 @@ DBI-related drivers are better off using L<CGI::Session::Driver::DBI|CGI::Sessio
 
 =head1 LICENSING
 
-For support and licensing information see L<CGI::Session|CGI::Session>.
+For support and licensing see L<CGI::Session|CGI::Session>.
 
 =cut

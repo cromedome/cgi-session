@@ -182,6 +182,19 @@ CGI::Session->name() >>:
 
     printf ("<a href=\"$ENV{SCRIPT_NAME}?%s=%s\">click me</a>", $session->name, $session->id);
 
+If you already have session id to be initialized you may pass it as the only argument, or the second argument of multi-argument syntax:
+
+    $session = new CGI::Session( $sid );
+    $session = new CGI::Session( "serializer:freezethaw", $sid );
+    $session = new CGI::Session( "driver:mysql", $sid, {Handle=>$dbh} );
+
+By default CGI::Session uses L<CGI.pm|CGI> to parse queries and cookies. If you prefer to use a different, but compatible object you can pass that object in place of $sid:
+
+    $cgi     = new CGI::Simple();
+    $session = new CGI::Session ( $cgi );
+    $session = new CGI::Session( "driver:db_file;serializer:storable", $cgi);
+    # etc
+
 =head2 STORING DATA
 
 CGI::Session offers param() method, which behaves exactly like CGI.pm's param() with identical syntax. param() is used for storing data 
