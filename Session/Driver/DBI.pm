@@ -11,7 +11,7 @@ use CGI::Session::Driver;
 
 
 @CGI::Session::Driver::DBI::ISA = qw( CGI::Session::Driver );
-$CGI::Session::Driver::DBI::VERSION = "1.0";
+$CGI::Session::Driver::DBI::VERSION = "1.1";
 
 
 sub init {

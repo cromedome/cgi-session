@@ -12,7 +12,7 @@ use CGI::Session::Driver;
 use vars qw( $FileName);
 
 @CGI::Session::Driver::file::ISA        = qw( CGI::Session::Driver );
-$CGI::Session::Driver::file::VERSION    = "3.3";
+$CGI::Session::Driver::file::VERSION    = "3.4";
 $FileName                               = "cgisess_%s";
 
 sub init {

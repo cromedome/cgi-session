@@ -13,7 +13,7 @@ use CGI::Session::Driver;
 use Fcntl qw( :DEFAULT :flock );
 
 @CGI::Session::Driver::db_file::ISA         = qw( CGI::Session::Driver );
-$CGI::Session::Driver::db_file::VERSION     = '1.0';
+$CGI::Session::Driver::db_file::VERSION     = '1.1';
 $CGI::Session::Driver::db_file::FILE_NAME   = "cgisess.db";
 
 

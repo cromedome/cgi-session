@@ -8,7 +8,7 @@ use strict;
 use Carp;
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::Driver::VERSION = "4.00";
+$CGI::Session::Driver::VERSION = "4.10";
 @CGI::Session::Driver::ISA     = qw(CGI::Session::ErrorHandler);
 
 sub new {
