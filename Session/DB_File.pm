@@ -40,12 +40,12 @@ sub store {
 sub retrieve {
     my ($self, $sid, $options) = @_;
 
-    # you will need to retrieve the stored data, and 
+    # you will need to retrieve the stored data, and
     # deserialize it using $self->thaw() method
 
     my $args = $options->[1];
     my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
-    
+
     tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0644 or die $!;
     my $data = $self->thaw($db{$sid});
     untie(%db);
@@ -58,7 +58,7 @@ sub retrieve {
 sub remove {
     my ($self, $sid, $options) = @_;
 
-    # you simply need to remove the data associated 
+    # you simply need to remove the data associated
     # with the id
 
     my $args = $options->[1];
@@ -68,8 +68,8 @@ sub remove {
     untie(%db) or die $!;
 
     return 1;
-    
-    
+
+
 }
 
 
@@ -85,7 +85,7 @@ sub teardown {
 
 # $Id$
 
-1;       
+1;
 
 =pod
 
@@ -117,14 +117,14 @@ the session object:
 The only driver option required, as in the above examples, is "Directory", which tells the
 driver where the session file and lock files should be created.
 
-"FileName" option is also available, but not required. 
+"FileName" option is also available, but not required.
 
 =head1 COPYRIGHT
 
 Copyright (C) 2001-2002 Sherzod Ruzmetov. All rights reserved.
 
 This library is free software and can be modified and distributed under the same
-terms as Perl itself. 
+terms as Perl itself.
 
 Bug reports should be directed to sherzodr@cpan.org, or posted to Cgi-session@ultracgis.com
 mailing list.
@@ -135,10 +135,33 @@ CGI::Session::DB_File is written and maintained by Sherzod Ruzmetov <sherzodr@cp
 
 =head1 SEE ALSO
 
-L<CGI::Session>
-L<CGI::Session::MySQL>
-L<CGI::Session::DB_File>
-L<CGI::Session::BerkelyDB>
+=over 4
+
+=item *
+
+L<CGI::Session|CGI::Session> - CGI::Session manual
+
+=item *
+
+L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual
+
+=item *
+
+L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
+
+=item *
+
+B<RFC 2965> - "HTTP State Management Mechanism" found at ftp://ftp.isi.edu/in-notes/rfc2965.txt
+
+=item *
+
+L<CGI|CGI> - standard CGI library
+
+=item *
+
+L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
+
+=back
 
 =cut
 

@@ -90,10 +90,33 @@ Your name
 
 =head1 SEE ALSO
 
-L<CGI::Session>
-L<CGI::Session::MySQL>
-L<CGI::Session::DB_File>
-L<CGI::Session::BerkelyDB>
+=over 4
+
+=item *
+
+L<CGI::Session|CGI::Session> - CGI::Session manual
+
+=item *
+
+L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual
+
+=item *
+
+L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
+
+=item *
+
+B<RFC 2965> - "HTTP State Management Mechanism" found at ftp://ftp.isi.edu/in-notes/rfc2965.txt
+
+=item *
+
+L<CGI|CGI> - standard CGI library
+
+=item *
+
+L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
+
+=back
 
 =cut
 
