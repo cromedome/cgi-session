@@ -10,10 +10,10 @@ use base qw(
     CGI::Session::Serialize::Storable    
 );
 
-use vars qw($NAME $VERSION);
+use vars qw($FileName $VERSION);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
-$NAME = 'cgisess_%s';
+$FileName = 'cgisess_%s';
 
 sub store {
     my ($self, $sid, $options, $data) = @_;
@@ -90,7 +90,7 @@ sub File_init {
     my ($self, $sid, $options) = @_;
 
     my $dir = $options->[1]->{Directory};
-    my $path = File::Spec->catfile($dir, sprintf("$NAME", $sid));
+    my $path = File::Spec->catfile($dir, sprintf("$FileName", $sid));
     $self->{_file_path} = $path;    
 }
 
@@ -129,9 +129,9 @@ Each session is stored in a seperate file. File name is by default formatted as 
 where '%s' is replaced with the effective session id. To change file name formatting,
 update $CGI::Session::File::NAME variable. Examples:
 
-    $CGI::Session::File::NAME = 'cgisess_%s.dat';       # with .dat extention
-    $CGI::Session::File::NAME = '%s.session';
-    $CGI::Session::File::NAME = '%CGI-Session-%s.dat';  # old style
+    $CGI::Session::File::FileName = 'cgisess_%s.dat';       # with .dat extention
+    $CGI::Session::File::FileName = '%s.session';
+    $CGI::Session::File::FileName = '%CGI-Session-%s.dat';  # old style
 
 The only driver option required is 'Directory', which denotes the location 
 session files are stored in.
