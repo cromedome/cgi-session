@@ -1,4 +1,4 @@
-package CGI::Session::BluePrint;
+package CGI::Session::DB_File;
 
 # $Id$
 
@@ -9,10 +9,14 @@ use base qw(
     CGI::Session::Serialize::Default
 );
 
+use DB_File;
+use File::Spec;
+use Fcntl (':DEFAULT', ':flock');
 
 # Load neccessary libraries below
 
-use vars qw($VERSION);
+use vars qw($VERSION $FILE_NAME);
+$FILE_NAME = 'cgisess.db';
 
 $VERSION = '0.1';
 
@@ -21,7 +25,14 @@ sub store {
 
     my $storable_data = $self->freeze($data);
 
-    #now you need to store the $storable_data into the disk
+    my $args = $options->[1];
+    my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
+
+    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0644 or die $!;
+    $db{$sid} = $storable_data;
+    untie(%db) or die $!;
+
+    return 1;
 
 }
 
@@ -31,6 +42,15 @@ sub retrieve {
 
     # you will need to retrieve the stored data, and 
     # deserialize it using $self->thaw() method
+
+    my $args = $options->[1];
+    my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
+    
+    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0644 or die $!;
+    my $data = $self->thaw($db{$sid});
+    untie(%db);
+
+    return $data;
 }
 
 
@@ -40,6 +60,14 @@ sub remove {
 
     # you simply need to remove the data associated 
     # with the id
+
+    my $args = $options->[1];
+    my $file = File::Spec->catfile($args->{Directory}, $args->{FileName} || $FILE_NAME);
+    tie my %db, "DB_File", $file, O_RDWR|O_CREAT, 0644 or die $!;
+    delete $db{$sid};
+    untie(%db) or die $!;
+
+    return 1;
     
     
 }

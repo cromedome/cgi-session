@@ -124,11 +124,11 @@ sub MySQL_dbh {
     if ( defined $self->{MySQL_dbh} ) {
         return $self->{MySQL_dbh};
 
-    }   
-
+    }
+    
     require DBI;
 
-    $self->{MySQL_dbh} = DBI->connect(
+    $self->{MySQL_dbh} = $args->{Handle} || DBI->connect(
                     $args->{DataSource},
                     $args->{User}       || undef, 
                     $args->{Password}   || undef, 
@@ -136,9 +136,8 @@ sub MySQL_dbh {
 
     # If we're the one established the connection, 
     # we should be the one who closes it    
-    $self->{MySQL_disconnect} = 1;
+    $args->{Handle} or $self->{MySQL_disconnect} = 1;
     return $self->{MySQL_dbh};
-
     
 }
 
@@ -197,32 +196,6 @@ Copyright (C) 2001, 2002 Sherzod Ruzmetov. All rights reserved.
 This library is free software and can be modified and distributed under the same
 terms as Perl itself. 
 
-=head1 AUTHOR
-
-Your name=pod
-
-=head1 NAME
-
-CGI::Session::BluePrint - Default CGI::Session driver BluePrint
-
-=head1 SYNOPSIS
-    
-    use CGI::Session::BluePrint
-    $session = new CGI::Session("driver:BluePrint", undef, {...});
-
-For more examples, consult L<CGI::Session> manual
-
-=head1 DESCRIPTION
-
-CGI::Session::BluePrint is a CGI::Session driver.
-To write your own drivers for B<CGI::Session> refere L<CGI::Session> manual.
-
-=head1 COPYRIGHT
-
-Copyright (C) 2002 Your Name. All rights reserved.
-
-This library is free software and can be modified and distributed under the same
-terms as Perl itself. 
 
 =head1 AUTHOR
 
