@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.00_08 - Tuesday, March 15, 2005
+
+    * FIX: Changes made in 4.00_07 rolled back
+
 4.00_07 - Sunday, March 13, 2005
 
     * FIX: overloaded objects are now stored properly

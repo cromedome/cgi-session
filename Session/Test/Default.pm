@@ -7,7 +7,7 @@ use Carp;
 use Test::More;
 use Data::Dumper;
 
-$CGI::Session::Test::Default::VERSION = '1.1';
+$CGI::Session::Test::Default::VERSION = '1.3';
 
 
 sub new {
@@ -228,16 +228,15 @@ sub run {
         SKIP: {
             my $dsn = CGI::Session->parse_dsn($self->{dsn});
             if ( !$dsn->{serializer} || ($dsn->{serializer} eq 'default') ) {
-                skip("Default serializer cannot serialize objects properly", 4);
+                skip("Default serializer cannot serialize objects properly", 6);
             }
             ok($simple_object->name eq "Sherzod Ruzmetov");
             ok($simple_object->emails(1) eq 'sherzodr@cpan.org');
             ok($simple_object->emails(0) eq 'sherzodr@handalak.com');
             ok($simple_object->blogs('lost+found') eq 'http://author.handalak.com/');
+            ok(ref $session->param("overloaded_object") );
+            ok($session->param("overloaded_object") eq "ABCDEFG", "Object is still overloaded");
         }
-
-        ok($session->param("overloaded_object") eq "ABCDEFG");
-        ok(!ref($session->param("overloaded_object")), "'overloaded' lost its objectness");
         $session->delete();
     }
 }

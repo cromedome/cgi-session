@@ -3,13 +3,13 @@ package CGI::Session;
 # $Id$
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.00_07';
+$CGI::Session::VERSION  = '4.00_08';
 $CGI::Session::NAME     = 'CGISESSID';
 
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
@@ -413,7 +413,7 @@ sub param {
         -value  => undef,
         @_
     );
-    
+
     #
     # USAGE: $s->param(-name=>$n, -value=>$v);
     # DESC:  updates session data using CGI.pm's 'named parameter' syntax. Only
@@ -423,8 +423,8 @@ sub param {
             carp "param(): attempt to write to private parameter";
             return undef;
         }
-        $self->{_DATA}->{ $args{'-name'} } = CGI::Session->str_val( $args{'-value'} );
-        return $self->_set_status(STATUS_MODIFIED);
+        $self->_set_status(STATUS_MODIFIED);
+        return $self->{_DATA}->{ $args{'-name'} } = $args{'-value'};
     }
 
     #
@@ -441,7 +441,7 @@ sub param {
                 carp "param(): attempt to write to private parameter";
                 next;
             }
-            $self->{_DATA}->{ $_[$i] } = CGI::Session->str_val( $_[$i+1] );
+            $self->{_DATA}->{ $_[$i] } = $_[$i+1];
         }
         $self->_set_status(STATUS_MODIFIED);
         return 1;
@@ -576,45 +576,6 @@ sub find {
         or return $class->set_error( "find(): traverse seems to have failed. " . $driver_obj->errstr );
     return 1;
 }
-
-
-
-sub is_object {
-    my $class = shift;
-    
-    unless ( @_ ) {
-        croak "is_object(): usage error";
-    }
-
-    my $refstr = ref $_[0];
-    return 0 unless $refstr;
-
-    if ( ($refstr eq "HASH") || ($refstr eq "ARRAY") || ($refstr eq "SCALAR") || ($refstr eq "GLOB") ||
-         ($refstr eq "CODE") || ($refstr eq "REF")   || ($refstr eq "LVALUE") ) {
-        return 0;
-    }
-    return 1;
-}
-
-
-
-sub str_val {
-    my $class = shift;
-
-    unless ( @_ ) {
-        croak "str_val(): usage error";
-    }
-
-    if ( $class->is_object( $_[0] ) ) {
-        require overload;
-        if ( overload::Overloaded($_[0]) ) {
-            return ''.$_[0];
-        }
-    }
-    return $_[0];
-}
-
-
 
 
 1;
@@ -1017,20 +978,6 @@ Now, $session->header() uses "MY_SID" as a name for the session cookie.
 Returns query object associated with current session object. Default query object class is L<CGI.pm|CGI>.
 
 =back
-
-=item parse_dsn($dsn_string)
-
-Class method. Takes a $dsn-compatible string as the first and the only argument and returns a reference
-to a hash of parsed dsn params and their values. Example:
-
-    my $hashref = CGI::Session->parse_dsn("driver:file;serializer:FreezeThaw");
-
-$hashref now references following table:
-
-    $hashref = {
-        driver      => "file",
-        serializer  => "freezethaw"
-    }
 
 =head1 DISTRIBUTION
 
