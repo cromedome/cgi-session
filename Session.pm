@@ -545,7 +545,7 @@ C<driver> - CGI::Session driver. Available drivers are "File", "DB_File" and
 
 C<serializer> - serializer to be used to encode the data structure before saving
 in the disk. Available serializers are "Storable", "FreezeThaw" and "Default".
-Default is "Default", which uses standard L<Data::Dumper>
+Default is "Default", which uses standard L<Data::Dumper|Data::Dumper>
 
 =item *
 
@@ -558,7 +558,7 @@ C<id> - ID generator to use when new session is to be created. Available ID gene
 
 Returns effective ID for a session. Since effective ID and claimed ID
 can differ, valid session id should always be retrieved using this
-method. Return value: string denoting the session id.
+method.
 
 =item C<param($name)>
 
@@ -616,17 +616,17 @@ goes out of scope or close() is called.
 =item C<close()>
 
 closes the session temporarily until new() is called on the same session
-next time. In other words, it's a call to flush() and DESTROY()
+next time. In other words, it's a call to flush() and DESTROY(), but
+a lot slower. Normally you never have to call close().
 
 =item C<atime()>
 
 returns the last access time of the session in the form of seconds from
-epoch. Is used while expiring sessions.
+epoch. This time is used internally while auto-expiring sessions and/or session parameters.
 
 =item C<ctime()>
 
-returns the time of the session data in the form of seconds from epoch,
-denoting the date when session was created for the first time.
+returns the time when the session was first created. 
 
 =item C<expires()>
 
@@ -634,15 +634,9 @@ denoting the date when session was created for the first time.
 
 =item C<expires($param, $time)>
 
-Sets expiration date relative to atime(). If used with no arguments,
-returns the expiration date if it was ever set for a whole object. If no
-expiration was ever set, returns undef.
+Sets expiration date relative to atime(). If used with no arguments, returns the expiration date if it was ever set. If no expiration was ever set, returns undef.
 
-Second form sets an expiration date for a whole session. This value is
-checked when previously stored session is asked to be retrieved, and if
-its expiration date has passed will be expunged from the disk
-immediately and new session is created accordingly. Passing 0 would
-cancel expiration date
+Second form sets an expiration time. This value is checked when previously stored session is asked to be retrieved, and if its expiration date has passed will be expunged from the disk immediately and new session is created accordingly. Passing 0 would cancel expiration date.
 
 By using the third syntax you can also set an expiration date for a
 particular session parameter, say "~logged-in". This would cause the
@@ -668,13 +662,11 @@ Examples:
     $session->expires(0);       # cancel expiration
     $session->expires("~logged-in", "+10m");# expires ~logged-in flag in 10 mins
 
-Note: all the expiration times are relative to session's last access
-time, not to its creation time. To expire a session immediately, call
-C<delete()>. To expire a specific session parameter immediately, call C<clear()>
+Note: all the expiration times are relative to session's last access time, not to its creation time. To expire a session immediately, call C<delete()>. To expire a specific session parameter immediately, call C<clear()> on that parameter.
 
 =item C<remote_addr()>
 
-Returns the remote address of the user who created the session for the
+returns the remote address of the user who created the session for the
 first time. Returns undef if variable REMOTE_ADDR wasn't present in the
 environment when the session was created
 
@@ -686,7 +678,7 @@ immediate expiration after which the session will not be accessible
 =item C<error()>
 
 returns the last error message from the library. It's the same as the
-value of $CGI::Session::errstr. Example:
+value of $CGI::Session::errstr. Example:	
 
     $session->flush() or die $session->error();
 
@@ -700,33 +692,27 @@ mostly for debugging.
 
 =back
 
-
 =head1 DISTRIBUTION
 
-CGI::Session consists of several modular components such as L<drivers|"DRIVERS">,
-L<serializers|"SERIALIZERS"> and L<id generators|"ID Generators">. This section lists
-what is available. 
+CGI::Session consists of several modular components such as L<drivers|"DRIVERS">, L<serializers|"SERIALIZERS"> and L<id generators|"ID Generators">. This section lists what is available. 
 
 =head2 DRIVERS
 
-Following drivers are available:
+Following drivers are included in the standard distribution:
 
 =over 4
 
 =item *
 
-L<File|CGI::Session::File> - default driver for storing session data in plain files.
-Full name: B<CGI::Session::File>
+L<File|CGI::Session::File> - default driver for storing session data in plain files. Full name: B<CGI::Session::File>
 
 =item *
 
-L<DB_File|CGI::Session::DB_File> - for storing session data in BerkelyDB. Requires: L<DB_File>.
-Full name: B<CGI::Session::DB_File>
+L<DB_File|CGI::Session::DB_File> - for storing session data in BerkelyDB. Requires: L<DB_File>. Full name: B<CGI::Session::DB_File>
 
 =item *
 
-L<MySQL|CGI::Session::MySQL> - for storing session data in MySQL tables. Requires L<DBI|DBI> and
-L<DBD::mysql|DBD::mysql>. Full name: B<CGI::Session::MySQL>
+L<MySQL|CGI::Session::MySQL> - for storing session data in MySQL tables. Requires L<DBI|DBI> and L<DBD::mysql|DBD::mysql>. Full name: B<CGI::Session::MySQL>
 
 =back
 
@@ -768,13 +754,11 @@ L<Incr|CGI::Session::ID::Incr> - generates auto-incrementing ids. Full name: B<C
 
 =head1 COPYRIGHT
 
-This library is free software. You can modify and or distribute it under
-the same terms as Perl itself.
+This library is free software. You can modify and or distribute it under the same terms as Perl itself.
 
 =head1 AUTHOR
 
-Sherzod Ruzmetov <sherzodr@cpan.org>.
-Feedbacks, suggestions and bug reports are welcome.
+Sherzod Ruzmetov <sherzodr@cpan.org>. Feedbacks, suggestions are welcome.
 
 =head1 SEE ALSO
 
@@ -1103,6 +1087,12 @@ sub param_hashref {
 
 # name() - returns the cookie name associated with the session id
 sub name {
+	my ($class, $name)  = @_;
+
+	if ( defined $name ) {
+		return $CGI::Session::NAME = $name;
+	}
+
     return $CGI::Session::NAME;
 }
 
@@ -1112,6 +1102,7 @@ sub cookie {
     my $self = shift;
     confess "cookie(): don't use me! I'm broken";
 }
+
 
 
 

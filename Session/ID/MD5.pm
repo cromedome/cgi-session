@@ -87,7 +87,4 @@ L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
 
 =back
 
-
 =cut
-
-
