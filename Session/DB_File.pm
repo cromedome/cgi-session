@@ -2,8 +2,6 @@ package CGI::Session::DB_File;
 
 # $sid: DB_File.pm,v 1.2 2002/11/03 08:27:04 sherzodr Exp $
 
-use strict;
-use warnings;
 use DB_File;
 use File::Spec;
 use Carp 'croak';
@@ -44,8 +42,10 @@ sub remove {
     my ($self, $sid, $options) = @_;
 
     my $db = $self->DB_File_init($options);
-    return $db->{$sid};
+    return delete $db->{$sid};
 }
+
+
 
 sub teardown {
     my ($self, $sid, $options) = @_;
@@ -71,7 +71,7 @@ sub DB_File_init {
     tie (my %db, "DB_File", $path, O_RDWR|O_CREAT, 0664, $DB_HASH) or die $!;
 
     $self->{_db_file_hash} = \%db;
-    $self->{_db_file_path} = $path;
+    $self->{_db_file_path} = $path;    
 
     return $self->{_db_file_hash};
 }

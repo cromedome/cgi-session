@@ -6,8 +6,8 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test;
-BEGIN { plan tests => 4 };
-use CGI::Session::DB_File;
+BEGIN { plan tests => 7 };
+use CGI::Session::File;
 ok(1); # If we made it this far, we're ok.
 
 #########################
@@ -15,13 +15,23 @@ ok(1); # If we made it this far, we're ok.
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
 
-my $s = new CGI::Session::DB_File('c51a3cf001bc2d1973d7979decff4879', {Directory=>"t"});
+my $s = new CGI::Session::File(undef, {Directory=>"t"});
 
 ok($s);
-
+    
 ok($s->id);
 
-$s->param(name=>'shrezodR');
+$s->param(author=>'Sherzod Ruzmetov', name => 'CGI::Session', version=>$s->version );
+
+ok($s->param('author'));
 
 ok($s->param('name'));
 
+ok($s->param('version'));
+
+
+$s->param(-name=>'email', -value=>'sherzodr@cpan.org');
+
+ok($s->param(-name=>'email'));
+
+#$s->delete();
