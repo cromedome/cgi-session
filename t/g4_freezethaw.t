@@ -8,7 +8,7 @@ unless ( eval "require FreezeThaw" ) {
 }
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "serializer:FreezeThaw",
+    dsn => "serial:FreezeThaw",
     args=>{Directory=>File::Spec->catdir('t', 'sessiondata')});
 
 $t->run();

@@ -1,3 +1,10 @@
+my %dsn = (
+    DataSource  => $ENV{CGISESS_MYSQL_DSN}      || "dbi:mysql:test",
+    User        => $ENV{CGISESS_MYSQL_USER}     || $ENV{USER},
+    Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
+    TableName   => 'sessions'
+);
+
 
 use strict;
 use File::Spec;
@@ -10,13 +17,6 @@ for ( "DBI", "DBD::mysql", "Storable" ) {
         exit(0);
     }
 }
-
-my %dsn = (
-    DataSource  => "dbi:mysql:sherzodr_shop",
-    User        => 'sherzodr_shop',
-    Password    => 'marley01',
-    TableName   => 'sessions'
-);
 
 my $dbh = DBI->connect($dsn{DataSource}, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>0});
 unless ( $dbh ) {
@@ -38,7 +38,7 @@ unless ( defined $count ) {
 
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "driver:mysql:serializer:Storable",
+    dsn => "dr:mysql;ser:Storable",
     args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
 
 $t->run();

@@ -11,7 +11,7 @@ for ( "DB_File", "Storable" ) {
 }
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "driver:DB_File;serializer:Storable",
+    dsn => "d:DB_File;s:Storable;id:md5",
     args=>{FileName => File::Spec->catfile('t', 'sessiondata', 'cgisess.db')});
 
 $t->run();

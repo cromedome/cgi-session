@@ -11,7 +11,7 @@ for ( "DB_File", "FreezeThaw" ) {
 }
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "driver:DB_File;serializer:FreezeThaw",
+    dsn => "dr:DB_File;ser:FreezeThaw",
     args=>{FileName => File::Spec->catfile('t', 'sessiondata', 'cgisess.db')});
 
 $t->run();

@@ -8,7 +8,7 @@ unless ( eval "require DB_File" ) {
 }
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "driver:DB_File",
+    dsn => "dr:db_file",
     args=>{FileName => File::Spec->catfile('t', 'sessiondata', 'cgisess.db')});
 
 $t->run();
