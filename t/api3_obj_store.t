@@ -29,7 +29,7 @@ unless ( $ser ) {
 my $args = "serializer:$ser";
 my $dr_args = {Directory=>'t'};
 
-print "1..8\n";
+print "1..9\n";
 
 my $cgi = new CGI;
 my $s   = new CGI::Session($args, undef, $dr_args);
@@ -38,10 +38,10 @@ my $s   = new CGI::Session($args, undef, $dr_args);
 print defined($s) ? "ok\n" : "not ok\n";
 print $s->id() ? "ok\n" : "not ok\n";
 
-$cgi->param(name => 'Sherzod');
+print $cgi->param(name => 'Sherzod') ? "ok\n" : "not ok\n";
 
 print $cgi->param('name') ? "ok\n" : "not ok\n";
-print $s->param(_CGI => $cgi) ? "ok\n" : "not ok\n";
+print $s->param(CGI => $cgi) ? "ok\n" : "not ok\n";
 
 my $sid = $s->id();
 
@@ -52,7 +52,7 @@ print defined($s2) ? "ok\n" : "not ok\n";
 
 print $s2->id eq $sid ? "ok\n" : "not ok\n";
 
-my $old_cgi = $s2->param('_CGI');
+my $old_cgi = $s2->param('CGI');
 
 print ref($old_cgi) ? "ok\n" : "not ok\n";
 
