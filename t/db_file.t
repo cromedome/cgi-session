@@ -7,7 +7,7 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test;
-BEGIN { plan tests => 11  };
+BEGIN { plan tests => 14  };
 use CGI::Session::DB_File;
 ok(1); # If we made it this far, we're ok.
 
@@ -31,7 +31,6 @@ ok($s->param('name'));
 
 ok($s->param('version'));
 
-
 $s->param(-name=>'email', -value=>'sherzodr@cpan.org');
 
 ok($s->param(-name=>'email'));
@@ -44,13 +43,16 @@ ok($s->expire());
 
 my $sid = $s->id();
 
-$s->close();
+$s->flush();
 
 my $s2 = new CGI::Session::DB_File($sid, {Directory=>'t'});
 ok($s2);
 
 ok($s2->id() eq $sid);
 
-$s2->delete();
+ok($s2->param('email'));
+ok($s2->param('author'));
+ok($s2->expire());
 
+$s2->delete();
 

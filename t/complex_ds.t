@@ -7,7 +7,7 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test;
-BEGIN { plan tests => 7  };
+BEGIN { plan tests => 11  };
 use CGI::Session::File;
 ok(1); # If we made it this far, we're ok.
 
@@ -39,4 +39,20 @@ ok( $s->param('d3')->{d1}->[1], 2);
 
 ok( $s->param('d3')->{d2}->{1}, 'Bir');
 
+my $sid = $s->id();
+
+$s->flush();
+
+my $s1 = new CGI::Session::File($sid, {Directory=>"t"})
+        or die $CGI::Session::errstr;
+
+ok($s1->param('d3'));
+
+ok( $s1->param('d3')->{d1}->[0], 1);
+
+ok( $s1->param('d3')->{d1}->[1], 2);
+
+ok( $s1->param('d3')->{d2}->{1}, 'Bir');
+
+$s1->delete();
 

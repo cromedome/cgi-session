@@ -8,22 +8,14 @@
 
 use Test;
 BEGIN { plan tests => 14  };
-use CGI::Session::MySQL;
+use CGI::Session qw/-api_3/;
 ok(1); # If we made it this far, we're ok.
 
 #########################
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
-
-my %options = (
-    DataSource => "DBI:mysql:sherzodr_shop",
-    User        => "sherzodr_shop",
-    Password    => "marley01"
-);
-
-my $s = new CGI::Session::MySQL(undef, \%options) 
-    or die $CGI::Session::errstr;
+my $s = new CGI::Session("serializer:Storable", undef, {Directory=>"t"} );
 
 ok($s);
     
@@ -52,7 +44,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session::MySQL($sid, \%options);
+my $s2 = new CGI::Session("serializer:Storable", $sid, {Directory=>'t'});
 ok($s2);
 
 ok($s2->id() eq $sid);
