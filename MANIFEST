@@ -1,6 +1,11 @@
 Changes
-Makefile.PL
 MANIFEST
+MANIFEST.SKIP
+Makefile.PL
 README
 Session.pm
-test.pl
+Session/DB_File.pm
+Session/File.pm
+Session/ID/MD5.pm
+Session/Serialize/Storable.pm
+t/default.t
