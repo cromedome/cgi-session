@@ -3,8 +3,8 @@ package CGI::Session;
 # $Id$
 
 use strict;
-use diagnostics;
-use Carp ('confess', 'carp');
+#use diagnostics;
+use Carp ('confess', 'croak');
 use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3 $TOUCH);
@@ -41,6 +41,7 @@ sub new {
         _DATA       => undef,
         _STATUS     => MODIFIED,
         _API3       => { },
+        _CACHE      => { },
     };
 
     if ( $API_3 || (@_ == 3 ) ) {
@@ -69,6 +70,7 @@ sub api_3 {
         _OPTIONS    => [ $_[1], $_[2] ],
         _DATA       => undef,
         _STATUS     => MODIFIED,
+        _CACHE      => {},
         _API_3      => {
             DRIVER      => 'File',
             SERIALIZER  => 'Default',
@@ -142,7 +144,7 @@ sub DESTROY {
 
 # options() - used by drivers only. Returns the driver
 # specific options. To be used in the future releases of the 
-# library, may be
+# library, may be. Experimental!
 sub driver_options {
     my $self = shift;
 
@@ -473,6 +475,8 @@ sub flush {
 
 
 
+
+
 # Autoload methods go after =cut, and are processed by the autosplit program.
 
 1;
@@ -609,6 +613,20 @@ Note: you can also use unambiguous abbreviations of the DSN parameters. Examples
 
     new CGI::Session("dr:File;ser:Storable", undef, {Diretory=>'/tmp'});
 
+=item C<touch()>
+
+Constructor. Used in cleanup scripts. Example:
+
+    tie my %dir, "IO::Dir", "/tmp";
+    while ( my ($filename, $stat) = each %dir ) {
+        my ($sid) = $filename = m/^cgisess_(\w{32})$/;
+        CGI::Session->touch(undef, $sid, {Directory=>"/tmp"});
+    }
+    untie(%dir);
+
+touch() accepts the same arguments as new() does, but it doesn't necessarily
+returns object instance. It simply expires old sessions without updating their
+last access time parameter. 
 
 =item C<id()>
 
@@ -780,6 +798,20 @@ It will retrieve the name of the session cookie from $CGI::Session::NAME variabl
 
 Now, $session->header() uses "MY_SID" as a name for the session cookie.
 
+=item C<cache()>
+
+a way of caching certain values in session object during the process.
+This is normally used exclusively from within CGI::Session drivers to 
+pass certain values from a method to another. It used to be done by setting
+a new object attribute from within the driver like so:
+
+    $self->{MYSQL_DBH} = $dbh;
+
+It would cause attribute collisions between the base class and session
+driver. cache() method prevents against such unpleasant surprises:
+
+    $self->cache(DBH => $dbh);
+
 =back
 
 =head1 DATA TABLE
@@ -790,7 +822,8 @@ in the table, and whatever value you assign become a value associated with
 that key. Every key/value pair is also called a record. 
 
 All the data you save through param() method are called public records.
-There are several read-only private records as well. Normally, you don't have to know anything about them to make the best use of the library. But knowing wouldn't hurt either. Here are the list of the private records and some description  of what they hold:
+These records are both readable and writable by the programmer implementing
+the library. There are several read-only private records as well. Normally, you don't have to know anything about them to make the best use of the library. But knowing wouldn't hurt either. Here are the list of the private records and some description  of what they hold:
 
 =over 4
 
@@ -835,7 +868,7 @@ So the following attempt will have no effect on the session data whatsoever
 Although private methods are not writable, the library allows reading them
 using param() method:
 
-    my $sid = $session->param(_SESSION_ID);
+    my $sid = $session->param('_SESSION_ID');
 
 The above is the same as:
 
@@ -922,6 +955,8 @@ Following people contributed with their patches and/or suggestions to the develo
 =item Olivier Dragon E<lt>dragon@shadnet.shad.caE<gt>
 
 =item Adam Jacob E<lt>adam@sysadminsith.orgE<gt>
+
+=item Igor Plisco E<lt>igor@plisco.ruE<gt>
 
 =back
 
@@ -1316,5 +1351,35 @@ sub sync_param {
 }
 
 
+
+
+
+# cache() - used by driver authors to cache certain values in the
+# object. Use of this method is prefered over accessing $self hashref
+# directly to avoid future namespace collisions. Experimental!
+sub cache {
+    my $self = shift;
+
+    unless ( @_ ) {
+        croak "cache(): arguments missing";
+    }
+
+    if ( scalar(@_) == 1 ) {
+        return $self->{_CACHE}->{ $_[0] };
+    }
+
+    if ( @_ % 2 ) {
+        croak "cache(): invalid number of arguments";
+    }
+
+    my %args = @_;
+    my $n    = 0;
+    while ( my ($k, $v) = each %args ) {
+        $self->{_CACHE}->{$k} = $v;
+        $n++;
+    }
+
+    return $n;
+}
 
 # $Id$
