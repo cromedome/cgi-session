@@ -374,6 +374,10 @@ __END__;
 
 CGI-Session - persistent storage of complex data in CGI applications
 
+=head1 REVISION
+
+This manual referes to $Revision$
+
 =head1 SYNOPSIS
 
     $sess = new CGI::Session::File(undef, {Directory=>"/tmp"} );
