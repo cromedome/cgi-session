@@ -38,7 +38,7 @@ unless ( defined $count ) {
 
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "driver:sqlite;serializer:storable",
+    dsn => "driver:sqlite;seRializer:storable",
     args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
     #args => \%dsn);
 

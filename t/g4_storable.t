@@ -10,7 +10,7 @@ if ( $@ ) {
 }
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "serializer:Storable",
+    dsn => "driver:file;serializer:Storable",
     args=>{Directory=>File::Spec->catdir('t', 'sessiondata')});
 
 $t->run();

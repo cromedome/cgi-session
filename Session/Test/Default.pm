@@ -5,6 +5,7 @@ use strict;
 
 use Carp;
 use Test::More;
+use Data::Dumper;
 
 $CGI::Session::Test::Default::VERSION = '1.0';
 
@@ -12,9 +13,9 @@ $CGI::Session::Test::Default::VERSION = '1.0';
 sub new {
     my $class   = shift;
     my $self    = bless {
-            dsn     => undef,
+            dsn     => "driver:file",
             args    => undef,
-            tests   => 54,
+            tests   => 56,
             @_
     }, $class;
 
@@ -40,13 +41,14 @@ sub run {
     
     plan(tests => $self->{tests});
 
-    use_ok("CGI::Session");
+    use_ok("CGI::Session", "CGI::Session loaded successfully!");
 
     my $sid = undef;
     FIRST: {
         ok(1, "=== 1 ===");
         my $session = CGI::Session->load() or die CGI::Session->errstr;
         ok($session, "empty session should be created");
+        ok(!$session->id);
         ok($session->is_empty);
         ok(!$session->is_expired);
 
@@ -54,6 +56,12 @@ sub run {
 
         $session = CGI::Session->new($self->{dsn}, '_DOESN\'T EXIST_', $self->{args}) or die CGI::Session->errstr;
         ok( $session, "Session created successfully!");
+
+        #
+        # checking if the driver object created is really the driver requested:
+        #
+        my $dsn = $session->parse_dsn( $self->{dsn} );
+        ok( ref $session->_driver eq "CGI::Session::Driver::" . $dsn->{driver}, ref $dsn->{Driver} );
 
         ok( $session->ctime && $session->atime, "ctime & atime are set");
         ok( $session->atime == $session->ctime, "ctime == atime");

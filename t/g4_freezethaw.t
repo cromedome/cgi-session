@@ -10,7 +10,7 @@ if ( $@ ) {
 }
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "serial:FreezeThaw",
+    dsn => "Driver:file;serial:FreezeThaw",
     args=>{Directory=>File::Spec->catdir('t', 'sessiondata')});
 
 $t->run();

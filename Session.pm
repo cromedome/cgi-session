@@ -3,13 +3,13 @@ package CGI::Session;
 # $Id$
 
 use strict;
-#use diagnostics;
+use diagnostics;
 
 use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.00_04';
+$CGI::Session::VERSION  = '4.00_05';
 $CGI::Session::NAME     = 'CGISESSID';
 
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
@@ -193,31 +193,39 @@ sub load {
     return $self;
 }
 
-
-sub DESTROY         {   $_[0]->flush()  }
+sub DESTROY         {   $_[0]->flush()      }
 
 *param_hashref      = \&dataref;
-sub dataref         { $_[0]->{_DATA}    }
-sub is_empty           { !$_[0]->id        }
-sub is_expired         { $_[0]->_test_status( STATUS_EXPIRED ) }
+sub dataref         { $_[0]->{_DATA}        }
+
+sub is_empty        { !defined($_[0]->id)   }
+
+sub is_expired      { $_[0]->_test_status( STATUS_EXPIRED ) }
+
 sub error           { croak $_[1]       }
-sub id              { $_[0]->dataref->{_SESSION_ID}     }
-sub atime           { $_[0]->dataref->{_SESSION_ATIME}  }
-sub ctime           { $_[0]->dataref->{_SESSION_CTIME}  }
-sub etime           { $_[0]->dataref->{_SESSION_ETIME}  }
+
+sub id              { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ID}    : undef }
+
+sub atime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ATIME} : undef }
+
+sub ctime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_CTIME} : undef }
+
+sub etime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ETIME} : undef }
 
 sub _driver         { $_[0]->{_OBJECTS}->{driver} }
+
 sub _serializer     { $_[0]->{_OBJECTS}->{serializer} }
+
 sub _id_generator   { $_[0]->{_OBJECTS}->{id} }
 
 sub parse_dsn {
     my $self = shift;
     croak "parse_dsn(): usage error" unless $_[0];
-    
+
     require Text::Abbrev;
     my $abbrev = Text::Abbrev::abbrev( "driver", "serializer", "id" );
     my %temp = map { split /:/ } (split /;/, $_[0]);
-    my %dsn  = map { ( lc($abbrev->{$_}), lc($temp{$_}) ) } keys %temp;
+    my %dsn  = map { $abbrev->{lc $_}, lc $temp{$_} } keys %temp;
     return \%dsn;
 }
 
