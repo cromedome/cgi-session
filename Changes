@@ -1,3 +1,7 @@
+What is new in 4.00_02 - Wednesday, February 09, 2005
+
+    * FIX: race conditions in Driver/file.pm pointed out by Martin Bartosch
+
 What is new in 4.00_01 - Wednesday, February 09, 2005
 
     * NEW: load() - constructor method to prevent unnecessary session creations

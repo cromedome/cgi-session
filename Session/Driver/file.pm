@@ -11,7 +11,7 @@ use CGI::Session::Driver;
 use vars qw( $FileName);
 
 @CGI::Session::Driver::file::ISA        = qw( CGI::Session::Driver );
-$CGI::Session::Driver::file::VERSION    = "3.2";
+$CGI::Session::Driver::file::VERSION    = "3.3";
 $FileName                               = "cgisess_%s";
 
 sub init {
@@ -59,10 +59,11 @@ sub store {
     my $directory = $self->{Directory};
     my $file      = sprintf( $FileName, $sid );
     my $path      = File::Spec->catfile($directory, $file);
-    sysopen(FH, $path, O_WRONLY|O_CREAT|O_TRUNC) or return $self->set_error( "store(): couldn't open '$path': $!" );
-    flock(FH, LOCK_EX) or return $self->set_error( "store(): couldn't lock '$path': $!" );
+    sysopen(FH, $path, O_WRONLY|O_CREAT) or return $self->set_error( "store(): couldn't open '$path': $!" );
+    flock(FH, LOCK_EX)      or return $self->set_error( "store(): couldn't lock '$path': $!" );
+    truncate(FH, 0)         or return $self->set_error( "store(): couldn't truncate '$path': $!" );
     print FH $datastr;
-    close(FH) or return $self->set_error( "store(): couldn't close '$path': $!" );
+    close(FH)               or return $self->set_error( "store(): couldn't close '$path': $!" );
     return 1;
 }
 
