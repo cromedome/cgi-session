@@ -722,7 +722,18 @@ param() syntax. Attempt setting parameter names that start with I<_SESSION_> wil
 
 =item param_hashref()
 
-B<Obsoleted> by L<data()|/"data()">. Returns reference to session's data table, which is represented as native HASH.
+B<Deprecated>. Use L<dataref()|/"dataref()"> instead.
+
+=item dataref()
+
+Returns reference to session's data table:
+
+    $params = $s->dataref();
+    $sid = $params->{_SESSION_ID};
+    $name= $params->{name};
+    # etc...
+
+Useful for having all session data in a hashref, but quite dangerous to update.
 
 =item save_param()
 
@@ -777,17 +788,6 @@ and if its expiration date has passed will be expunged from the disk immediately
 By using the third syntax you can set expiration date for a particular session parameter, say I<~logged-in>. This would
 cause the library call clear() on the parameter when its time is up. Passing 0 cancels expiration.
 
-Only way of catching expired session in applications is through L<load()|/"load()"> only:
-
-    $s = CGI::Session->load() or die CGI::Session->errstr;
-    if ( $s->expired ) {
-        die "Your session has expired, please refresh your browser to restart";
-    }
-
-    if ( $s->empty ) {
-        $s =  $s->new();
-    }
-
 All the time values should be given in the form of seconds. Following keywords are also supported for your convenience:
 
     +-----------+---------------+
@@ -824,12 +824,40 @@ with load():
         $s = $s->new() or die $s->errstr;
     }
 
+
+=item empty()
+
+Returns true for sessions that are empty. It's preferred way of testing whether requested session was loaded successfully or not:
+
+    $s = CGI::Session->load($sid);
+    if ( $s->empty ) {
+        $s = $s->new();
+    }
+
+Actually, the above code is nothing but waste. The same effect could've been achieved by saying:
+
+    $s = CGI::Session->new( $sid );
+
+empty() is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<expired()|/"expired()"> for an example.
+
+=item delete()
+
+Deletes a session from the datastore and empties session data from memory, completely, so subsequent read/write requests on the same 
+object will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush()">,
+and flush() will do the actual removal.
+
+=back
+
+=head MISCELLANEOUS METHODS
+
+=over 4
+
 =item remote_addr()
 
 Returns the remote address of the user who created the session for the first time. Returns undef if variable REMOTE_ADDR
 wasn't present in the environment when the session was created.
 
-=item error()
+=item errstr()
 
 Class method. Returns last error message from the library.
 
@@ -839,7 +867,7 @@ Returns a dump of the session object. Useful for debugging purposes only.
 
 =item header()
 
-Simply a replacement for L<CGI.pm|CGI>'s header() method. Without this
+Replacement for L<CGI.pm|CGI>'s header() method. Without this
 method, you usually need to create a CGI::Cookie object and send it as part of the
 HTTP header:
 
@@ -859,17 +887,6 @@ creating session object:
     $session = new CGI::Session(undef, $cgi, \%attrs);
 
 Now, $session->header() uses "MY_SID" as a name for the session cookie.
-
-=item data()
-
-Returns CGI::Session::Data object. CGI::Session::Data represents in-memory session data, although in applications there's
-never a need for this method.
-
-=item delete()
-
-Deletes a session from the datastore and empties session data, completely, so subsequent read/write requests on the same object
-will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush()">, and 
-flush() will do the actual removal.
 
 =item query()
 
@@ -942,7 +959,11 @@ Full name: B<CGI::Session::ID::md5>.
 
 =item *
 
-L<static|CGI::Session::ID::static> - generates static, session ids. B<CGI::Session::ID::static>
+L<incr|CGI::Session::ID::incr> - generates incremental session ids.
+
+=item *
+
+L<static|CGI::Session::ID::static> - generates static session ids. B<CGI::Session::ID::static>
 
 =back
 
@@ -969,12 +990,11 @@ please send me a note.
 =head1 COPYRIGHT
 
 Copyright (C) 2001-2005 Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>. All rights reserved.
-
 This library is free software. You can modify and or distribute it under the same terms as Perl itself.
 
 =head1 AUTHOR
 
-Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>. Feedbacks, suggestions are welcome.
+Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>, http://author.handalak.com/
 
 =head1 SEE ALSO
 
