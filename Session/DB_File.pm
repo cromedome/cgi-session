@@ -1,48 +1,47 @@
-package CGI::Session::DB_File;
+package CGI::Session::BluePrint;
 
 # $Id$
 
-use DB_File;
-use File::Spec;
+use strict;
 use base qw(
     CGI::Session
     CGI::Session::ID::MD5
-    CGI::Session::Serialize::Default );
-
-use vars qw($VERSION $NAME);
-
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
-$NAME = 'cgisess.db';
+    CGI::Session::Serialize::Default
+);
 
 
-sub retrieve {
-    my ($self, $sid, $options) = @_;
-    
-    my $db = $self->DB_File_init($options) or return;
-    
-    if ( defined $db->{$sid} ) {
-        return $self->thaw( $db->{$sid} );
-    }
+# Load neccessary libraries below
 
-    return undef;
-}
+use vars qw($VERSION);
 
+$VERSION = '0.1';
 
 sub store {
     my ($self, $sid, $options, $data) = @_;
 
-    my $db = $self->DB_File_init($options) or return;
-    return $db->{$sid} = $self->freeze($data);    
+    my $storable_data = $self->freeze($data);
+
+    #now you need to store the $storable_data into the disk
+
 }
 
+
+sub retrieve {
+    my ($self, $sid, $options) = @_;
+
+    # you will need to retrieve the stored data, and 
+    # deserialize it using $self->thaw() method
+}
 
 
 
 sub remove {
     my ($self, $sid, $options) = @_;
 
-    my $db = $self->DB_File_init($options);
-    return delete $db->{$sid};
+    # you simply need to remove the data associated 
+    # with the id
+    
+    
 }
 
 
@@ -50,37 +49,15 @@ sub remove {
 sub teardown {
     my ($self, $sid, $options) = @_;
 
-    if ( defined $self->{_db_file_hash} ) {
-        untie(%{$self->{_db_file_hash}} );
-    }    
+    # this is called just before session object is destroyed
 }
 
 
 
-sub DB_File_init {
-    my ($self, $options) = @_;
-
-    if ( defined $self->{_db_file_hash} ) {
-        return $self->{_db_file_hash};
-    }
-
-    my $dir = $options->[1]->{Directory};
-    my $file= $options->[1]->{FileName} || $NAME;
-    my $path= File::Spec->catfile($dir, $file);
-
-    unless ( tie (my %db, "DB_File", $path, O_RDWR|O_CREAT, 0644, $DB_HASH) ) {
-        $self->error("Couldn't open $path: $!");
-        return undef;
-    }
-    $self->{_db_file_hash} = \%db;
-    $self->{_db_file_path} = $path;
-
-    return $self->{_db_file_hash};
-}
 
 # $Id$
 
-1;
+1;       
 
 =pod
 
