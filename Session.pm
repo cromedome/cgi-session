@@ -4,7 +4,7 @@ package CGI::Session;
 
 use strict;
 use diagnostics;
-use Carp ('confess');
+use Carp ('confess', 'carp');
 use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3 $TOUCH);
@@ -90,13 +90,13 @@ sub api_3 {
     }
 
     my $driver = "CGI::Session::$self->{_API_3}->{DRIVER}";
-    eval "require $driver" or die $@;
+    eval "require $driver" or carp $@;
 
     my $serializer = "CGI::Session::Serialize::$self->{_API_3}->{SERIALIZER}";
-    eval "require $serializer" or die $@;
+    eval "require $serializer" or carp $@;
 
     my $id = "CGI::Session::ID::$self->{_API_3}->{ID}";
-    eval "require $id" or die $@;
+    eval "require $id" or carp $@;
 
 
     # Now re-defining ISA according to what we have above
