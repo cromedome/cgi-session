@@ -1,8 +1,8 @@
 package CGI::Session::Test::Default;
 
 use strict;
-#use diagnostics;
-
+use diagnostics;
+use overload;
 use Carp;
 use Test::More;
 use Data::Dumper;
@@ -15,7 +15,7 @@ sub new {
     my $self    = bless {
             dsn     => "driver:file",
             args    => undef,
-            tests   => 56,
+            tests   => 77,
             @_
     }, $class;
 
@@ -120,7 +120,7 @@ sub run {
     }
 
 
-    sleep(1);   # <-- have to wait untill the session expires!
+    sleep(1);   # <-- have to wait until the session expires!
 
     my $driver;
     THREE: {
@@ -178,8 +178,108 @@ sub run {
         $session->delete();
     }
 
+
+    SIX: {
+        ok(1, "=== 6 ===");
+        my $session = CGI::Session->new($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
+        ok($session, "Session object created successfully");
+        ok($session->id ne $sid, "New object created, because previous object was deleted");
+        $sid = $session->id;
+
+        #
+        # creating a simple object to be stored into session
+        my $simple_class = SimpleObjectClass->new();
+        ok($simple_class, "SimpleObjectClass created successfully");
+
+        $simple_class->name("Sherzod Ruzmetov");
+        $simple_class->emails(0, 'sherzodr@handalak.com');
+        $simple_class->emails(1, 'sherzodr@cpan.org');
+        $simple_class->blogs('lost+found', 'http://author.handalak.com/');
+        $simple_class->blogs('yigitlik', 'http://author.handalak.com/uz/');
+        $session->param('simple_object', $simple_class);
+
+        ok($session->param('simple_object')->name eq "Sherzod Ruzmetov");
+        ok($session->param('simple_object')->emails(1) eq 'sherzodr@cpan.org');
+        ok($session->param('simple_object')->blogs('yigitlik') eq 'http://author.handalak.com/uz/');
+
+        #
+        # creating an overloaded object to be stored into session
+        my $overloaded_class = OverloadedObjectClass->new("ABCDEFG");
+        ok($overloaded_class, "OverloadedObjectClass created successfully");
+        ok(overload::Overloaded($overloaded_class) , "OverloadedObjectClass is properly overloaded");
+        ok(ref ($overloaded_class) eq "OverloadedObjectClass", "OverloadedObjectClass is an object");
+        $session->param("overloaded_object", $overloaded_class);
+
+        ok($session->param("overloaded_object") eq "ABCDEFG");
+
+    }
+
+
+    SEVEN: {
+        ok(1, "=== 7 ===");
+        my $session = CGI::Session->new($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
+        ok($session, "Session object created successfully");
+        ok($session->id eq $sid, "Previously stored object loaded successfully");
+
+        
+        my $simple_object = $session->param("simple_object");
+        ok(ref $simple_object eq "SimpleObjectClass", "SimpleObjectClass loaded successfully");
+
+        SKIP: {
+            my $dsn = CGI::Session->parse_dsn($self->{dsn});
+            if ( !$dsn->{serializer} || ($dsn->{serializer} eq 'default') ) {
+                skip("Default serializer cannot serialize objects properly", 4);
+            }
+            ok($simple_object->name eq "Sherzod Ruzmetov");
+            ok($simple_object->emails(1) eq 'sherzodr@cpan.org');
+            ok($simple_object->emails(0) eq 'sherzodr@handalak.com');
+            ok($simple_object->blogs('lost+found') eq 'http://author.handalak.com/');
+        }
+
+        ok($session->param("overloaded_object") eq "ABCDEFG");
+        ok(!ref($session->param("overloaded_object")), "'overloaded' lost its objectness");
+        $session->delete();
+    }
 }
 
+
+package SimpleObjectClass;
+use strict;
+use Class::Struct;
+
+struct (
+    name    => '$',
+    emails  => '@',
+    blogs   => '%'
+);
+
+
+
+package OverloadedObjectClass;
+
+use strict;
+use overload (
+    '""'    => \&as_string,
+    'eq'    => \&equals
+);
+
+
+sub new {
+    return bless {
+        str_value => $_[1]
+    }, $_[0];
+}
+
+
+sub as_string {
+    return $_[0]->{str_value};
+}
+
+sub equals {
+    my ($self, $arg) = @_;
+
+    return ($self->as_string eq $arg);
+}
 
 
 1;

@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.00_07 - Sunday, March 13, 2005
+
+    * FIX: overloaded objects are now stored properly
+
 4.00_06 - Thursday, February 24, 2005
 
     * FIX (?): a test script was failing on Win32
