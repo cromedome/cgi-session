@@ -9,7 +9,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.00_05';
+$CGI::Session::VERSION  = '4.00_06';
 $CGI::Session::NAME     = 'CGISESSID';
 
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
@@ -43,7 +43,7 @@ sub new {
     #   * expired session
     #       Because load() - constructor is required to empty contents of _DATA - table
     #   * unavailable session
-    #       Such sessions are the ones that don't exist on datastore, but we requested by client
+    #       Such sessions are the ones that don't exist on datastore, but requested by client
     #   * new sessions
     #       When no specific session is requested to be loaded
     unless ( $self->{_DATA}->{_SESSION_ID} ) {
@@ -149,26 +149,34 @@ sub load {
             $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
         };
         if ( my $errmsg = $@ ) {
-            return $class->set_error( "couldn't acquire: " .  $errmsg );
+            return $class->set_error( "query object $query does not support cookie() and param() methods: " .  $errmsg );
         }
     }
 
+    #
+    # No session is being requested. Just return an empty session
+    return $self unless $self->{_CLAIMED_ID};
 
-    return $self unless  $self->{_CLAIMED_ID};
-
+    #
+    # Attempting to load the session
     my $raw_data = $self->{_OBJECTS}->{driver}->retrieve( $self->{_CLAIMED_ID} );
     unless ( defined $raw_data ) {
-        return $self->set_error( "init(): couldn't retireve data: " . $self->{_OBJECTS}->{driver}->errstr );
+        return $self->set_error( "load(): couldn't retireve data: " . $self->{_OBJECTS}->{driver}->errstr );
     }
-    return $self unless $raw_data;                              # <-- such session doesn't exist in storage
+    #
+    # Requested session couldn't be retrieved
+    return $self unless $raw_data;
 
     $self->{_DATA} = $self->{_OBJECTS}->{serializer}->thaw($raw_data);
     unless ( defined $self->{_DATA} ) {
-        return $self->set_error( $self->{_OBJECTS}->{serializer}->errstr );
+        return $self->set_error( "load(): couldn't thaw() data using $self->{_OBJECTS}->{serializer} :" . 
+                                $self->{_OBJECTS}->{serializer}->errstr );
     }
-    unless ( ref ($self->{_DATA}) && (ref $self->{_DATA} eq 'HASH') ) {
+    unless (defined($self->{_DATA}) && ref ($self->{_DATA}) && (ref $self->{_DATA} eq 'HASH') && 
+            defined($self->{_DATA}->{_SESSION_ID}) ) {
         return $self->set_error( "Invalid data structure returned from thaw()" );
     }
+    #
     # checking for expiration ticker
     if ( $self->{_DATA}->{_SESSION_ETIME} ) {
         if ( ($self->{_DATA}->{_SESSION_ATIME} + $self->{_DATA}->{_SESSION_ETIME}) <= time() ) {
@@ -201,8 +209,6 @@ sub dataref         { $_[0]->{_DATA}        }
 sub is_empty        { !defined($_[0]->id)   }
 
 sub is_expired      { $_[0]->_test_status( STATUS_EXPIRED ) }
-
-sub error           { croak $_[1]       }
 
 sub id              { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ID}    : undef }
 

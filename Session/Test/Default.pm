@@ -7,7 +7,7 @@ use Carp;
 use Test::More;
 use Data::Dumper;
 
-$CGI::Session::Test::Default::VERSION = '1.0';
+$CGI::Session::Test::Default::VERSION = '1.1';
 
 
 sub new {

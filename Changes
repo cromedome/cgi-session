@@ -1,23 +1,31 @@
-What is new in 4.00_05 - Tuesday, February 22, 2005
+CGI::Session Change Log
+=====================================================================
+
+4.00_06 - Thursday, February 24, 2005
+
+    * FIX (?): a test script was failing on Win32
+    * FIX: inaccurate error reporting in load()
+
+4.00_05 - Tuesday, February 22, 2005
 
     * FIX: case insesitivity was not enforced properly in CGI::Session::parse_dsn()
 
-What is new in 4.00_04 - Wednesday, February 16, 2005
+4.00_04 - Wednesday, February 16, 2005
 
     * FIX: Minor fix in tests suits and error-checking routines of
       serializers and id-generators
 
-What is new in 4.00_03 - Friday, February 11, 2005
+4.00_03 - Friday, February 11, 2005
 
     * NEW: CGI::Session::find() introduced
     * NEW: traverse() introduced into drivers to support CGI::Session::find()
     * DOCS: More complete driver specs documented
 
-What is new in 4.00_02 - Wednesday, February 09, 2005
+4.00_02 - Wednesday, February 09, 2005
 
     * FIX: race conditions in Driver/file.pm pointed out by Martin Bartosch
 
-What is new in 4.00_01 - Wednesday, February 09, 2005
+4.00_01 - Wednesday, February 09, 2005
 
     * NEW: load() - constructor method to prevent unnecessary session creations
     * NEW: is_expired() - method to intercept expired sessions
@@ -27,15 +35,14 @@ What is new in 4.00_01 - Wednesday, February 09, 2005
     * NEW: standard testing framework
     * NEW: 'sqlite' driver
 
-
-What is new in 3.12?
+3.12
 
 	* cache() method introduced, which is normally used
           by library drivers to cache certain value within the single process
 	* Apache::Session-like tie interface supported (EXPERIMENTAL!)
 	* trace() and tracemsg() methods added for debugging purposes
 
-What is new in 3.8?
+3.8
 
 	* Abbreviations in DSN parameters are supported via Text::Abbrev.
 	* Automatic api3 detection makes "-api3" switch obsolete
@@ -46,9 +53,7 @@ What is new in 3.8?
 	* Private data records have been documented.
 	* Bug in clear() kept failing if passed no arguments to be cleared.
 
-
-
-What is new in 3.x?
+3.x
 
 	* Ability to choose between serializers, drivers and id generators
 	  while creating the session object. Supported via '-api3' switch.
@@ -62,13 +67,6 @@ What is new in 3.x?
 	* Main documentation is split into two: 
 		CGI::Session and CGI::Session::Tutorial
 	* Bug in POD documentation is fixed (thanks to Graham Barr)	
-
-
-
-
-
-
-
 
 
 $Id$
