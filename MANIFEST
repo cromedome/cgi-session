@@ -5,6 +5,7 @@ Makefile.PL
 README
 Session.pm
 Session/BluePrint.pm
+Session/CookBook.pm
 Session/DB_File.pm
 Session/File.pm
 Session/ID/Incr.pm
@@ -13,6 +14,8 @@ Session/MySQL.pm
 Session/Serialize/Default.pm
 Session/Serialize/FreezeThaw.pm
 Session/Serialize/Storable.pm
+Session/Tutorial.pm
+rfc2965.txt
 t/api3_db_file.t
 t/api3_db_file_freezethaw.t
 t/api3_db_file_storable.t
