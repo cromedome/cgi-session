@@ -48,7 +48,7 @@ sub DESTROY {
     my $self = shift;
 
     $self->flush() && $self->teardown();
-    
+
 }
 
 
@@ -62,7 +62,7 @@ sub _validate_driver {
     for my $method ( @required ) {
         unless ( $self->can($method) ) {
             my $class = ref($self);
-            croak "$class doesn't seem to be a valid CGI::Session driver. " . 
+            croak "$class doesn't seem to be a valid CGI::Session driver. " .
                 "At least '$method' method is missing";
         }
     }
@@ -151,8 +151,8 @@ sub param {
         croak "read attempt on deleted session  ";
     }
 
-    unless ( @_ ) {
-        return keys %{$self->{_data}};
+    unless ( defined $_[0] ) {        
+        return keys %{ $self->{_data} };
     }
 
     if ( @_ == 1 ) {
@@ -169,7 +169,7 @@ sub param {
 
     if ( defined($arg->{'-name'}) && defined($arg->{'-value'}) ) {
         return $self->set_param($arg->{'-name'}, $arg->{'-value'});
-    
+
     }
 
     if ( defined $arg->{'-name'} ) {
@@ -188,7 +188,7 @@ sub param {
         }
         return $n;
     }
-    
+
     croak "param(): something smells fishy here. RTFM!";
 }
 
@@ -202,10 +202,14 @@ sub set_param {
         croak "read attempt on deleted session";
     }
 
+    if ( $key =~ m/^_session/ ) {
+        return undef;
+    }
+
     $self->{_data}->{$key} = $value;
     $self->{_status} = MODIFIED;
 
-    return $value;    
+    return $value;
 }
 
 
@@ -231,7 +235,7 @@ sub flush {
 
     if ( $status == MODIFIED ) {
         $self->store($self->id, $self->{_options}, $self->{_data});
-        $self->{_status} = SYNCED;        
+        $self->{_status} = SYNCED;
     }
 
     if ( $status == DELETED ) {
@@ -339,16 +343,18 @@ sub clear {
             croak "Usage: $class->clear([\@array])";
         }
         @params = @{ $_[0] };
-    
+
     } else {
         @params = $self->params();
 
     }
 
+    croak "@params";
+
     my $n = 0;
     for ( @params ) {
         /^_session/ and next;
-        delete $self->{_data}->{$_} && ++$n;
+        delete ($self->{_data}->{$_}) && ++$n;
     }
 
     $self->{_status} = MODIFIED;
@@ -356,4 +362,100 @@ sub clear {
     return $n;
 }
 
+
+
+sub save_param {
+    my ($self, $cgi, $list) = @_;
+
+    unless ( ref($cgi) ) {
+        croak "save_param(): first argument should be an object";
+
+    }
+    unless ( $cgi->can('param') ) {
+        croak "save_param(): Cannot call method param() on the object";
+    }
+
+    my @params = ();
+    if ( defined $list ) {
+        unless ( ref($list) eq 'ARRAY' ) {
+            croak "save_param(): second argument must be an arrayref";
+        }
+
+        @params = @{ $list };
+
+    } else {
+        @params = $cgi->param();
+
+    }
+
+    my $n = 0;
+    for ( @params ) {
+        # It's imporatnt to note that CGI.pm's param() returns array
+        # if a parameter has more values associated with it (checkboxes and crolling lists).
+        # So we should access its parameters in array context not to miss
+        # anything
+        my @values = $cgi->param($_);
+
+        if ( defined $values[1] ) {
+            $self->set_param($_ => \@values);
+
+        } else {
+            $self->set_param($_ => $values[0] );
+
+        }
+
+        ++$n;
+    }
+
+    return $n;
+}
+
+
+sub load_param {
+    my ($self, $cgi, $list) = @_;
+
+    unless ( ref($cgi) ) {
+        croak "save_param(): first argument should be an object";
+
+    }
+    unless ( $cgi->can('param') ) {
+        croak "save_param(): Cannot call method param() on the object";
+    }
+
+    my @params = ();
+    if ( defined $list ) {
+        unless ( ref($list) eq 'ARRAY' ) {
+            croak "save_param(): second argument must be an arrayref";
+        }
+
+        @params = @{ $list };
+
+    } else {
+        @params = $self->param();
+
+    }
+
+    my $n = 0;
+    for ( @params ) {
+        # Unlike CGI.pm's param() method, however, our param() method
+        # returns a reference if there're more than one values associated
+        # with a parameter. But CGI.pm's param accepts either scalars or
+        # arrayrefs. so we need to check if it's not anyting other than
+        # these acceptable values
+        my $value = $self->param($_);
+
+        if ( ref($value) eq 'ARRAY' ) {
+            $cgi->param( $_ => $self->param($_) );
+            ++$n;
+
+        } elsif ( ref($value) ) {
+            next;
+
+        } else {
+            $cgi->parm( $_ => $self->param($_) );
+            ++$n;
+        }
+    }
+    return $n;
+}
 
