@@ -4,7 +4,6 @@ package CGI::Session::DB_File;
 
 use DB_File;
 use File::Spec;
-use Carp 'croak';
 use base qw(
     CGI::Session
     CGI::Session::ID::MD5
