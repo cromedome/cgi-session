@@ -1,3 +1,14 @@
+What is new in 4.00_01 - Wednesday, February 09, 2005
+
+    * NEW: load() - constructor method to prevent unnecessary session creations
+    * NEW: is_expired() - method to intercept expired sessions
+    * NEW: is_empty() - to intercept requests for unexisting sessions
+    * NEW: more optimized source code
+    * NEW: updated and improved driver specs
+    * NEW: standard testing framework
+    * NEW: 'sqlite' driver
+
+
 What is new in 3.12?
 
 	* cache() method introduced, which is normally used

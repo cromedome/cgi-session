@@ -1,15 +1,17 @@
 package CGI::Session::Driver::DBI;
 
+# $Id$
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use DBI;
 use Carp;
 use CGI::Session::Driver;
-use vars qw( $VERSION @ISA );
 
-@ISA = qw( CGI::Session::Driver );
-$VERSION = "2.01";
+
+@CGI::Session::Driver::DBI::ISA = qw( CGI::Session::Driver );
+$CGI::Session::Driver::DBI::VERSION = "1.0";
 
 
 sub init {

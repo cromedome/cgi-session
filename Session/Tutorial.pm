@@ -1,14 +1,7 @@
 # $Id$
 
 package CGI::Session::Tutorial;
-
-use vars ('$VERSION');
-
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/
-
-1;
-
-__END__;
+$CGI::Session::Tutorial::VERSION = '3.8';
 
 =pod
 

@@ -1,7 +1,9 @@
 package CGI::Session::Driver::db_file;
 
+# $Id$
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Carp;
 use DB_File;
@@ -9,10 +11,10 @@ use File::Spec;
 use File::Basename;
 use CGI::Session::Driver;
 use Fcntl qw( :DEFAULT :flock );
-use vars qw( $VERSION @ISA );
 
-@ISA = qw( CGI::Session::Driver );
-$CGI::Session::Driver::db_file::FILE_NAME = "cgisess.db";
+@CGI::Session::Driver::db_file::ISA         = qw( CGI::Session::Driver );
+$CGI::Session::Driver::db_file::VERSION     = '1.0';
+$CGI::Session::Driver::db_file::FILE_NAME   = "cgisess.db";
 
 
 sub init {

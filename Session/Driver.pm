@@ -3,14 +3,13 @@ package CGI::Session::Driver;
 # $Id$
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
-use Carp "croak";
+use Carp;
 use CGI::Session::ErrorHandler;
-use vars qw( $VERSION @ISA );
 
-$VERSION = "2.01";
-@ISA     = qw(CGI::Session::ErrorHandler);
+$CGI::Session::Driver::VERSION = "4.00";
+@CGI::Session::Driver::ISA     = qw(CGI::Session::ErrorHandler);
 
 sub new {
     my $class = shift;

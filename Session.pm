@@ -3,17 +3,14 @@ package CGI::Session;
 # $Id$
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Carp;
 use CGI::Session::ErrorHandler;
 
-use vars qw( @ISA );
-
-@ISA = qw( CGI::Session::ErrorHandler );
-
-$CGI::Session::VERSION    = '3.91';
-$CGI::Session::NAME       = 'CGISESSID';
+@CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
+$CGI::Session::VERSION  = '4.00_01';
+$CGI::Session::NAME     = 'CGISESSID';
 
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
 sub STATUS_MODIFIED () { 2 }        # denotes session that's needs synchronization
@@ -210,7 +207,7 @@ sub DESTROY         {   $_[0]->flush()  }
 
 *param_hashref      = \&dataref;
 sub dataref         { $_[0]->{_DATA}    }
-sub empty           { !$_[0]->id        }
+sub is_empty           { !$_[0]->id        }
 sub is_expired         { $_[0]->_test_status( STATUS_EXPIRED ) }
 sub error           { croak $_[1]       }
 sub id              { $_[0]->dataref->{_SESSION_ID}     }
@@ -585,10 +582,6 @@ programming style, consider the following:
 =item *
 
 L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual. Also includes library architecture and driver specifications.
-
-=item *
-
-L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
 
 =item *
 
@@ -1011,10 +1004,6 @@ Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>, http://author.handalak.com/
 =item *
 
 L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual
-
-=item *
-
-L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
 
 =item *
 

@@ -1,0 +1,57 @@
+INSTALLATION
+
+Installation of CGI::Session follows standard Makefile.PL installation pattern:
+
+    % perl Makefile.PL
+    % make
+    % make test
+    % make install
+
+If you don't have proper permission to perform system-wide installations you can install
+CGI::Session to your private PERL5LIB folder:
+
+    % perl Makefile.PL LIB=~/perllib
+    % make
+    % make test
+    % make install
+
+Above set of commands will install CGI::Session to your '~/perllib' folder.
+
+RUNNING MYSQL TESTS
+
+If you are considering to use MySQL as the primary storage device for your session data
+I recommend you running mysql tests. For MySQL tests to run properly DBI and DBD::mysql
+Perl modules should be installed. CGI::Session should also have access to a mysql database.
+Access details should be set in the following environmental variables:
+
+    * CGISESS_MYSQL_DSN 
+        example: "dbi:mysql:sessions". If missing defaults to "dbi:mysql:test"
+
+    * CGISESS_MYSQL_USER
+        example: sherzodr. If missing defaults to value of $ENV{USER}, or undef
+
+    * CGISESS_MYSQL_PASSWORD
+        example: marley. If missing defaults to undef
+
+If your system doesn't support setting environmental variables (or you don't know how)
+feel free to update %dsn hash at the top of all of the t/g4_mysql*.t files.
+
+RUNNING POSTGRESQL TESTS
+
+If you are considering to use PostgreSQL as the primary storage device for your session data
+I recommend you running postgresql tests. For postgresql tests to run properly DBI and DBD::Pg Perl
+modules should be installed. CGI::Session should also have access to a postgresql database.
+Access details should be set in the following environmental variables:
+
+    * CGISESS_PGSQL_DSN
+        example: "dbi:Pg:dbname=sessions". Defaults to "dbi:Pg:dbname=test"
+
+    * CGISESS_PGSQL_USER
+        example: "sherzodr". Defaults to $ENV{USER} or undef
+
+    * CGISESS_PGSQL_PASSWORD
+        example: marley. Defaults to undef
+
+If your system doesn't support setting environmental variables (or you don't know how)
+feel free to update %dsn hash at the top of all of the t/g4_postgresql*.t files.
+

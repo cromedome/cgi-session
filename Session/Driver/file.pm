@@ -3,17 +3,16 @@ package CGI::Session::Driver::file;
 # $Id$
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use File::Spec;
 use Fcntl qw(:DEFAULT :flock);
 use CGI::Session::Driver;
-use vars qw( @ISA $VERSION $FileName);
+use vars qw( $FileName);
 
-@ISA        = qw( CGI::Session::Driver );
-$VERSION    = "2.00";
-$FileName   = "cgisess_%s";
-
+@CGI::Session::Driver::file::ISA        = qw( CGI::Session::Driver );
+$CGI::Session::Driver::file::VERSION    = "3.2";
+$FileName                               = "cgisess_%s";
 
 sub init {
     my $self = shift;

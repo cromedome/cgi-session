@@ -1,4 +1,7 @@
 package CGI::Session::Driver::postgresql;
+
+# $Id$
+
 # CGI::Session::Driver::postgresql - PostgreSQL driver for CGI::Session
 #
 # Copyright (C) 2001-2002 Sherzod Ruzmetov, sherzodr@cpan.org
@@ -12,16 +15,13 @@ package CGI::Session::Driver::postgresql;
 
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use CGI::Session::Driver::DBI;
-use vars qw( $VERSION @ISA );
 
-$VERSION = '2.01';
-@ISA     = qw( CGI::Session::Driver::DBI );
+$CGI::Session::Driver::postgresql::VERSION = '2.01';
+@CGI::Session::Driver::postgresql::ISA     = qw( CGI::Session::Driver::DBI );
 
-
-# $Id$
 
 1;
 

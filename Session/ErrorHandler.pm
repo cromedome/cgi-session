@@ -3,10 +3,9 @@ package CGI::Session::ErrorHandler;
 # $Id$
 
 use strict;
-use diagnostics;
-use vars qw( $VERSION );
+#use diagnostics;
 
-$VERSION = "1.01";
+$CGI::Session::ErrorHandler::VERSION = "4.00";
 
 sub set_error {
     my $class = shift;

@@ -1,14 +1,15 @@
 NAME
-    CGI-Session - persistent session in CGI applications
+    CGI::Session - persistent session data in CGI applications
 
 SYNOPSIS
         # Object initialization:
-        use CGI::Session qw/-api3/;
+        use CGI::Session;
+        $session = new CGI::Session();
 
-        my $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
+        $CGISESSID = $session->id();
 
-        # getting the effective session id:
-        my $CGISESSID = $session->id();
+        # send proper HTTP header with cookies:
+        print $session->header();
 
         # storing data in the session
         $session->param('f_name', 'Sherzod');
@@ -21,10 +22,10 @@ SYNOPSIS
         my $l_name = $session->param(-name=>'l_name');
 
         # clearing a certain session parameter
-        $session->clear(["_IS_LOGGED_IN"]);
+        $session->clear(["l_name", "f_name"]);
 
         # expire '_IS_LOGGED_IN' flag after 10 idle minutes:
-        $session->expire(_IS_LOGGED_IN => '+10m')
+        $session->expire('is_logged_in', '+10m')
 
         # expire the session itself after 1 idle hour
         $session->expire('+1h');
@@ -37,232 +38,18 @@ DESCRIPTION
     modular session management system across HTTP requests. Persistency is a
     key feature for such applications as shopping carts,
     login/authentication routines, and application that need to carry data
-    accross HTTP requests. CGI::Session does that and many more
-
-TO LEARN MORE
-    Current manual is optimized to be used as a quick reference. To learn
-    more both about the logic behind session management and CGI::Session
-    programming style, consider the following:
-
-    *   CGI::Session::Tutorial - extended CGI::Session manual. Also includes
-        library architecture and driver specifications.
-
-    *   CGI::Session::CookBook - practical solutions for real life problems
-
-    *   RFC 2965 - "HTTP State Management Mechanism" found at
-        ftp://ftp.isi.edu/in-notes/rfc2965.txt
-
-    *   CGI - standard CGI library
-
-    *   Apache::Session - another fine alternative to CGI::Session
-
-METHODS
-    Following is the overview of all the available methods accessible via
-    CGI::Session object.
-
-    "new( DSN, SID, HASHREF )"
-        Requires three arguments. First is the Data Source Name, second
-        should be the session id to be initialized or an object which
-        provides either of 'param()' or 'cookie()' mehods. If Data Source
-        Name is undef, it will fall back to default values, which are
-        "driver:File;serializer:Default;id:MD5".
-
-        If session id is missing, it will force the library to generate a
-        new session id, which will be accessible through "id()" method.
-
-        Examples:
-
-            $session = new CGI::Session(undef, undef, {Directory=>'/tmp'});
-            $session = new CGI::Session("driver:File;serializer:Storable", undef,  {Directory=>'/tmp'})
-            $session = new CGI::Session("driver:MySQL;id:Incr", undef, {Handle=>$dbh});
-
-        Following data source variables are supported:
-
-        *   "driver" - CGI::Session driver. Available drivers are "File",
-            "DB_File" and "MySQL". Default is "File".
-
-        *   "serializer" - serializer to be used to encode the data
-            structure before saving in the disk. Available serializers are
-            "Storable", "FreezeThaw" and "Default". Default is "Default",
-            which uses standard Data::Dumper
-
-        *   "id" - ID generator to use when new session is to be created.
-            Available ID generators are "MD5" and "Incr". Default is "MD5".
-
-    "id()"
-        Returns effective ID for a session. Since effective ID and claimed
-        ID can differ, valid session id should always be retrieved using
-        this method.
-
-    "param($name)"
-    "param(-name=>$name)"
-        this method used in either of the above syntax returns a session
-        parameter set to "$name" or undef on failure.
-
-    "param( $name, $value)"
-    "param(-name=>$name, -value=>$value)"
-        method used in either of the above syntax assigns a new value to
-        $name parameter, which can later be retrieved with previously
-        introduced param() syntax.
-
-    "param_hashref()"
-        returns all the session parameters as a reference to a hash
-
-    "save_param($cgi)"
-    "save_param($cgi, $arrayref)"
-        Saves CGI parameters to session object. In otherwords, it's calling
-        "param($name, $value)" for every single CGI parameter. The first
-        argument should be either CGI object or any object which can provide
-        param() method. If second argument is present and is a reference to
-        an array, only those CGI parameters found in the array will be
-        stored in the session
-
-    "load_param($cgi)"
-    "load_param($cgi, $arrayref)"
-        loads session parameters to CGI object. The first argument is
-        required to be either CGI.pm object, or any other object which can
-        provide param() method. If second argument is present and is a
-        reference to an array, only the parameters found in that array will
-        be loaded to CGI object.
-
-    "clear()"
-    "clear([@list])"
-        clears parameters from the session object. If passed an argument as
-        an arrayref, clears only those parameters found in the list.
-
-    "flush()"
-        synchronizes data in the buffer with its copy in disk. Normally it
-        will be called for you just before the program terminates, session
-        object goes out of scope or close() is called.
-
-    "close()"
-        closes the session temporarily until new() is called on the same
-        session next time. In other words, it's a call to flush() and
-        DESTROY(), but a lot slower. Normally you never have to call
-        close().
-
-    "atime()"
-        returns the last access time of the session in the form of seconds
-        from epoch. This time is used internally while auto-expiring
-        sessions and/or session parameters.
-
-    "ctime()"
-        returns the time when the session was first created.
-
-    "expires()"
-    "expires($time)"
-    "expires($param, $time)"
-        Sets expiration date relative to atime(). If used with no arguments,
-        returns the expiration date if it was ever set. If no expiration was
-        ever set, returns undef.
-
-        Second form sets an expiration time. This value is checked when
-        previously stored session is asked to be retrieved, and if its
-        expiration date has passed will be expunged from the disk
-        immediately and new session is created accordingly. Passing 0 would
-        cancel expiration date.
-
-        By using the third syntax you can also set an expiration date for a
-        particular session parameter, say "~logged-in". This would cause the
-        library call clear() on the parameter when its time is up.
-
-        All the time values should be given in the form of seconds.
-        Following time aliases are also supported for your convenience:
-
-            +===========+===============+
-            |   alias   |   meaning     |
-            +===========+===============+
-            |     s     |   Second      |
-            |     m     |   Minute      |
-            |     h     |   Hour        |
-            |     w     |   Week        |
-            |     M     |   Month       |
-            |     y     |   Year        |
-            +-----------+---------------+
-
-        Examples:
-
-            $session->expires("+1y");   # expires in one year
-            $session->expires(0);       # cancel expiration
-            $session->expires("~logged-in", "+10m");# expires ~logged-in flag in 10 mins
-
-        Note: all the expiration times are relative to session's last access
-        time, not to its creation time. To expire a session immediately,
-        call "delete()". To expire a specific session parameter immediately,
-        call "clear()" on that parameter.
-
-    "remote_addr()"
-        returns the remote address of the user who created the session for
-        the first time. Returns undef if variable REMOTE_ADDR wasn't present
-        in the environment when the session was created
-
-    "delete()"
-        deletes the session from the disk. In other words, it calls for
-        immediate expiration after which the session will not be accessible
-
-    "error()"
-        returns the last error message from the library. It's the same as
-        the value of $CGI::Session::errstr. Example:
-
-            $session->flush() or die $session->error();
-
-    "dump()"
-    "dump("logs/dump.txt")"
-        creates a dump of the session object. Argument, if passed, will be
-        interpreted as the name of the file object should be dumped in. Used
-        mostly for debugging.
-
-DISTRIBUTION
-    CGI::Session consists of several modular components such as drivers,
-    serializers and id generators. This section lists what is available.
-
-  DRIVERS
-
-    Following drivers are included in the standard distribution:
-
-    *   File - default driver for storing session data in plain files. Full
-        name: CGI::Session::File
-
-    *   DB_File - for storing session data in BerkelyDB. Requires: the
-        DB_File manpage. Full name: CGI::Session::DB_File
-
-    *   MySQL - for storing session data in MySQL tables. Requires DBI and
-        DBD::mysql. Full name: CGI::Session::MySQL
-
-  SERIALIZERS
-
-    *   Default - default data serializer. Uses standard Data::Dumper. Full
-        name: CGI::Session::Serialize::Default.
-
-    *   Storable - serializes data using the Storable manpage. Requires the
-        Storable manpage. Full name: CGI::Session::Serialize::Storable.
-
-    *   FreezeThaw - serializes data using the FreezeThaw manpage. Requires
-        the FreezeThaw manpage. Full name:
-        CGI::Session::Serialize::FreezeThaw
-
-  ID GENERATORS
-
-    Following ID generators are available:
-
-    *   MD5 - generates 32 character long hexidecimal string. Requires
-        Digest::MD5. Full name: CGI::Session::ID::MD5.
-
-    *   Incr - generates auto-incrementing ids. Full name:
-        CGI::Session::ID::Incr
+    accross HTTP requests. CGI::Session does that and many more.
 
 COPYRIGHT
-    This library is free software. You can modify and or distribute it under
-    the same terms as Perl itself.
+    Copyright (C) 2001-2005 Sherzod Ruzmetov <sherzodr@cpan.org>. All rights
+    reserved. This library is free software. You can modify and or
+    distribute it under the same terms as Perl itself.
 
 AUTHOR
-    Sherzod Ruzmetov <sherzodr@cpan.org>. Feedbacks, suggestions are
-    welcome.
+    Sherzod Ruzmetov <sherzodr AT cpan DOT org>, http://author.handalak.com/
 
 SEE ALSO
     *   CGI::Session::Tutorial - extended CGI::Session manual
-
-    *   CGI::Session::CookBook - practical solutions for real life problems
 
     *   RFC 2965 - "HTTP State Management Mechanism" found at
         ftp://ftp.isi.edu/in-notes/rfc2965.txt

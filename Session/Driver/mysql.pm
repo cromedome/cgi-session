@@ -1,16 +1,15 @@
 package CGI::Session::Driver::mysql;
 
+# $Id$
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Carp;
 use CGI::Session::Driver::DBI;
-use vars qw( $VERSION @ISA $TABLE_NAME );
 
-
-@ISA = qw( CGI::Session::Driver::DBI );
-$VERSION = "2.01";
-$TABLE_NAME = "sessions";
+@CGI::Session::Driver::mysql::ISA       = qw( CGI::Session::Driver::DBI );
+$CGI::Session::Driver::mysql::VERSION   = "2.01";
 
 sub init {
     my $self = shift;

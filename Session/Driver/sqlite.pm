@@ -1,15 +1,16 @@
 package CGI::Session::Driver::sqlite;
 
+# $Id$
+
 use strict;
-use diagnostics;
+#use diagnostics;
 
 use Carp;
 use File::Spec;
 use CGI::Session::Driver::DBI;
-use vars qw( $VERSION @ISA );
 
-@ISA        = qw( CGI::Session::Driver::DBI );
-$VERSION    = "2.01";
+@CGI::Session::Driver::sqlite::ISA        = qw( CGI::Session::Driver::DBI );
+$CGI::Session::Driver::sqlite::VERSION    = "1.0";
 
 sub init {
     my $self = shift;
