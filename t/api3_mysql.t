@@ -11,8 +11,8 @@ BEGIN {
     # If you want to run MySQL tests, uncomment the following two
     # lines, create a table called "sessions" according to the
     # CGI::Session::MySQL, and modify %options hash
-    print "1..0\n";
-    exit();
+    #print "1..0\n";
+    #exit();
 
 
     # Check if DB_File is avaialble. Otherwise, skip this test

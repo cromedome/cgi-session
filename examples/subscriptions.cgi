@@ -3,8 +3,9 @@
 # $Id$
 
 # Configurable contants
-use constant DSN        => "dr:MySQL;ser:Default;id:MD5";
-use constant DSN_ARGS   => {DataSource=>"DBI:mysql:sherzodr_shop", User=>"sherzodr_shop", Password=>"marley01"};
+use constant DSN        => "dr:FileX;ser:Default;id:MD5";
+use constant DSN_ARGS	=> {Dir => "../tmp"};
+#use constant DSN_ARGS   => {DataSource=>"DBI:mysql:sherzodr_shop", User=>"sherzodr_shop", Password=>"marley01"};
 # Do not modify anything below unless you know what you're doing
 
 use strict;
@@ -86,8 +87,14 @@ if ( $cmd eq "directions" ) {
 sub directions {
     my ($cgi, $session) = @_;
 
+    my $dirver = ref($session);
+    my $version = $session->VERSION();
+
     my $HTML = <<HTML;
 <h2>Welcome to CGI::Session Demo Script</h2>
+
+<div><strong>Driver:</strong> $dirver/$version</div>
+
 <p>
 The tricks are endless! This script is to demonstrate basic usage of
 CGI::Session in CGI applications.
