@@ -56,6 +56,11 @@ sub new {
 }
 
 
+sub api3 {
+    
+    die "api3(): Do not use me yet! Use your head, use your head";
+}
+
 
 
 # DESTROY() - destructor.
