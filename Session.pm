@@ -6,7 +6,7 @@ use strict;
 use Carp 'confess';
 use AutoLoader 'AUTOLOAD';
 
-use vars qw($VERSION $errstr $IP_MATCH $NAME);
+use vars qw($VERSION $errstr $IP_MATCH $NAME $API_3);
 
 ($VERSION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
 $NAME     = 'CGISESSID';
@@ -17,7 +17,8 @@ sub import {
     my $class = shift;
     @_ or return;
     for ( my $i=0; $i < @_; $i++ ) {
-        $IP_MATCH = ( $_[$i] eq '-ip_match' ) and next;
+        $IP_MATCH   = ( $_[$i] eq '-ip_match'   ) and next;
+        $API_3      = ( $_[$i] eq '-api_3'      ) and next;
     }
 }
 
@@ -41,12 +42,7 @@ sub new {
         _QUERY_OBJ  => undef,
     };
 
-    # The following test is important to understand how to 
-    # treat the arguments passed to the constructor, to be
-    # able to return a proper driver object. Checking if
-    # the second argument is not a hashref is enough to assume
-    # new api-3 syntax
-    unless ( ref($_[1]) eq 'HASH' ) {
+    if ( $API_3 ) {
         return api3(@_);
     }
 
