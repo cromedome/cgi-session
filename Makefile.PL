@@ -3,9 +3,18 @@
 use strict;
 use ExtUtils::MakeMaker;
 
+print "-" x 35, "\n";
+print ".::WARNING::.\n";
+print "-" x 35, "\n";
+print "This is the development release\n";
+print "-" x 35, "\n";
 
 sub MY::postamble {
     return <<'TAG';
+realclean::
+	$(RM_RF) blib/
+	$(RM_F) Makefile Makefile.old t/cgisess.*
+
 upload: dist
 	cpan-upload $(DISTVNAME).tar$(SUFFIX)
 
