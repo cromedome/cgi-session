@@ -6,22 +6,23 @@ use DB_File;
 use File::Spec;
 use Carp 'croak';
 use base qw(
-        CGI::Session
-        CGI::Session::Serialize::Storable 
-        CGI::Session::ID::MD5);
+    CGI::Session
+    CGI::Session::ID::MD5
+    CGI::Session::Serialize::Storable );
 
-use vars qw($VERSION);
+use vars qw($VERSION $NAME);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
+$NAME = 'cgisess.db';
 
 
 sub retrieve {
     my ($self, $sid, $options) = @_;
     
-    my $db = $self->DB_File_init($options);
+    my $db = $self->DB_File_init($options) or return;
     
     if ( defined $db->{$sid} ) {
-        return $self->thaw($db->{$sid});
+        return $self->thaw( $db->{$sid} );
     }
 
     return undef;
@@ -29,7 +30,7 @@ sub retrieve {
 
 
 sub store {
-    my ($self, $sid, $options, $data) = @_;    
+    my ($self, $sid, $options, $data) = @_;
 
     my $db = $self->DB_File_init($options) or return;
     return $db->{$sid} = $self->freeze($data);    
@@ -65,18 +66,76 @@ sub DB_File_init {
     }
 
     my $dir = $options->[1]->{Directory};
-    my $file= $options->[1]->{FileName} || 'cgisession.db';
+    my $file= $options->[1]->{FileName} || $NAME;
     my $path= File::Spec->catfile($dir, $file);
 
-    tie (my %db, "DB_File", $path, O_RDWR|O_CREAT, 0664, $DB_HASH) or die $!;
-
+    unless ( tie (my %db, "DB_File", $path, O_RDWR|O_CREAT, 0644, $DB_HASH) ) {
+        $self->error("Couldn't open $path: $!");
+        return undef;
+    }
     $self->{_db_file_hash} = \%db;
-    $self->{_db_file_path} = $path;    
+    $self->{_db_file_path} = $path;
 
     return $self->{_db_file_hash};
 }
 
-
+# $Id$
 
 1;
 
+=pod
+
+=head1 NAME
+
+CGI::Session::DB_File - DB_File driver for CGI::Session
+
+=head1 SYNOPSIS
+
+    use CGI::Session::DB_File;
+    $session = new CGI::Session::DB_File(undef, {Directory=>'/tmp'});
+
+For more details, refer to L<CGI::Session> manual
+
+=head1 DESCRIPTION
+
+CGI::Session::DB_File is a CGI::Session driver to store session data in BerkeleyDB.
+Filename to store the session data is by default 'cgisess.db'. If you want a different
+name, you can either specify it with the "FileName" option as below:
+
+    $s = new CGI::Session::DB_File(undef, {Directory=>'/tmp', FileName=>'sessions.db'});
+
+or by setting the value of the $CGI::Session::DB_File::NAME variable before creating
+the session object:
+
+    $CGI::Session::DB_File::NAME = 'sessions.db';
+    $s = new CGI::Session::DB_File(undef, {Directory=>'/tmp'});
+
+The only driver option required, as in the above examples, is "Directory", which tells the
+driver where the session file and lock files should be created.
+
+"FileName" option is also available, but not required. 
+
+=head1 COPYRIGHT
+
+Copyright (C) 2001-2002 Sherzod Ruzmetov. All rights reserved.
+
+This library is free software and can be modified and distributed under the same
+terms as Perl itself. 
+
+Bug reports should be directed to sherzodr@cpan.org, or posted to Cgi-session@ultracgis.com
+mailing list.
+
+=head1 AUTHOR
+
+CGI::Session::DB_File is written and maintained by Sherzod Ruzmetov <sherzodr@cpan.org>
+
+=head1 SEE ALSO
+
+L<CGI::Session>
+L<CGI::Session::MySQL>
+L<CGI::Session::DB_File>
+L<CGI::Session::BerkelyDB>
+
+=cut
+
+# $Id$

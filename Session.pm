@@ -3,17 +3,27 @@ package CGI::Session;
 # $Id$
 
 use strict;
-use warnings;
-use diagnostics;
 use Carp 'confess';
 use AutoLoader 'AUTOLOAD';
 
-use vars qw($VERSION $errstr);
+use vars qw($VERSION $errstr $IP_MATCH $COOKIE);
 
-($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
+($VERSION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
+$COOKIE     = 'CGISESSID';
+
+# import() - we do not import anything into the callers
+# namespace, however, we enable the user to specify
+# hooks at compile time
+sub import {
+    my $class = shift;
+    @_ or return;
+    for ( my $i=0; $i < @_; $i++ ) {
+        $IP_MATCH = ( $_[$i] eq '-ip_match' ) and next;        
+    }
+}
 
 
-# Session status flags
+# Session _status flags
 sub SYNCED   () { 0 }
 sub MODIFIED () { 1 }
 sub DELETED  () { 2 }
@@ -71,12 +81,23 @@ sub _validate_driver {
 
 
 
-# _init() - object initialializer. 
+# _init() - object initialializer.
 # Decides between _init_old_session() and _init_new_session()
 sub _init {
     my $self = shift;
 
-    my $claimed_id = $self->{_options}->[0];
+    my $claimed_id = undef;
+    my $arg = $self->{_options}->[0];
+    if ( defined ($arg) && ref($arg) ) {
+        if ( $arg->isa('CGI') ) {            
+            $claimed_id = $arg->cookie($COOKIE) || $arg->param($COOKIE) || undef;
+        } elsif ( ref($arg) eq 'CODE' ) {
+            $claimed_id = $arg->() || undef;
+
+        }
+    } else {
+        $claimed_id = $arg;
+    }
 
     if ( defined $claimed_id ) {
         my $rv = $self->_init_old_session($claimed_id);
@@ -94,7 +115,7 @@ sub _init {
 
 # _init_old_session() - tries to retieve the old session.
 # If suceeds, checks if the session is expirable. If so, deletes it
-# and returns undef so that _init() creates a new session. 
+# and returns undef so that _init() creates a new session.
 # Otherwise, checks if there're any parameters to be expired, and
 # calls clear() if any. Aftewards, updates atime of the session, and
 # returns true
@@ -109,10 +130,21 @@ sub _init_old_session {
 
         $self->{_data} = $data;
 
+        # Check if the IP of the initial session owner should
+        # match with the current user's IP
+        if ( $IP_MATCH ) {
+            unless ( $self->_ip_matches() ) {
+                $self->delete();
+                $self->flush();
+                return undef;
+            }
+        }
+
+        # Check if the session's expiration ticker is up
         if ( $self->_is_expired() ) {
             $self->delete();
             $self->flush();
-            return;
+            return undef;
         }
 
         # Expring single parameters, if any
@@ -132,11 +164,20 @@ sub _init_old_session {
 
 
 
+
+sub _ip_matches {
+    return ( $_[0]->{_data}->{_session_remote_addr} eq $ENV{REMOTE_ADDR} );
+}
+
+
+
+
+
 # _is_expired() - returns true if the session is to be expired.
-# Called from _init_old_session() method. 
+# Called from _init_old_session() method.
 sub _is_expired {
     my $self = shift;
-    
+
     unless ( $self->expire() ) {
         return undef;
     }
@@ -151,9 +192,9 @@ sub _is_expired {
 # _expire_params() - expires individual params. Called from within
 # _init_old_session() method on a sucessfully retrieved session
 sub _expire_params {
-    my $self = shift;    
+    my $self = shift;
 
-    # Expiring 
+    # Expiring
     my $exp_list = $self->{_data}->{_session_expire_list} || {};
     my @trash_can = ();
     while ( my ($param, $etime) = each %{$exp_list} ) {
@@ -182,7 +223,9 @@ sub _init_new_session {
         _session_etime => undef,
         _session_remote_addr => $ENV{REMOTE_ADDR} || undef,
         _session_expire_list => { },
-    };    
+    };
+
+    $self->{_status} = MODIFIED;
 
     return 1;
 }
@@ -191,7 +234,14 @@ sub _init_new_session {
 
 
 # id() - accessor method. Returns effective id
-# for the current session. 
+# for the current session. CGI::Session deals with
+# two kinds of ids; effective and claimed. Claimed id
+# is the one passed to the constructor - new() as the first
+# argument. It doesn't mean that id() method returns that
+# particular id, since that ID might be either expired,
+# or even invalid, or just data associated with that id
+# might not be available for some reason. In this case,
+# claimed id and effective id are not the same.
 sub id {
     my $self = shift;
 
@@ -206,7 +256,7 @@ sub id {
 sub param {
     my $self = shift;
 
-    
+
     unless ( defined $_[0] ) {
         return keys %{ $self->{_data} };
     }
@@ -254,7 +304,7 @@ sub param {
 sub _set_param {
     my ($self, $key, $value) = @_;
 
-    if ( $self->{_status} == DELETED ) {        
+    if ( $self->{_status} == DELETED ) {
         return;
     }
 
@@ -273,12 +323,12 @@ sub _set_param {
 
 
 
-# _get_param() - gets a single parameter from the 
+# _get_param() - gets a single parameter from the
 # '_data' table
 sub _get_param {
     my ($self, $key) = @_;
 
-    if ( $self->{_status} == DELETED ) {        
+    if ( $self->{_status} == DELETED ) {
         return;
     }
 
@@ -318,14 +368,18 @@ sub flush {
 __END__
 
 
+
+
+
+
 # dump() - dumps the session object using Data::Dumper
 sub dump {
     my ($self, $file) = @_;
 
     require Data::Dumper;
-    local $Data::Dumper::Indent = 3;
+    local $Data::Dumper::Indent = 1;
 
-    my $d = new Data::Dumper([$self], ["cgisession"]);    
+    my $d = new Data::Dumper([$self], ["cgisession"]);
 
     if ( defined $file ) {
         unless ( open(FH, '<' . $file) ) {
@@ -340,7 +394,7 @@ sub dump {
             }
         }
     }
-    
+
     return $d->Dump();
 }
 
@@ -349,7 +403,7 @@ sub dump {
 sub version {   return $VERSION()   }
 
 
-# delete() - sets the '_status' session flag to DELETED, 
+# delete() - sets the '_status' session flag to DELETED,
 # which flush() uses to decide to call remove() method on driver.
 sub delete {
     my $self = shift;
@@ -386,7 +440,7 @@ sub clear {
     my $n = 0;
     for ( @params ) {
         /^_session_/ and next;
-        # If this particular parameter has an expiration ticker, 
+        # If this particular parameter has an expiration ticker,
         # remove it.
         if ( $self->{_data}->{_session_expire_list}->{$_} ) {
             delete ( $self->{_data}->{_session_expire_list}->{$_} );
@@ -430,9 +484,9 @@ sub save_param {
     my $n = 0;
     for ( @params ) {
         # It's imporatnt to note that CGI.pm's param() returns array
-        # if a parameter has more values associated with it (checkboxes and crolling lists).
-        # So we should access its parameters in array context not to miss
-        # anything
+        # if a parameter has more values associated with it (checkboxes
+        # and crolling lists). So we should access its parameters in
+        # array context not to miss anything
         my @values = $cgi->param($_);
 
         if ( defined $values[1] ) {
@@ -486,7 +540,7 @@ sub load_param {
 
 
 
-# another, but a less efficient alternative to undefining 
+# another, but a less efficient alternative to undefining
 # the object
 sub close {
     my $self = shift;
@@ -511,7 +565,7 @@ sub error {
 # errstr() - alias to error()
 sub errstr {
     my $self = shift;
-    
+
     return $self->error(@_);
 }
 
@@ -554,7 +608,7 @@ sub expire {
     }
 
     # If we came this far, we'll simply assume user is trying
-    # to set an expiration date for a single session parameter. 
+    # to set an expiration date for a single session parameter.
     my ($param, $etime) = @_;
 
     # Let's check if that particular session parameter exists
@@ -579,7 +633,7 @@ sub _time_alias {
     if ( $str =~ m/^\d+$/ ) {
         return $str;
     }
-    
+
     my %time_map = (
         s           => 1,
         m           => 60,
@@ -598,4 +652,20 @@ sub _time_alias {
 }
 
 
-# $Id$ 
+# remote_addr() - returns ip address of the session
+sub remote_addr {
+    my $self = shift;
+
+    return $self->{_data}->{_session_remote_addr};
+}
+
+
+# param_hashref() - returns parameters as a reference to a hash
+sub param_hashref {
+    my $self = shift;
+
+    return $self->{_data};
+}
+
+
+# $Id$

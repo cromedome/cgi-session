@@ -8,4 +8,5 @@ Session/DB_File.pm
 Session/File.pm
 Session/ID/MD5.pm
 Session/Serialize/Storable.pm
-t/default.t
+t/db_file.t
+t/file.t
