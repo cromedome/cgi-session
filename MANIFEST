@@ -1,3 +1,4 @@
+.#Session.pm.3.12
 Changes
 MANIFEST
 MANIFEST.SKIP
@@ -10,12 +11,14 @@ Session/DB_File.pm
 Session/File.pm
 Session/ID/Incr.pm
 Session/ID/MD5.pm
+Session/ID/Static.pm
 Session/MySQL.pm
 Session/Serialize/Default.pm
 Session/Serialize/FreezeThaw.pm
 Session/Serialize/Storable.pm
 Session/Tutorial.pm
 rfc2965.txt
+t/.#file.t.1.5
 t/api3_db_file.t
 t/api3_db_file_freezethaw.t
 t/api3_db_file_storable.t
@@ -29,6 +32,8 @@ t/api3_incr.t
 t/api3_mysql.t
 t/api3_obj_store.t
 t/api3_obj_store_db_file.t
+t/api3_static_id.t
+t/cgisess_static
 t/complex_ds.t
 t/db_file.t
 t/file.t
