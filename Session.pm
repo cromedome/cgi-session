@@ -98,8 +98,12 @@ sub load {
 
     # Two or more args passed:
     if ( @_ > 1 ) {
-        if ( defined $_[0] ) {      # <-- to avoid 'Uninitialized value...' carpings
-            %{ $self->{_DSN} } = map { split /:/ } split /;/, $_[0];
+        if ( defined $_[0] ) {      # <-- to avoid 'Uninitialized value...' warnings
+            require Text::Abbrev;
+            my $abbrev = Text::Abbrev::abbrev( "driver", "serializer", "id" );
+            #%{ $self->{_DSN} } = map { split /:/ } split /;/, $_[0];
+            my %dsn = map { split /:/ } (split /;/, $_[0]);
+            %{ $self->{_DSN} } = map { ( $abbrev->{$_}, $dsn{$_} ) } keys %dsn;
             #
             # convertingn all the values to lowercase
             while ( my($key, $value) = each %{ $self->{_DSN} } ) {
@@ -207,7 +211,7 @@ sub DESTROY         {   $_[0]->flush()  }
 *param_hashref      = \&dataref;
 sub dataref         { $_[0]->{_DATA}    }
 sub empty           { !$_[0]->id        }
-sub expired         { $_[0]->_test_status( STATUS_EXPIRED ) }
+sub is_expired         { $_[0]->_test_status( STATUS_EXPIRED ) }
 sub error           { croak $_[1]       }
 sub id              { $_[0]->dataref->{_SESSION_ID}     }
 sub atime           { $_[0]->dataref->{_SESSION_ATIME}  }
@@ -456,7 +460,7 @@ sub cookie {
     my $query = $self->query();
     my $cookie= undef;
 
-    if ( $self->expired ) {
+    if ( $self->is_expired ) {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '-1d', @_ );
     } elsif ( my $t = $self->expire ) {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> $t . 's', @_ );
@@ -557,7 +561,7 @@ CGI::Session - persistent session data in CGI applications
     $session->clear(["l_name", "f_name"]);
 
     # expire '_IS_LOGGED_IN' flag after 10 idle minutes:
-    $session->expire(_IS_LOGGED_IN => '+10m')
+    $session->expire('is_logged_in', '+10m')
 
     # expire the session itself after 1 idle hour
     $session->expire('+1h');
@@ -643,7 +647,7 @@ depending on its type. Some examples of this syntax are:
     $s = CGI::Session->new("driver:mysql", undef);
     $s = CGI::Session->new("driver:sqlite", $sid);
     $s = CGI::Session->new("driver:db_file", $query);
-    $s = CGI::Session->new("serializer:storable", $sid);
+    $s = CGI::Session->new("serializer:storable;id:incr", $sid);
     # etc...
 
 
@@ -668,9 +672,13 @@ C<id> - ID generator to use when new session is to be created. Available ID gene
 
 =back
 
+For example, to get CGI::Session store its data using DB_File and serialize data using FreezeThaw:
+
+    $s = new CGI::Session("driver:DB_File;serializer:FreezeThaw", undef);
+
 If called with three arguments, first two will be treated as in the previous example, and third argument will be \%dsn_args,
 which will be passed to $dsn components (namely, driver, serializer and id generators) for initialization purposes. Since all the
-$dsn components must initialize to some default value, this third argument is not required.
+$dsn components must initialize to some default value, this third argument should not be required for most drivers to operate properly.
 
 undef is acceptable as a valid placeholder to any of the above arguments, which will force default behavior.
 
@@ -688,7 +696,7 @@ load() is useful to detect expired or non-existing sessions without forcing the 
 something like this:
 
     $s = CGI::Session->load() or die CGI::Session->errstr();
-    if ( $s->expired ) {
+    if ( $s->is_expired ) {
         print $s->header(),
             $cgi->start_html(),
             $cgi->p("Your session timedout! Refresh the screen to start new session!")
@@ -696,7 +704,7 @@ something like this:
         exit(0);
     }
 
-    if ( $s->empty ) {
+    if ( $s->is_empty ) {
         $s = $s->new() or die $s->errstr;
     }
 
@@ -733,16 +741,16 @@ Returns reference to session's data table:
     $name= $params->{name};
     # etc...
 
-Useful for having all session data in a hashref, but quite dangerous to update.
+Useful for having all session data in a hashref, but too risky to update.
 
 =item save_param()
 
-=item save_param($cgi)
+=item save_param($query)
 
-=item save_param($cgi, \@list)
+=item save_param($query, \@list)
 
 Saves query parameters to session object. In otherwords, it's the same as calling C<param($name, $value)> for every single
-query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query() method|/"query()">, which returns C<< CGI->new >>.
+query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query()|/"query()">, which returns C<< CGI->new >>.
 If second argument is present and is a reference to an array, only those query parameters found in the array will be stored
 in the session. undef is a valid placeholder for any argument to force default behavior.
 
@@ -809,28 +817,28 @@ Examples:
     $session->expire("~logged-in", "10m"); # expires '~logged-in' parameter after 10 idle minutes
 
 B<Note:> all the expiration times are relative to session's last access time, not to its creation time.
-To expire a session immediately, call L<delete()|/"delete()">. To expire a specific session parameter immediately, call L<clear()|/"clear()"> and the name of the parameter as an element of \@list.
+To expire a session immediately, call L<delete()|/"delete()">. To expire a specific session parameter immediately, call L<clear([$name])|/"clear()">.
 
-=item expired()
+=item is_expired()
 
 Tests whether session initialized using L<load()|/"load()"> is to be expired. This method works only on sessions initialized
 with load():
 
     $s = CGI::Session->load() or die CGI::Session->errstr;
-    if ( $s->expired ) {
+    if ( $s->is_expired ) {
         die "Your session expired. Please refresh";
     }
-    if ( $s->empty ) {
+    if ( $s->is_empty ) {
         $s = $s->new() or die $s->errstr;
     }
 
 
-=item empty()
+=item is_empty()
 
 Returns true for sessions that are empty. It's preferred way of testing whether requested session was loaded successfully or not:
 
     $s = CGI::Session->load($sid);
-    if ( $s->empty ) {
+    if ( $s->is_empty ) {
         $s = $s->new();
     }
 
@@ -838,7 +846,7 @@ Actually, the above code is nothing but waste. The same effect could've been ach
 
     $s = CGI::Session->new( $sid );
 
-empty() is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<expired()|/"expired()"> for an example.
+is_empty() is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<is_expired()|/"is_expired()"> for an example.
 
 =item delete()
 
@@ -848,7 +856,7 @@ and flush() will do the actual removal.
 
 =back
 
-=head MISCELLANEOUS METHODS
+=head1 MISCELLANEOUS METHODS
 
 =over 4
 
