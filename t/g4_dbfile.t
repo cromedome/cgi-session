@@ -1,8 +1,10 @@
 
+use Test::More;
 use File::Spec;
 use CGI::Session::Test::Default;
 
-unless ( eval "require DB_File" ) {
+eval "require DB_File";
+if ( $@ ) {
     plan(skip_all=>"DB_File is NOT available");
     exit(0);
 }

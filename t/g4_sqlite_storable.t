@@ -5,7 +5,8 @@ use Test::More;
 use CGI::Session::Test::Default;
 
 for ( "DBI", "DBD::SQLite", "Storable" ) {
-    unless ( eval "require $_" ) {
+    eval "require $_";
+    if ( $@ ) {
         plan(skip_all=>"$_ is NOT available");
         exit(0);
     }

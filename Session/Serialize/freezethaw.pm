@@ -6,8 +6,10 @@ use strict;
 #use diagnostics;
 
 use FreezeThaw;
+use CGI::Session::ErrorHandler;
 
-$CGI::Session::Serialize::freezethaw::VERSION = '1.4';
+$CGI::Session::Serialize::freezethaw::VERSION = '1.5';
+@CGI::Session::Serialize::freezethaw::ISA     = qw( CGI::Session::ErrorHandler );
 
 sub freeze {
     my ($self, $data) = @_;

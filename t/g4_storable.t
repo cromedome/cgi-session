@@ -1,8 +1,10 @@
 
+use Test::More;
 use File::Spec;
 use CGI::Session::Test::Default;
 
-unless ( eval "require Storable" ) {
+eval "require Storable";
+if ( $@ ) {
     plan(skip_all=>"Storable is NOT available");
     exit(0);
 }

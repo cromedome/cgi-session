@@ -7,11 +7,12 @@ use strict;
 
 use File::Spec;
 use Carp "croak";
-use CGI::Session::ErrorHandler;
 use Fcntl qw( :DEFAULT :flock );
+use CGI::Session::ErrorHandler;
 
+$CGI::Session::ID::incr::VERSION = '1.5';
 @CGI::Session::ID::incr::ISA     = qw( CGI::Session::ErrorHandler );
-$CGI::Session::ID::incr::VERSION = '1.4';
+
 
 sub generate_id {
     my ($self, $args) = @_;

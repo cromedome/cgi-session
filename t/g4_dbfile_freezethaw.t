@@ -1,10 +1,12 @@
 
 use strict;
+use Test::More;
 use File::Spec;
 use CGI::Session::Test::Default;
 
 for ( "DB_File", "FreezeThaw" ) {
-    unless ( eval "require $_" ) {
+    eval "require $_";
+    if ( $@ ) {
         plan(skip_all=>"$_ is NOT available");
         exit(0);
     }

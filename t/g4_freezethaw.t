@@ -1,8 +1,10 @@
 
+use Test::More;
 use File::Spec;
 use CGI::Session::Test::Default;
 
-unless ( eval "require FreezeThaw" ) {
+eval "require FreezeThaw";
+if ( $@ ) {
     plan(skip_all=>"FreezeThaw is NOT available");
     exit(0);
 }

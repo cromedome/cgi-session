@@ -6,10 +6,10 @@ use strict;
 #use diagnostics;
 
 use Carp;
+use CGI::Session::ErrorHandler;
 
-$CGI::Session::ID::static::VERSION = '1.5';
-
-# Preloaded methods go here.
+$CGI::Session::ID::static::VERSION = '1.6';
+@::CGI::Session::ID::static::ISA   = qw( CGI::Session::ErrorHandler );
 
 sub generate_id {
     my ($self, $args, $claimed_id ) = @_;

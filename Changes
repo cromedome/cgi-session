@@ -1,3 +1,8 @@
+What is new in 4.00_04 - Wednesday, February 16, 2005
+
+    * FIX: Minor fix in tests suits and error-checking routines of
+      serializers and id-generators
+
 What is new in 4.00_03 - Friday, February 11, 2005
 
     * NEW: CGI::Session::find() introduced
