@@ -98,7 +98,7 @@ sub teardown {
     }
     
     if ( $self->{MySQL_disconnect} ) {
-        #$dbh->disconnect();
+        $dbh->disconnect();
     }
 
     return 1;

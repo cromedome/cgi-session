@@ -219,7 +219,7 @@ sub _init_new_session {
     my $self = shift;
 
     $self->{_DATA} = {
-        _session_id => $self->generate_id(),
+        _session_id => $self->generate_id($self->{_OPTIONS}),
         _session_ctime => time(),
         _session_atime => time(),
         _session_etime => undef,
