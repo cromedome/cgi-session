@@ -39,5 +39,4 @@ t/db_file.t
 t/file.t
 t/mysql.t
 t/tie_file.t
-t/trace.log
 t/trace.t

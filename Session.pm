@@ -1284,7 +1284,7 @@ sub save_param {
         # if a parameter has more values associated with it (checkboxes
         # and crolling lists). So we should access its parameters in
         # array context not to miss anything
-        my @values = $cgi->param($_);
+        my @values = $cgi->param($_) or next;
 
         if ( defined $values[1] ) {
             $self->_set_param($_ => \@values);

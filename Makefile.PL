@@ -21,7 +21,7 @@ DOC_BASE = /home/sherzodr/public_html/modules/CGI
 POD2HTML = pod2html --backlink="[toc]" --podroot=/usr/lib/perl5/5.6.1 \
 	                               --recurse --header --css=style.css
 publish: dist
-	mv $(DISTVNAME).tar$(SUFFIX) /home/sherzodr/public_html/modules/dist/
+	mv $(DISTVNAME).tar$(SUFFIX) /home/sherzodr/public_html/modules/dist/CGI-Session/
 	$(RM_RF)  $(DOC_BASE)
 	$(MKPATH) $(DOC_BASE)/Session/Serialize
 	$(MKPATH) $(DOC_BASE)/Session/ID
