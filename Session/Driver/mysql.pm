@@ -44,61 +44,22 @@ CGI::Session::Driver::mysql - CGI::Session driver for MySQL database
 =head1 SYNOPSIS
 
     $s = new CGI::Session( "driver:mysql", $sid);
-    $s = new CGI::Session( "driver:mysql", $sid, {
-                                                DataSource  => 'dbi:mysql:test',
-                                                User        => 'sherzodr',
-                                                Password    => 'hello'
-                          });
+    $s = new CGI::Session( "driver:mysql", $sid, { DataSource  => 'dbi:mysql:test',
+                                                   User        => 'sherzodr',
+                                                   Password    => 'hello' });
     $s = new CGI::Session( "driver:mysql", $sid, { Handle => $dbh } );
 
 =head1 DESCRIPTION
 
-B<mysql> stores session records in a MySQL table, where session will be stored
-in a separate table row. Name of the sessions table defaults to I<sessions>. This can be
-changed by setting C<$CGI::Session::Driver::mysql::TABLE_NAME> to desired value or setting
-I<TableName> dsn argument while creating session object:
-
-    $s = new CGI::Session("driver:mysql", $sid, {Handle=>$dbh, TableName=>$tblname});
+B<mysql> stores session records in a MySQL table. For details see L<CGI::Session::Driver::DBI|CGI::Session::Driver::DBI>, its parent class.
 
 =head2 DRIVER ARGUMENTS
 
-B<mysql> driver supports following attributes:
+B<mysql> driver supports all the arguments documented in CGI::Session::Driver::DBI. In addition, I<DataSource> argument can optionally leave leading "dbi:mysql:" string out:
 
-=over 4
-
-=item DataSource
-
-First argument to be passed to L<DBI|DBI>->connect(). If I<DataSource> string does not being
-with I<dbi::mysql>, it will be prepended for you. This means instead of setting I<DataSource> to
-I<dbi:mysql:test> you can safely set it to I<test> and I<dbi:mysql:test> will be assumed.
-
-=item User
-
-User privileged to connect to the database defined in I<DataSource>.
-
-=item Password
-
-Password of the I<User> privileged to connect to the database defined in I<DataSource>
-
-=item Handle
-
-To set existing database handle object ($dbh) returned by DBI->connect(). I<Handle> will override all the
-above arguments, if any present.
-
-=back
-
-=head1 STORAGE COLUMNS
-
-B<mysql> driver will expect storage table to have two columns, I<id CHAR(32) NOT NULL PRIMARY KEY>
-and I<a_session TEXT NOT NULL>. <id> holds session id, and I<a_session> keeps serialized data. Table may keep other colulmns,
-if you wish, but the driver will use only the above two.
-
-Following command will create the sessions table:
-
-    CREATE TABLE sessions (
-        id CHAR(32) NOT NULL PRIMARY KEY,
-        a_session TEXT NOT NULL
-    );
+    $s = new CGI::Session( "driver:mysql", $sid, {DataSource=>'shopping_cart'});
+    # is the same as:
+    $s = new CGI::Session( "driver:mysql", $sid, {DataSource=>'dbi:mysql:shopping_cart'});
 
 =head1 LICENSING
 

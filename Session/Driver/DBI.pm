@@ -123,9 +123,52 @@ The only reason why this class doesn't suit for a valid driver is its name isn't
 =head2 NOTES
 
 CGI::Session::Driver::DBI defines init() method, which makes DBI handle available for drivers in 'Handle' attribute regardless
-of what \%dsn_args were used in creating CGI::Session. Should your driver require non-standard initialization you have to
+of what \%dsn_args were used in creating session object. Should your driver require non-standard initialization you have to
 re-define init() method in your F<.pm> file, but make sure to set 'Handle' - object attribute to database handle (returned
 by DBI->connect(...)) if you wish to inherit any of the methods from CGI::Session::Driver::DBI.
+
+=head1 STORAGE
+
+Before you can use any DBI-based session drivers you need to make sure compatible database table is created for CGI::Session to work with. Following command will produce minimal requirements in most SQL databases:
+
+    CREATE TABLE sessions (
+        id CHAR(32) NOT NULL PRIMARY KEY,
+        a_session TEXT NOT NULL
+    );
+
+Your session table can define additional columns, but the above two are required. Name of the session table is expected to be I<sessions> by default. You may use a different name if you wish. To do this you have to pass I<TableName> as part of your C< \%dsn_args >:
+
+    $s = new CGI::Session("driver:sqlite", undef, {TableName=>'my_sessions'});
+    $s = new CGI::Session("driver:mysql", undef, {TableName=>'my_sessions', DataSource=>'dbi:mysql:shopping_cart'});
+
+=head1 DRIVER ARGUMENTS
+
+Following driver arguments are supported:
+
+=over 4
+
+=item DataSource
+
+First argument to be passed to L<DBI|DBI>->connect().
+
+=item User
+
+User privileged to connect to the database defined in I<DataSource>.
+
+=item Password
+
+Password of the I<User> privileged to connect to the database defined in I<DataSource>
+
+=item Handle
+
+To set existing database handle object ($dbh) returned by DBI->connect(). I<Handle> will override all the
+above arguments, if any present.
+
+=item TableName
+
+Name of the table session data will be stored in.
+
+=back
 
 =head1 LICENSING
 
