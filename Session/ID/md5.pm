@@ -1,4 +1,4 @@
-package CGI::Session::ID::MD5;
+package CGI::Session::ID::md5;
 
 # $Id$
 
@@ -8,12 +8,10 @@ use vars qw($VERSION);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
 
+*generate = \&generate_id;
 sub generate_id {
-    my $self = shift;
-
     my $md5 = new Digest::MD5();
-    $md5->add($$ , time() , rand(9999) );
-
+    $md5->add($$ , time() , rand(time) );
     return $md5->hexdigest();
 }
 

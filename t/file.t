@@ -6,23 +6,16 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-BEGIN { 
-    # Check if DB_File is avaialble. Otherwise, skip this test
-
-    require Test;
-    Test->import();
-    
-    plan(tests => 14); 
-};
-use CGI::Session::File;
+use Test::More tests => 14;
+use CGI::Session;
 ok(1); # If we made it this far, we're ok.
 
 #########################
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
-my $s = new CGI::Session::File(undef, {Directory=>"t"} )
-    or die $CGI::Session::errstr;
+my $s = new CGI::Session("driver:File", undef, {Directory=>"t/sessiondata"} )
+    or die CGI::Session->errstr;
 
 ok($s);
     
@@ -41,9 +34,9 @@ $s->param(-name=>'email', -value=>'sherzodr@cpan.org');
 
 ok($s->param(-name=>'email'));
 
-ok(!$s->expires() );
+ok(!$s->expire() );
 
-$s->expires("+10m");
+$s->expire("+10m");
 
 ok($s->expire());
 
@@ -51,7 +44,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session::File($sid, {Directory=>'t'});
+my $s2 = new CGI::Session(undef, $sid, {Directory=>'t/sessiondata'});
 ok($s2);
 
 ok($s2->id() eq $sid);
@@ -61,6 +54,6 @@ ok($s2->param('author'));
 ok($s2->expire());
 
 
-#$s2->delete();
+$s2->delete();
 
 

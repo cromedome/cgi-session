@@ -1,4 +1,4 @@
-package CGI::Session::ID::Static;
+package CGI::Session::ID::static;
 
 use strict;
 use Carp 'croak';
@@ -9,9 +9,7 @@ use vars qw($VERSION);
 # Preloaded methods go here.
 
 sub generate_id {
-	my ($self, $options ) = @_;
-
-    my $claimed_id = $options->[0];
+	my ($self, $args, $claimed_id ) = @_;
 
     unless ( defined $claimed_id ) {
         croak "'CGI::Session::ID::Static::generate_id()' requires static id";

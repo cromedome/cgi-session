@@ -8,16 +8,13 @@
 
 use Test;
 BEGIN { plan tests => 11  };
-use CGI::Session::File;
+use CGI::Session;
 ok(1); # If we made it this far, we're ok.
 
 #########################
 
-# Insert your test code below, the Test module is use()ed here so read
-# its man page ( perldoc Test ) for help writing this test script.
-$CGI::Session::File::FileName = 'cgisession_%s.txt';
-my $s = new CGI::Session::File(undef, {Directory=>"t"} )
-    or die $CGI::Session::errstr;
+my $s = new CGI::Session(undef, undef, {Directory=>"t"} )
+    or die CGI::Session->errstr;
 
 ok($s);
 ok($s->id());
@@ -43,8 +40,8 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s1 = new CGI::Session::File($sid, {Directory=>"t"})
-        or die $CGI::Session::errstr;
+my $s1 = new CGI::Session(undef, $sid, {Directory=>"t"})
+        or die CGI::Session->errstr;
 
 ok($s1->param('d3'));
 

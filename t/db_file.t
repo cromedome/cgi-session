@@ -19,7 +19,7 @@ BEGIN {
     
     plan(tests => 14); 
 };
-use CGI::Session::DB_File;
+use CGI::Session;
 ok(1); # If we made it this far, we're ok.
 
 #########################
@@ -27,8 +27,8 @@ ok(1); # If we made it this far, we're ok.
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
 
-my $s = new CGI::Session::DB_File(undef, {Directory=>"t"}) 
-    or die $CGI::Session::errstr;
+my $s = new CGI::Session("driver:db_file", undef, {Directory=>"t"}) 
+    or die CGI::Session->errstr;
 
 ok($s);
     
@@ -53,11 +53,10 @@ $s->expire("+10s");
 ok($s->expire());
 
 my $sid = $s->id();
-
 $s->flush();
 
-my $s2 = new CGI::Session::DB_File($sid, {Directory=>'t'});
-ok($s2);
+my $s2 = CGI::Session->new("driver:db_file", $sid, {Directory=>'t'}) or die CGI::Session->errstr;
+ok($s2, $s2);
 
 ok($s2->id() eq $sid);
 
@@ -65,5 +64,5 @@ ok($s2->param('email'));
 ok($s2->param('author'));
 ok($s2->expire());
 
-#$s2->delete();
+$s2->delete();
 

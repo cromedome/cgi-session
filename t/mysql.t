@@ -34,7 +34,7 @@ BEGIN {
     
     plan(tests => 14); 
 };
-use CGI::Session::MySQL;
+use CGI::Session;
 ok(1); # If we made it this far, we're ok.
 
 #########################
@@ -48,8 +48,7 @@ my %options = (
     Password    => "marley01"
 );
 
-my $s = new CGI::Session::MySQL(undef, \%options) 
-    or die $CGI::Session::errstr;
+my $s = new CGI::Session("driver:mysql", undef, \%options) or die CGI::Session->errstr;   
 
 ok($s);
     
@@ -78,7 +77,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session::MySQL($sid, \%options);
+my $s2 = new CGI::Session("driver:mysql", $sid, \%options);
 ok($s2);
 
 ok($s2->id() eq $sid);

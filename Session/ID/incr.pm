@@ -1,4 +1,4 @@
-package CGI::Session::ID::Incr;
+package CGI::Session::ID::incr;
 
 # $Id$
 
@@ -12,11 +12,11 @@ use vars qw($VERSION);
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
 
 sub generate_id {
-    my ($self, $options) = @_;
+    my ($self, $args) = @_;
 
-    my $IDFile = $options->[1]->{IDFile} or croak "Don't know where to store the id";
-    my $IDIncr = $options->[1]->{IDIncr} || 1;
-    my $IDInit = $options->[1]->{IDInit} || 0;
+    my $IDFile = $args->{IDFile} or croak "Don't know where to store the id";
+    my $IDIncr = $args->{IDIncr} || 1;
+    my $IDInit = $args->{IDInit} || 0;
 
     unless (sysopen(FH, $IDFile, O_RDWR|O_CREAT, 0644) ) {
         $self->error("Couldn't open IDFile=>$IDFile: $!");

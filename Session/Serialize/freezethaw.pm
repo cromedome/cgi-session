@@ -1,4 +1,4 @@
-package CGI::Session::Serialize::FreezeThaw;
+package CGI::Session::Serialize::freezethaw;
 
 # $Id$ 
 use strict;
