@@ -6,10 +6,10 @@ use strict;
 use Carp 'confess';
 use AutoLoader 'AUTOLOAD';
 
-use vars qw($VERSION $errstr $IP_MATCH $COOKIE);
+use vars qw($VERSION $errstr $IP_MATCH $NAME);
 
 ($VERSION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
-$COOKIE     = 'CGISESSID';
+$NAME     = 'CGISESSID';
 
 # import() - we do not import anything into the callers
 # namespace, however, we enable the user to specify
@@ -23,7 +23,7 @@ sub import {
 }
 
 
-# Session _status flags
+# Session _STATUS flags
 sub SYNCED   () { 0 }
 sub MODIFIED () { 1 }
 sub DELETED  () { 2 }
@@ -36,9 +36,10 @@ sub new {
     $class = ref($class) || $class;
 
     my $self = {
-        _options    => [ @_ ],
-        _data       => undef,
-        _status     => MODIFIED,
+        _OPTIONS    => [ @_ ],
+        _DATA       => undef,
+        _STATUS     => MODIFIED,
+        _QUERY_OBJ  => undef,
     };
 
     bless ($self, $class);
@@ -55,7 +56,7 @@ sub DESTROY {
     my $self = shift;
 
     $self->flush();
-    $self->can('teardown') && $self->teardown();
+    $self->teardown();
 }
 
 
@@ -87,10 +88,11 @@ sub _init {
     my $self = shift;
 
     my $claimed_id = undef;
-    my $arg = $self->{_options}->[0];
+    my $arg = $self->{_OPTIONS}->[0];
     if ( defined ($arg) && ref($arg) ) {
         if ( $arg->isa('CGI') ) {
-            $claimed_id = $arg->cookie($COOKIE) || $arg->param($COOKIE) || undef;
+            $claimed_id = $arg->cookie($NAME) || $arg->param($NAME) || undef;
+            $self->{_SESSION_OBJ} = $arg;
         } elsif ( ref($arg) eq 'CODE' ) {
             $claimed_id = $arg->() || undef;
 
@@ -122,13 +124,13 @@ sub _init {
 sub _init_old_session {
     my ($self, $claimed_id) = @_;
 
-    my $options = $self->{_options} || [];
+    my $options = $self->{_OPTIONS} || [];
     my $data = $self->retrieve($claimed_id, $options);
 
     # Session was initialized successfully
     if ( defined $data ) {
 
-        $self->{_data} = $data;
+        $self->{_DATA} = $data;
 
         # Check if the IP of the initial session owner should
         # match with the current user's IP
@@ -151,10 +153,10 @@ sub _init_old_session {
         $self->_expire_params();
 
         # Updating last access time for the session
-        $self->{_data}->{_session_atime} = time();
+        $self->{_DATA}->{_session_atime} = time();
 
         # Marking the session as modified
-        $self->{_status} = MODIFIED;
+        $self->{_STATUS} = MODIFIED;
 
         return 1;
     }
@@ -166,7 +168,7 @@ sub _init_old_session {
 
 
 sub _ip_matches {
-    return ( $_[0]->{_data}->{_session_remote_addr} eq $ENV{REMOTE_ADDR} );
+    return ( $_[0]->{_DATA}->{_session_remote_addr} eq $ENV{REMOTE_ADDR} );
 }
 
 
@@ -195,7 +197,7 @@ sub _expire_params {
     my $self = shift;
 
     # Expiring
-    my $exp_list = $self->{_data}->{_session_expire_list} || {};
+    my $exp_list = $self->{_DATA}->{_session_expire_list} || {};
     my @trash_can = ();
     while ( my ($param, $etime) = each %{$exp_list} ) {
         if ( time() >= ($self->atime() + $etime) ) {
@@ -216,7 +218,7 @@ sub _expire_params {
 sub _init_new_session {
     my $self = shift;
 
-    $self->{_data} = {
+    $self->{_DATA} = {
         _session_id => $self->generate_id(),
         _session_ctime => time(),
         _session_atime => time(),
@@ -225,7 +227,7 @@ sub _init_new_session {
         _session_expire_list => { },
     };
 
-    $self->{_status} = MODIFIED;
+    $self->{_STATUS} = MODIFIED;
 
     return 1;
 }
@@ -245,20 +247,20 @@ sub _init_new_session {
 sub id {
     my $self = shift;
 
-    return $self->{_data}->{_session_id};
+    return $self->{_DATA}->{_session_id};
 }
 
 
 
 # param() - accessor method. Reads and writes
-# session parameters ( $self->{_data} ). Decides
+# session parameters ( $self->{_DATA} ). Decides
 # between _get_param() and _set_param() accordingly.
 sub param {
     my $self = shift;
 
 
     unless ( defined $_[0] ) {
-        return keys %{ $self->{_data} };
+        return keys %{ $self->{_DATA} };
     }
 
     if ( @_ == 1 ) {
@@ -300,11 +302,11 @@ sub param {
 
 
 
-# _set_param() - sets session parameter to the '_data' table
+# _set_param() - sets session parameter to the '_DATA' table
 sub _set_param {
     my ($self, $key, $value) = @_;
 
-    if ( $self->{_status} == DELETED ) {
+    if ( $self->{_STATUS} == DELETED ) {
         return;
     }
 
@@ -314,8 +316,8 @@ sub _set_param {
         return undef;
     }
 
-    $self->{_data}->{$key} = $value;
-    $self->{_status} = MODIFIED;
+    $self->{_DATA}->{$key} = $value;
+    $self->{_STATUS} = MODIFIED;
 
     return $value;
 }
@@ -324,15 +326,15 @@ sub _set_param {
 
 
 # _get_param() - gets a single parameter from the
-# '_data' table
+# '_DATA' table
 sub _get_param {
     my ($self, $key) = @_;
 
-    if ( $self->{_status} == DELETED ) {
+    if ( $self->{_STATUS} == DELETED ) {
         return;
     }
 
-    return $self->{_data}->{$key};
+    return $self->{_DATA}->{$key};
 }
 
 
@@ -341,18 +343,18 @@ sub _get_param {
 sub flush {
     my $self = shift;
 
-    my $status = $self->{_status};
+    my $status = $self->{_STATUS};
 
     if ( $status == MODIFIED ) {
-        $self->store($self->id, $self->{_options}, $self->{_data});
-        $self->{_status} = SYNCED;
+        $self->store($self->id, $self->{_OPTIONS}, $self->{_DATA});
+        $self->{_STATUS} = SYNCED;
     }
 
     if ( $status == DELETED ) {
-        return $self->remove($self->id, $self->{_options});
+        return $self->remove($self->id, $self->{_OPTIONS});
     }
 
-    $self->{_status} = SYNCED;
+    $self->{_STATUS} = SYNCED;
 
     return 1;
 }
@@ -642,10 +644,10 @@ This will try to get the session id either from the cookie or from the
 query_string parameter. If it succeeds, initializes the old session from 
 the disk or creates a new session. Name of the cookie and query_string 
 parameter the library looks for is B<CGISESSID>. If you'd rather assign 
-a different name update the value of B<$CGI::Session::COOKIE> variable 
+a different name update the value of B<$CGI::Session::NAME> variable 
 before creating the object:
 
-    $CGI::Session::COOKIENAME = "SID";
+    $CGI::Session::NAME = "SID";
     $session = new CGI::Session::File($cgi, {Directory=>"/tmp"});
 
 =head2 STORING DATA IN THE SESSION
@@ -826,7 +828,7 @@ can optionally set values to before creating a session object:
 
 =over 4
 
-=item B<$CGI::Session::COOKIE>
+=item B<$CGI::Session::NAME>
 
 Denotes a name of the cookie that holds the session ID of the user. This 
 variable is used only if you pass CGI object as the first argument to 
@@ -1371,24 +1373,24 @@ sub dump {
 sub version {   return $VERSION()   }
 
 
-# delete() - sets the '_status' session flag to DELETED,
+# delete() - sets the '_STATUS' session flag to DELETED,
 # which flush() uses to decide to call remove() method on driver.
 sub delete {
     my $self = shift;
 
     # If it was already deleted, make a confession!
-    if ( $self->{_status} == DELETED ) {
+    if ( $self->{_STATUS} == DELETED ) {
         confess "delete attempt on deleted session";
     }
 
-    $self->{_status} = DELETED;
+    $self->{_STATUS} = DELETED;
 }
 
 
 
 
 
-# clear() - clears a list of parameters off the session's '_data' table
+# clear() - clears a list of parameters off the session's '_DATA' table
 sub clear {
     my $self = shift;
     $class   = ref($class);
@@ -1410,21 +1412,21 @@ sub clear {
         /^_session_/ and next;
         # If this particular parameter has an expiration ticker,
         # remove it.
-        if ( $self->{_data}->{_session_expire_list}->{$_} ) {
-            delete ( $self->{_data}->{_session_expire_list}->{$_} );
+        if ( $self->{_DATA}->{_session_expire_list}->{$_} ) {
+            delete ( $self->{_DATA}->{_session_expire_list}->{$_} );
         }
-        delete ($self->{_data}->{$_}) && ++$n;
+        delete ($self->{_DATA}->{$_}) && ++$n;
     }
 
-    # Set the session '_status' flag to MODIFIED
-    $self->{_status} = MODIFIED;
+    # Set the session '_STATUS' flag to MODIFIED
+    $self->{_STATUS} = MODIFIED;
 
     return $n;
 }
 
 
 # save_param() - copies a list of third party object parameters
-# into CGI::Session object's '_data' table
+# into CGI::Session object's '_DATA' table
 sub save_param {
     my ($self, $cgi, $list) = @_;
 
@@ -1473,7 +1475,7 @@ sub save_param {
 
 
 # load_param() - loads a list of third party object parameters
-# such as CGI, into CGI::Session's '_data' table
+# such as CGI, into CGI::Session's '_DATA' table
 sub load_param {
     my ($self, $cgi, $list) = @_;
 
@@ -1512,7 +1514,7 @@ sub load_param {
 # the object
 sub close {
     my $self = shift;
-
+    
     $self->DESTROY();
 }
 
@@ -1547,7 +1549,7 @@ sub atime {
         confess "_session_atime - read-only value";
     }
 
-    return $self->{_data}->{_session_atime};
+    return $self->{_DATA}->{_session_atime};
 }
 
 
@@ -1559,7 +1561,7 @@ sub ctime {
         confess "_session_atime - read-only value";
     }
 
-    return $self->{_data}->{_session_ctime};
+    return $self->{_DATA}->{_session_ctime};
 }
 
 
@@ -1568,11 +1570,11 @@ sub expire {
     my $self = shift;
 
     unless ( @_ ) {
-        return $self->{_data}->{_session_etime};
+        return $self->{_DATA}->{_session_etime};
     }
 
     if ( @_ == 1 ) {
-        return $self->{_data}->{_session_etime} = _time_alias( $_[0] );
+        return $self->{_DATA}->{_session_etime} = _time_alias( $_[0] );
     }
 
     # If we came this far, we'll simply assume user is trying
@@ -1580,15 +1582,15 @@ sub expire {
     my ($param, $etime) = @_;
 
     # Let's check if that particular session parameter exists
-    # in the '_data' table. Otherwise, return now!
-    defined ($self->{_data}->{$param} ) || return;
+    # in the '_DATA' table. Otherwise, return now!
+    defined ($self->{_DATA}->{$param} ) || return;
 
     if ( $etime == -1 ) {
-        delete $self->{_data}->{_session_expire_list}->{$param};
+        delete $self->{_DATA}->{_session_expire_list}->{$param};
         return;
     }
 
-    $self->{_data}->{_session_expire_list}->{$param} = _time_alias( $etime );
+    $self->{_DATA}->{_session_expire_list}->{$param} = _time_alias( $etime );
 }
 
 
@@ -1624,7 +1626,7 @@ sub _time_alias {
 sub remote_addr {
     my $self = shift;
 
-    return $self->{_data}->{_session_remote_addr};
+    return $self->{_DATA}->{_session_remote_addr};
 }
 
 
@@ -1632,7 +1634,7 @@ sub remote_addr {
 sub param_hashref {
     my $self = shift;
 
-    return $self->{_data};
+    return $self->{_DATA};
 }
 
 
