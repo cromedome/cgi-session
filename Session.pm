@@ -130,6 +130,14 @@ sub DESTROY {
 }
 
 
+# options() - used by drivers only. Returns the driver
+# specific options. To be used in the future releases of the 
+# library, may be
+sub driver_options {
+    my $self = shift;
+
+    return $self->{_OPTIONS}->[1];
+}
 
 # _validate_driver() - checks driver's validity.
 # Return value doesn't matter. If the driver doesn't seem
@@ -143,7 +151,7 @@ sub _validate_driver {
         unless ( $self->can($method) ) {
             my $class = ref($self);
             confess "$class doesn't seem to be a valid CGI::Session driver. " .
-                "At least one method('$method') is missing";
+                "At least one method ('$method') is missing";
         }
     }
     return 1;
@@ -447,7 +455,7 @@ __END__;
 
 =head1 NAME
 
-CGI-Session - persistent session in CGI applications
+CGI::Session - persistent session data in CGI applications
 
 =head1 WARNING
 
@@ -495,21 +503,21 @@ does that and many more
 
 =head1 TO LEARN MORE
 
-Current manual is optimized to be used as a quick reference. To learn more both about
-the logic behind session management and CGI::Session programming style, consider
-the following:
+Current manual is optimized to be used as a quick reference. To learn more both about the logic behind session management and CGI::Session programming style, consider the following:
 
 =over 4
 
 =item *
 
-L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual. Also
-includes library architecture and driver specifications.
+L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual. Also includes library architecture and driver specifications.
 
 =item *
 
-L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life
-problems
+L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
+
+=item *
+
+We also provide mailing lists for CGI::Session users. To subscribe to the list or browse the archives visit https://lists.sourceforge.net/lists/listinfo/cgi-session-user
 
 =item *
 
@@ -737,6 +745,69 @@ Now, $session->header() uses "MY_SID" as a name for the session cookie.
 
 =back
 
+=head1 DATA TABLE
+
+Session data is stored in the form of hash table, in key value pairs.
+All the parameter names you assign through param() method become keys 
+in the table, and whatever value you assign become a value associated with
+that key. Every key/value pair is also called a record. 
+
+All the data you save through param() method are called public records.
+There are several read-only private records as well. Normally, you don't have to know anything about them to make the best use of the library. But knowing wouldn't hurt either. Here are the list of the private records and some description  of what they hold:
+
+=over 4
+
+=item _SESSION_ID
+
+Session id of that data. Accessible through id() method.
+
+=item _SESSION_CTIME
+
+Session creation time. Accessible through ctime() method.
+
+=item _SESSION_ATIME
+
+Session last access time. Accessible through atime() method.
+
+=item _SESSION_ETIME
+
+Session's expiration time, if any. Accessible through expire() method.
+
+=item _SESSION_REMOTE_ADDR
+
+IP address of the user who create that session. Accessible through remote_addr() 
+method
+
+=item _SESSION_EXPIRE_LIST 
+
+Another internal hash table that holds the expiration information for each
+expirable public record, if any. This table is updated with the two-argument-syntax of expires() method.
+
+=back
+
+These private methods are essential for the proper operation of the library
+while working with session data. For this purpose, CGI::Session doesn't allow
+overriding any of these methods through the use of param() method. In addition,
+it doesn't allow any parameter names that start with string B<_SESSION_> either
+to prevent future collisions.
+
+So the following attempt will have no effect on the session data whatsoever
+
+    $session->param(_SESSION_XYZ => 'xyz');
+
+Although private methods are not writable, the library allows reading them
+using param() method:
+
+    my $sid = $session->param(_SESSION_ID);
+
+The above is the same as:
+
+    my $sid = $session->id();
+
+But we discourage people from accessing private records using param() method.
+In the future we are planning to store private records in their own namespace
+to avoid name collisions and remove restrictions on session parameter names.
+
 =head1 DISTRIBUTION
 
 CGI::Session consists of several modular components such as L<drivers|"DRIVERS">, L<serializers|"SERIALIZERS"> and L<id generators|"ID Generators">. This section lists what is available.
@@ -798,6 +869,8 @@ L<Incr|CGI::Session::ID::Incr> - generates auto-incrementing ids. Full name: B<C
 
 
 =head1 COPYRIGHT
+
+Copyright (C) 2001-2002 Sherzod Ruzmetov <sherzodr@cpan.org>. All rights reserved.
 
 This library is free software. You can modify and or distribute it under the same terms as Perl itself.
 
@@ -1097,13 +1170,13 @@ sub _time_alias {
         s           => 1,
         m           => 60,
         h           => 3600,
-        d           => 3600 * 24,
-        w           => 3600 * 24 * 7,
-        M           => 3600 * 24 * 30,
-        y           => 3600 * 24 * 365,
+        d           => 86400,
+        w           => 604800,
+        M           => 2592000,
+        y           => 31536000
     );
 
-    my ($koef, $d) = $str =~ m/([+-]?\d+)(\w)/;
+    my ($koef, $d) = $str =~ m/^([+-]?\d+)(\w)$/;
 
     if ( defined($koef) && defined($d) ) {
         return $koef * $time_map{$d};
