@@ -371,7 +371,7 @@ sub _set_param {
 
     # session parameters starting with '_session_' are
     # private to the class
-    if ( $key =~ m/^_session_/ ) {
+    if ( $key =~ m/^_SESSION_/ ) {
         return undef;
     }
 
@@ -813,11 +813,11 @@ L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
 
 # dump() - dumps the session object using Data::Dumper.
 # during development it defines global dump(). 
-sub UNIVERSAL::dump {
+sub dump {
     my ($self, $file, $data_only) = @_;
 
     require Data::Dumper;
-    local $Data::Dumper::Indent = 1;
+    local $Data::Dumper::Indent = 2;
 
     my $ds = $data_only ? $self->{_DATA} : $self;
 
@@ -864,23 +864,19 @@ sub delete {
 # clear() - clears a list of parameters off the session's '_DATA' table
 sub clear {
     my $self = shift;
-    $class   = ref($class);
+    $class   = ref($self);
 
-    my @params = ();
+    my @params = $self->param();
     if ( defined $_[0] ) {
         unless ( ref($_[0]) eq 'ARRAY' ) {
             confess "Usage: $class->clear([\@array])";
         }
         @params = @{ $_[0] };
-
-    } else {
-        @params = $self->param();
-
-    }
+	}
 
     my $n = 0;
     for ( @params ) {
-        /^_session_/ and next;
+        /^_SESSION_/ and next;
         # If this particular parameter has an expiration ticker,
         # remove it.
         if ( $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$_} ) {
