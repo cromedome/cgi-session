@@ -2,44 +2,42 @@
 
 # $Id$
 
-# Configurable contants
-use constant DSN        => "driver:DB_File;serializer:Default;id:MD5";
-use constant DSN_ARGS   => {FileName => "/home/sherzodr/tmp/sessions.db"};
-
 use strict;
 use CGI;
 use CGI::Carp 'fatalsToBrowser';
 use URI::Escape;
 use vars qw($SELF_URL);
 
-use lib "/home/sherzodr/tmp/CGI-Session/blib/lib";
-use CGI::Session;
+use lib '/home/sherzodr/perllib';
+BEGIN {
+    unshift @INC, '/home/sherzodr/tmp/CGI-Session/blib/lib';
+}
+
 
 # Check for some non-standard Perl modules
-my @required = qw(MIME::Lite HTML::Template);
+my @required = qw(MIME::Lite HTML::Template CGI::Session);
 for my $mod ( @required ) {
     eval "require $mod";
     if ( $@ ) {
         print "Content-Type: text/html\n\n";
         print "$mod is required. If it's installed in a non-standard path, " .
                 "please 'use lib' line in $0";
-        exit(1);
+        exit(0);
     }
 }
 
 my $cgi     = new CGI();
-my $session = CGI::Session->instance() or die CGI::Session->errstr;
+my $session = CGI::Session->load("driver:sqlite", undef) or die CGI::Session->errstr;
 
 if ( $session->expired ) {
     print $session->header();
     print "Your session expired, inevitably!";
     exit(0);
-} else {
-    $session = CGI::Session->new( $session );
+} elsif ( $session->empty ) {
+    $session = $session->new();
 }
 
 $session->expire("+30s");
-
 
 my $cmd     = $cgi->param('cmd') || $session->param("last_cmd") || 'directions';
 
