@@ -28,76 +28,38 @@ sub thaw {
 
 1;
 
+__END__;
+
 =pod
 
 =head1 NAME
 
-CGI::Session::Serialize::FreezeThaw - serializer for CGI::Session
+CGI::Session::Serialize::freezethaw - serializer for CGI::Session
 
 =head1 DESCRIPTION
 
-This library is used by CGI::Session driver to serialize session data before storing
-it in disk. Uses FreezeThaw.
+This library can be used by CGI::Session to serialize session data. Uses L<FreezeThaw|FreezeThaw>.
 
 =head1 METHODS
 
 =over 4
 
-=item freeze()
+=item freeze($class, \%hash)
 
-receives two arguments. First is the CGI::Session driver object, the second is the data to be
-stored passed as a reference to a hash. Should return true to indicate success, undef otherwise, 
-passing the error message with as much details as possible to $self->error()
+Receives two arguments. First is the class name, the second is the data to be serialized.
+Should return serialized string on success, undef on failure. Error message should be set using
+C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
-=item thaw()
+=item thaw($class, $string)
 
-receives two arguments. First being CGI::Session driver object, the second is the string
-to be deserialized. Should return deserialized data structure to indicate successs. undef otherwise,
-passing the error message with as much details as possible to $self->error().
-
-=back
-
-=head1 COPYRIGHT
-
-Copyright (C) 2002 Sherzod Ruzmetov. All rights reserved.
-
-This library is free software. It can be distributed under the same terms as Perl itself. 
-
-=head1 AUTHOR
-
-Sherzod Ruzmetov <sherzodr@cpan.org>
-
-All bug reports should be directed to Sherzod Ruzmetov <sherzodr@cpan.org>. 
-
-=head1 SEE ALSO
-
-=over 4
-
-=item *
-
-L<CGI::Session|CGI::Session> - CGI::Session manual
-
-=item *
-
-L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual
-
-=item *
-
-L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
-
-=item *
-
-B<RFC 2965> - "HTTP State Management Mechanism" found at ftp://ftp.isi.edu/in-notes/rfc2965.txt
-
-=item *
-
-L<CGI|CGI> - standard CGI library
-
-=item *
-
-L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
+Received two arguments. First is the class name, second is the I<frozen> data string. Should return
+thawed data structure on success, undef on failure. Error message should be set 
+using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 =back
+
+=head1 LICENSING
+
+For support and licensing see L<CGI::Session|CGI::Session>
 
 =cut
-

@@ -13,108 +13,70 @@ use vars qw($VERSION);
 
 
 sub freeze {
-    my ($self, $data) = @_;
-    
-    local $Data::Dumper::Indent   = 0;
-    local $Data::Dumper::Purity   = 0;
-    local $Data::Dumper::Useqq    = 0;
-    local $Data::Dumper::Deepcopy = 0;   
-    local $Data::Dumper::Quotekeys= 0;    
+    my ($class, $data) = @_;
     
     my $d = new Data::Dumper([$data], ["D"]);
+    $d->Indent( 0 );
+    $d->Purity( 0 );
+    $d->Useqq( 0 );
+    $d->Deepcopy( 1 );
+    $d->Quotekeys( 0 );
+    $d->Terse( 0 );
     return $d->Dump();
 }
 
-
-
 sub thaw {
-    my ($self, $string) = @_;    
+    my ($class, $string) = @_;
 
     # To make -T happy
-    my ($safe_string) = $string =~ m/^(.*)$/;    
-    
-    my $cpt = new Safe();
-    return $cpt->reval ($safe_string );
+    my ($safe_string) = $string =~ m/^(.*)$/;
+    Safe->new()->reval( $safe_string );
 }
 
 
 1;
 
+__END__;
+
 =pod
 
 =head1 NAME
 
-CGI::Session::Serialize::Default - default serializer for CGI::Session
+CGI::Session::Serialize::default - Default CGI::Session serializer
 
 =head1 DESCRIPTION
 
 This library is used by CGI::Session driver to serialize session data before storing
-it in disk. 
+it in disk.
+
+All the methods are called as class methods.
 
 =head1 METHODS
 
 =over 4
 
-=item freeze()
+=item freeze($class, \%hash)
 
-receives two arguments. First is the CGI::Session driver object, the second is the data to be
-stored passed as a reference to a hash. Should return true to indicate success, undef otherwise, 
-passing the error message with as much details as possible to $self->error()
+Receives two arguments. First is the class name, the second is the data to be serialized.
+Should return serialized string on success, undef on failure. Error message should be set using
+C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
-=item thaw()
+=item thaw($class, $string)
 
-receives two arguments. First being CGI::Session driver object, the second is the string
-to be deserialized. Should return deserialized data structure to indicate successs. undef otherwise,
-passing the error message with as much details as possible to $self->error().
+Received two arguments. First is the class name, second is the I<frozen> data string. Should return
+thawed data structure on success, undef on failure. Error message should be set 
+using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 =back
 
 =head1 WARNING
 
-If you want to be able to store objects, consider using L<CGI::Session::Serialize::Storable> or
-L<CGI::Session::Serialize::FreezeThaw> instead.
+May not be able to freeze/thaw complex objects. For that consider L<storable|CGI::Session::Serialize::storable>
+or L<freezethaw|CGI::Session::Serialize::freezethaw>
 
-=head1 COPYRIGHT
+=head1 LICENSING
 
-Copyright (C) 2002 Sherzod Ruzmetov. All rights reserved.
-
-This library is free software. It can be distributed under the same terms as Perl itself. 
-
-=head1 AUTHOR
-
-Sherzod Ruzmetov <sherzodr@cpan.org>
-
-All bug reports should be directed to Sherzod Ruzmetov <sherzodr@cpan.org>. 
-
-=head1 SEE ALSO
-
-=over 4
-
-=item *
-
-L<CGI::Session|CGI::Session> - CGI::Session manual
-
-=item *
-
-L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual
-
-=item *
-
-L<CGI::Session::CookBook|CGI::Session::CookBook> - practical solutions for real life problems
-
-=item *
-
-B<RFC 2965> - "HTTP State Management Mechanism" found at ftp://ftp.isi.edu/in-notes/rfc2965.txt
-
-=item *
-
-L<CGI|CGI> - standard CGI library
-
-=item *
-
-L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
-
-=back
+For support and licensing see L<CGI::Session|CGI::Session>
 
 =cut
 
