@@ -10,7 +10,7 @@ use AutoLoader 'AUTOLOAD';
 use vars qw($VERSION $REVISION $errstr $IP_MATCH $NAME $API_3);
 
 ($REVISION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
-$VERSION = '3.2';
+$VERSION = '3.2-dev';
 $NAME     = 'CGISESSID';
 
 # import() - we do not import anything into the callers namespace, however,
