@@ -20,7 +20,7 @@ sub store {
     my ($self, $sid, $options, $data) = @_;
 
     $self->File_init($sid, $options);
-    unless ( sysopen (FH, $self->{_file_path}, O_RDWR|O_CREAT, 0644) ) {
+    unless ( sysopen (FH, $self->{_file_path}, O_RDWR|O_CREAT|O_TRUNC, 0644) ) {
         $self->error("Couldn't store $sid into $self->{_file_path}: $!");
         return undef;
     }
