@@ -19,14 +19,12 @@ CGI::Session::Tutorial - Extended CGI::Session manual
 =head1 STATE MAINTENANCE OVERVIEW
 
 Since HTTP is a stateless protocol, each subsequent click to a web site is treated as new by the Web server. The server does not relate a 
-visit with previous one, thus all the state information from the previous requests are lost. This makes creating such applications as 
-shopping carts, login/authentication routines, secure restricted services in the web impossible. So people had to do something about this 
-despair situation HTTP was putting us in.
+visit with the previous one, thus all the state information from the previous requests are lost. This makes creating such applications as 
+shopping carts, login-authentication required Web pages impossible. So people had to do something about this despair situation HTTP was putting us in.
 
 For our rescue come such technologies as HTTP Cookies and QUERY_STRINGs that help us save the users' session for a certain period. Since 
 cookies and query_strings alone cannot take us too far (B<RFC 2965, Section 5, "Implementation Limitations">), several other 
-libraries/technologies have been developed to extend their capabilities and promise a more reliable and a more persistent system. 
-CGI::Session is one of them.
+libraries have been developed to extend their capabilities and promise a more reliable system. CGI::Session is one of them.
 
 Before we discuss this library, let's look at some alternative solutions.
 
@@ -34,21 +32,20 @@ Before we discuss this library, let's look at some alternative solutions.
 
 Cookie is a piece of text-information that a web server is entitled to place in the user's hard disk, assuming a user agent (i.e.. Web 
 Browser) is compatible with the specification. After the cookie's placed, user agents are required to send these cookies back to the 
-server as part of the HTTP request. This way the server application ( CGI ) will have a way of relating previous requests by the same 
-user agent, thus overcoming statelessness of HTTP.
+server as part of the HTTP request. This way the server application ( CGI, for example ) will have a way of relating previous requests by the same user agent, thus overcoming statelessness of HTTP.
 
 Although cookies seem to be promising solutions for the statelessness of HTTP, they do carry certain limitations, such as limited number 
 of cookies per domain and per user agent and limited size on each cookie. User Agents are required to store at least 300 cookies at a 
 time, 20 cookies per domain and allow 4096 bytes of storage for each cookie. They also rise several Privacy and Security concerns, the 
-lists of which can be found on the sections 6-B<"Privacy"  and 7-"Security Considerations"> of B<RFC 2965>.
+lists of which can be found on the sections B<6-"Privacy">  and B<7-"Security Considerations"> of B<RFC 2965>.
 
 =head2 QUERY STRING
 
 Query string is a string appended to URL following a question mark (?) such as:
 
-    http://my.dot.com/login.cgi?user=sherzodr;password=topSecret
+    http://my.dot.com/login.cgi?user=sherzodr;password=top-secret
 
-As you probably guessed, it can also help you to pass state information from a click to another, but how secure is it do you think, 
+As you probably guessed, it can also help you pass state information from a click to another, but how secure is it do you think, 
 considering these URLs tend to get cached by most of the user agents and also logged in the servers access log, to which everyone can 
 have access.
 
@@ -65,7 +62,7 @@ Query strings and hidden fields are also lost easily by closing the browser, or 
 =head2 SERVER SIDE SESSION MANAGEMENT
 
 This technique is built upon the aforementioned technologies plus a server-side storage device, which saves the state data on the server side. Each session has a unique id associated with the data in the server. This id is also associated with the user agent 
-either in the form of a cookie, a QUERY_STRING, hidden field or all at the same time. This is necessary to make the connection with the client and his data.
+either in the form of a cookie, a QUERY_STRING, hidden field or any combination of the above. This is necessary to make the connection with the client and his data.
 
 Advantages:
 
@@ -73,7 +70,7 @@ Advantages:
 
 =item *
 
-We no longer need to depend on the User Agent constraints in cookie size
+We no longer need to depend on User Agent constraints in cookie size.
 
 =item *
 
@@ -139,7 +136,7 @@ Whenever you're ready to create a new session in your application, do the follow
 
 Above line will first try to re-initialize an existing session by consulting cookies and necessary QUERY_STRING parameters. If it fails
 will create a brand new session with a unique ID, which is normally called I<session ID>, I<SID> for short, and can be accessed
-through id() - object method.
+through C< id() > - object method.
 
 We didn't check for any session cookies above, did we? No, we didn't, but CGI::Session did. It looked for a cookie called C<CGISESSID>, 
 and if it found it tried to load existing session from server side storage (B<file> in our case). If cookie didn't exist it looked for a 
@@ -185,12 +182,12 @@ CGI::Session->name() >>:
 
     printf ("<a href=\"$ENV{SCRIPT_NAME}?%s=%s\">click me</a>", $session->name, $session->id);
 
-=head2 STORING DATA IN SESSION
+=head2 STORING DATA
 
 CGI::Session offers param() method, which behaves exactly like CGI.pm's param() with identical syntax. param() is used for storing data 
 in session as well as for accessing already stored data.
 
-Imagine your customer submitted a login/authentication form on your Web site. You, as good host, wanted to remember the guest's name, so 
+Imagine your customer submitted a login form on your Web site. You, as good host, wanted to remember the guest's name, so 
 you can a) greet him accordingly when he visits your site again, or b) to be helpful by filling out I<Username> part of his login form, 
 so the customer can jump right to the I<Password> field without having to type his username again.
 
@@ -239,7 +236,7 @@ request. There are, however, occasions I can think of one may need to call flush
 =head2 ACCESSING STORED DATA
 
 There's no point of storing data if you cannot access it. You can access stored session data by using the same C<param()> method you once 
-used to store them. Remember the Username field from the previous section that we store in the session? Let's read it back so we can 
+used to store them. Remember the Username field from the previous section that we stored in the session? Let's read it back so we can 
 partially fill the Login form for the user:
 
     $name = $session->param("name");
@@ -249,8 +246,8 @@ To retrieve previously stored @fruits do not forget to dereference it:
 
     @fruits = @{ $session->param('fruits') };
 
-Very frequently, you may find yourself having to create a pre-filled and pre-selected forms, like radio buttons, checkboxes and drop down 
-menus according to the user's preferences or previous action. With text and textarea it's not a big deal: you can simply retrieve a 
+Very frequently, you may find yourself having to create pre-filled and pre-selected forms, like radio buttons, checkboxes and drop down 
+menus according to the user's preferences or previous action. With text and textareas it's not a big deal - you can simply retrieve a 
 single parameter from the session and hard code the value into the text field. But how would you do it when you have a group of radio 
 buttons, checkboxes and scrolling lists? For this purpose, CGI::Session provides load_param() method, which loads given session 
 parameters to a CGI object (assuming they have been previously saved with save_param() method or alternative):
@@ -317,11 +314,7 @@ expiration ticker for a session, use expire():
 When session is set to expire at some time in the future, but session was not requested at or after that time has passed it will remain 
 in the disk. When expired session is requested CGI::Session will remove the data from disk, and will initialize a brand new session.
 
-Before CGI::Session 4.x there was no way of catching requests to expired sessions. CGI::Session 4.x introduced new kind of constructor, 
-C<load()>, which is identical in use to C<new()>, but is not allowed to create sessions. It can only load them. If session is found to be 
-expired, or session does not exist it will return an empty CGI::Session object. And if session is expired, in addition to being empty, 
-its status will also be set to expired. You can check against these conditions using C<empty()> and C<expired()> methods. If session was 
-loaded successfully object returned by load() is as good a session as the one returned by new():
+Before CGI::Session 4.x there was no way of intercepting requests to expired sessions. CGI::Session 4.x introduced new kind of constructor, C<load()>, which is identical in use to C<new()>, but is not allowed to create sessions. It can only load them. If session is found to be expired, or session does not exist it will return an empty CGI::Session object. And if session is expired, in addition to being empty, its status will also be set to expired. You can check against these conditions using C<empty()> and C<expired()> methods. If session was loaded successfully object returned by load() is as good a session as the one returned by new():
 
     $session = CGI::Session->load() or die CGI::Session->errstr;
     if ( $session->expired ) {
@@ -350,21 +343,19 @@ Initial C<$session> object was configured with B<mysql> as the driver, B<storabl
 Calling C< new() > on this object will return an object of the same configuration. So C< $session > object returned from C< new() > in 
 the above example will use B<mysql> as the driver, B<storable> as the serializer and B<$dbh> as the database handle.
 
-Now back to expiring sessions...
-
 Sometimes it makes perfect sense to expire a certain session parameter, instead of the whole session. I usually do this in my 
-login/authentication enabled sites, where after the user logs in successfully, I set his/her "_logged_in" session parameter to true, and 
+login enabled sites, where after the user logs in successfully, I set his/her "_logged_in" session parameter to true, and 
 assign an expiration ticker on that flag to something like 30 minutes. It means, after 30 idle minutes CGI::Session will clear() 
 "_logged_in" flag, indicating the user should log in over again. I agree, the same effect can be achieved by simply expiring() the 
 session itself, but by doing this we would loose other session parameters, such as user's shopping cart, session-preferences and the 
 like.
 
-This feature can also be used to simulate layered security/authentication, such as, you can keep the user's access to his/her personal 
-profile information for as long as 10 idle hours after successful login, but expire his/her access to his credit card information after 
-10 idle minutes. To achieve this effect, we will use expire() method again, but with a slightly different syntax:
+This feature can also be used to simulate layered authentication, such as, you can keep the user's access to his/her personal 
+profile information for as long as 60 minutes after a successful login, but expire his/her access to his credit card information after 
+5 idle minutes. To achieve this effect, we will use expire() method again:
 
-    $session->expire(_profile_access, '+10h');
-    $session->expire(_cc_access, '+10m');
+    $session->expire(_profile_access, '1h');
+    $session->expire(_cc_access, '5m');
 
 With the above syntax, the person will still have access to his personal information even after 5 idle hours. But when he tries to access 
 or update his/her credit card information, he may be displayed a "login again, please" screen.
@@ -381,8 +372,8 @@ user?", "Are the session ids guessable?" are the questions I find myself answeri
 
 Security of the library does in many aspects depend on the implementation. After making use of this library, you no longer have to send 
 all the information to the user's cookie except for the session id. But, you still have to store the data in the server side. So another 
-set of questions arise, can an evil person have access to session data in your server, even if they do, can they make sense out of the 
-data in the session file, and even if they can, can they reuse the information against a person who created that session. As you see, the 
+set of questions arise, can an evil person have access to session data in your server, even if he does, can he make sense out of the 
+data in the session file, and even if he can, can he reuse the information against a person who created that session. As you see, the 
 answer depends on yourself who is implementing it.
 
 =over 4
@@ -390,7 +381,7 @@ answer depends on yourself who is implementing it.
 =item *
 
 First rule of thumb, do not store users' passwords or other sensitive data in the session, please. If you have to, use one-way 
-encryption, such as md5, or sha-1
+encryption, such as md5, or sha-1. Although in properly implemented session-powered web applications there is never a need for it.
 
 =item *
 
@@ -404,14 +395,11 @@ to decipher session file very easily.
 
 Do not allow anyone to update contents of session files. If you're using default serializer serialized data string needs to be 
 eval()ed to bring the original data structure back to life. Of course, we use L<Safe|Safe> to do it safely,  but your cautiousness does 
-no 
-harm either.
+no harm either.
 
 =item *
 
-Do not keep sessions open with sensitive information for very long. This will increase the possibility that some bad guy may have 
-someone's valid session id at a given time (acquired somehow). To do this use expire() method to set expiration ticker. The more 
-sensitive the information on your web site is, the sooner the session should be set to expire.
+Do not keep sessions open for very long. This will increase the possibility that some bad guy may have someone's valid session id at a given time (acquired somehow). To do this use expire() method to set expiration ticker. The more sensitive the information on your web site is, the sooner the session should be set to expire.
 
 =back
 
@@ -424,8 +412,7 @@ others, if they find it out somehow, can they use this identifier against the ot
 Consider the scenario, where you just give someone either via email or an instant messaging a link to a Web site where you're currently 
 logged in. The URL you give to that person contains a session id as part of a query string. If the site was initializing 
 the session solely using query string parameter, after clicking on that link that person now appears to that site as you, and might have 
-access to all of your private data instantly. How scary and how unwise implementation. And what a poor kid who didn't know that pasting 
-URLs with session ids is not very smart thing to do.
+access to all of your private data instantly.
 
 Even if you're solely using cookies as the session id transporters, it's not that difficult to plant a cookie in the cookie file with the 
 same id and trick the web browser to send that particular session id to the server. So key for security is to check if the person who's 
