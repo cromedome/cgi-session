@@ -59,7 +59,4 @@ print ref($old_cgi) ? "ok\n" : "not ok\n";
 print $old_cgi->param('name') eq 'Sherzod' ? "ok\n" : "not ok\n";
 
 
-
-
-
-
+$s2->delete();
