@@ -52,6 +52,7 @@ sub retrieve {
     # after you get the data, deserialize it using
     # $self->thaw(), and return it
     my $dbh = $self->MySQL_dbh($options);
+
     my $lck_status  = $dbh->selectrow_array(qq|SELECT GET_LOCK("$sid", 10)|);
     unless ( $lck_status == 1 ) {
         $self->error("Couldn't acquire lock on is '$sid'. Lock status: $lck_status");
@@ -95,16 +96,16 @@ sub remove {
 
 # called right before the object is destroyed to do cleanup
 sub teardown {
-    my ($self, $sid, $options) = @_;
+    my ($self, $sid, $options) = @_;    
 
-    my $dbh = $self->MySQL_dbh($options);
+    my $dbh = $self->cache('DBH');
 
     # Call commit if it isn't meant to be autocommited!
     unless ( $dbh->{AutoCommit}  ) {
         $dbh->commit();
     }
     
-    if ( $self->{MySQL_disconnect} ) {
+    if ( $self->cache('disconnect') ) {
         $dbh->disconnect();
     }
 
@@ -121,28 +122,28 @@ sub MySQL_dbh {
 
     my $args = $options->[1] || {};
     
-    if ( defined $self->{MySQL_dbh} ) {
-        return $self->{MySQL_dbh};
+    if ( defined $self->cache('DBH') ) {
+        return $self->cache('DBH');
 
     }
     
     require DBI;
 
-    $self->{MySQL_dbh} = $args->{Handle} || DBI->connect(
+    my $dbh = $args->{Handle} || DBI->connect(
                     $args->{DataSource},
                     $args->{User}       || undef, 
                     $args->{Password}   || undef, 
                     { RaiseError=>1, PrintError=>1, AutoCommit=>1 } );
 
+    $self->cache(DBH => $dbh);
 
     if ( defined $args->{TableName} ) {
         $TABLE_NAME = $args->{TableName};
     }
     # If we're the one established the connection, 
     # we should be the one who closes it    
-    $args->{Handle} or $self->{MySQL_disconnect} = 1;
-    return $self->{MySQL_dbh};
-    
+    $args->{Handle} or $self->cache(disconnect=>1);
+    return $self->MySQL_dbh($options);    
 }
 
 
@@ -174,7 +175,7 @@ To store session data in MySQL database, you first need to create a suitable tab
 with the following command:
 
     CREATE TABLE sessions (
-        id CHAR(32) NOT NULL,
+        id CHAR(32) NOT NULL UNIQUE,
         a_session TEXT NOT NULL
     );
 
@@ -183,8 +184,7 @@ You can also add any number of additional columns to the table, but the above "i
 
 If you want to store the session data in other table than "sessions", you need to defined B<TableName> option:
 
-    use CGI::Session;
-    
+    use CGI::Session;    
     $session = new CGI::Session("driver:MySQL", undef, {Handle=>$dbh, TableName=>"my_sessions"});
 
 =head1 DRIVER OPTIONS
@@ -212,24 +212,27 @@ User to connect to DataSource as. Passed as the second argument to DBI->connect(
 
 Password used by the user to access the DataSource
 
+=item TableName
+
+Name of the table session data will be written into and read from. Default is
+"sessions".
+
 =back
 
 =head1 EXAMPLES
-
     
     $session = new CGI::Session("dr:MySQL", undef, {Handle=>$dbh});
     $session = new CGI::Session("dr:MySQL", undef, {Handle=>$dbh, TableName=>"my_sessions"});
     $session = new CGI::Session("dr:MySQL", undef, {DataSource=>"dbi:mysql:temp", 
                                                     User=>"cgisess",
-                                                    Password => "marley01"});    
+                                                    Password => "marley01"});
 
 =head1 COPYRIGHT
 
 Copyright (C) 2001, 2002 Sherzod Ruzmetov. All rights reserved.
 
 This library is free software and can be modified and distributed under the same
-terms as Perl itself. 
-
+terms as Perl itself.
 
 =head1 AUTHOR
 
