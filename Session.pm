@@ -7,7 +7,7 @@ use strict;
 use Carp ('confess', 'croak')   ;
 use AutoLoader 'AUTOLOAD';
 
-use vars qw($VERSION $REVISION $errstr $IP_MATCH $NAME $API_3);
+use vars qw($VERSION $REVISION $errstr $IP_MATCH $NAME $API_3 $FROZEN);
 
 ($VERSION)  = '$Revision$' =~ m/Revision:\s*(\S+)/;
 $NAME     = 'CGISESSID';
@@ -20,6 +20,7 @@ sub import {
     for ( my $i=0; $i < @_; $i++ ) {
         $IP_MATCH   = ( $_[$i] eq '-ip_match'   ) and next;
         $API_3      = ( $_[$i] eq '-api3'       ) and next;
+		$FROZEN		= ( $_[$i] eq '-frozen'		) and next;
     }
 }
 
@@ -47,6 +48,12 @@ sub new {
         return $class->api_3(@_);
     }
 
+	# automatic detaction of api3. Make -api3 compile time switch
+	# obsolete
+	if ( @_ == 3 ) {
+		return $class->api_3(@_);
+	}
+
     bless ($self, $class);
     $self->_validate_driver() && $self->_init() or return;
     return $self;
@@ -66,7 +73,7 @@ sub api_3 {
     $class = ref($class) || $class;	
 
     my $self = {
-        _OPTIONS    => [ $_[1], $_[2] ], # for now settle for empty option
+        _OPTIONS    => [ $_[1], $_[2] ],
         _DATA       => undef,
         _STATUS     => MODIFIED,
         _API_3      => {
@@ -76,10 +83,15 @@ sub api_3 {
         }
     };
 
+	# supporting DSN namme abbreviations:
+	require Text::Abbrev;
+	my $dsn_abbrev = Text::Abbrev::abbrev('driver', 'serializer', 'id');
+
     if ( defined $_[0] ) {
         my @arg_pairs = split (/;/, $_[0]);
         for my $arg ( @arg_pairs ) {
             my ($key, $value) = split (/:/, $arg) or next;
+			$key = $dsn_abbrev->{$key};
             $self->{_API_3}->{ uc($key) } = $value || $self->{_API_3}->{uc($key)};
         }
     }
@@ -443,7 +455,7 @@ This is the development release ($Revision$)
 =head1 SYNOPSIS
 
     # Object initialization:
-    use CGI::Session qw/-api3/;
+    use CGI::Session;
 
     my $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
 
@@ -552,9 +564,14 @@ Default is "Default", which uses standard L<Data::Dumper|Data::Dumper>
 
 =item *
 
-C<id> - ID generator to use when new session is to be created. Available ID generators are "MD5" and "Incr". Default is "MD5".
+C<id> - ID generator to use when new session is to be created. Available ID generators 
+are "MD5" and "Incr". Default is "MD5".
 
 =back
+
+Note: you can also use unambiguous abbreviations of the DSN parameters. Examples:
+
+	new CGI::Session("dr:File;ser:Storable", undef, {Diretory=>'/tmp'});
 
 
 =item C<id()>
@@ -1114,7 +1131,7 @@ sub name {
 	my ($class, $name)  = @_;
 
 	if ( defined $name ) {
-		return $CGI::Session::NAME = $name;
+		$CGI::Session::NAME = $name;
 	}
 
     return $CGI::Session::NAME;
