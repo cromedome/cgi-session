@@ -21,7 +21,7 @@ ok($s);
     
 ok($s->id);
 
-$s->param(author=>'Sherzod Ruzmetov', name => 'CGI::Session', version=>$s->version );
+$s->param(author=>'Sherzod Ruzmetov', name => 'CGI::Session', version=>'1'   );
 
 ok($s->param('author'));
 

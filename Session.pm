@@ -3,24 +3,18 @@ package CGI::Session;
 # $Id$
 
 use strict;
-use Carp 'croak';
+use Carp 'confess';
 use AutoLoader 'AUTOLOAD';
 
-use vars qw($VERSION);
+use vars qw($VERSION $errstr);
 
 ($VERSION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
 
 
-sub SYNCED   () { return 0 }
-sub MODIFIED () { return 1 }
-sub DELETED  () { return 2 }
-
-
-
-
-
-
-
+# Session status flags
+sub SYNCED   () { 0 }
+sub MODIFIED () { 1 }
+sub DELETED  () { 2 }
 
 
 sub new {
@@ -62,11 +56,10 @@ sub _validate_driver {
     for my $method ( @required ) {
         unless ( $self->can($method) ) {
             my $class = ref($self);
-            croak "$class doesn't seem to be a valid CGI::Session driver. " .
+            confess "$class doesn't seem to be a valid CGI::Session driver. " .
                 "At least '$method' method is missing";
         }
     }
-
     return 1;
 }
 
@@ -148,7 +141,7 @@ sub param {
     my $self = shift;
 
     if ( $self->{_status} == DELETED ) {
-        croak "read attempt on deleted session  ";
+        confess "read attempt on deleted session  ";
     }
 
     unless ( defined $_[0] ) {        
@@ -189,7 +182,7 @@ sub param {
         return $n;
     }
 
-    croak "param(): something smells fishy here. RTFM!";
+    confess "param(): something smells fishy here. RTFM!";
 }
 
 
@@ -199,7 +192,7 @@ sub set_param {
     my ($self, $key, $value) = @_;
 
     if ( $self->{_status} == DELETED ) {
-        croak "read attempt on deleted session";
+        confess "read attempt on deleted session";
     }
 
     if ( $key =~ m/^_session/ ) {
@@ -220,7 +213,7 @@ sub get_param {
     my ($self, $key) = @_;
 
     if ( $self->{_status} == DELETED ) {
-        croak "read attempt on deleted session";
+        confess "read attempt on deleted session";
     }
 
     return $self->{_data}->{$key};
@@ -293,7 +286,7 @@ sub dump {
     my $self = shift;
 
     require Data::Dumper;
-    my $d = new Data::Dumper([$self->{_data}], ["cgisession"]);
+    my $d = new Data::Dumper([$self], ["cgisession"]);
 
     return $d->Dump();
 }
@@ -306,7 +299,8 @@ sub dump {
 
 
 sub version {
-    return $VERSION;
+    my $self = shift;
+    return $self->VERSION();
 }
 
 
@@ -322,7 +316,7 @@ sub delete {
     my $self = shift;
 
     if ( $self->{_status} == DELETED ) {
-        croak "delete attempt on deleted session";
+        confess "delete attempt on deleted session";
     }
 
     $self->{_status} = DELETED;
@@ -340,16 +334,16 @@ sub clear {
     my @params = ();
     if ( defined $_[0] ) {
         unless ( ref($_[0]) eq 'ARRAY' ) {
-            croak "Usage: $class->clear([\@array])";
+            confess "Usage: $class->clear([\@array])";
         }
         @params = @{ $_[0] };
 
     } else {
-        @params = $self->params();
+        @params = $self->param();
 
     }
 
-    croak "@params";
+    #confess "@params";
 
     my $n = 0;
     for ( @params ) {
@@ -368,17 +362,17 @@ sub save_param {
     my ($self, $cgi, $list) = @_;
 
     unless ( ref($cgi) ) {
-        croak "save_param(): first argument should be an object";
+        confess "save_param(): first argument should be an object";
 
     }
     unless ( $cgi->can('param') ) {
-        croak "save_param(): Cannot call method param() on the object";
+        confess "save_param(): Cannot call method param() on the object";
     }
 
     my @params = ();
     if ( defined $list ) {
         unless ( ref($list) eq 'ARRAY' ) {
-            croak "save_param(): second argument must be an arrayref";
+            confess "save_param(): second argument must be an arrayref";
         }
 
         @params = @{ $list };
@@ -415,47 +409,54 @@ sub load_param {
     my ($self, $cgi, $list) = @_;
 
     unless ( ref($cgi) ) {
-        croak "save_param(): first argument should be an object";
+        confess "save_param(): first argument must be an object";
 
     }
     unless ( $cgi->can('param') ) {
-        croak "save_param(): Cannot call method param() on the object";
+        my $class = ref($cgi);
+        confess "save_param(): Cannot call method param() on the object $class";
     }
 
     my @params = ();
     if ( defined $list ) {
         unless ( ref($list) eq 'ARRAY' ) {
-            croak "save_param(): second argument must be an arrayref";
+            confess "save_param(): second argument must be an arrayref";
         }
-
         @params = @{ $list };
 
     } else {
         @params = $self->param();
 
-    }
+    }    
 
     my $n = 0;
     for ( @params ) {
-        # Unlike CGI.pm's param() method, however, our param() method
-        # returns a reference if there're more than one values associated
-        # with a parameter. But CGI.pm's param accepts either scalars or
-        # arrayrefs. so we need to check if it's not anyting other than
-        # these acceptable values
-        my $value = $self->param($_);
-
-        if ( ref($value) eq 'ARRAY' ) {
-            $cgi->param( $_ => $self->param($_) );
-            ++$n;
-
-        } elsif ( ref($value) ) {
-            next;
-
-        } else {
-            $cgi->parm( $_ => $self->param($_) );
-            ++$n;
-        }
+        $cgi->param(-name=>$_, -value=>$self->param($_));        
     }
     return $n;
 }
+
+
+
+
+sub close {
+    my $self = shift;
+
+    $self->DESTROY();
+}
+
+
+
+
+sub error {
+    my ($self, $msg) = @_;
+
+    if ( defined $msg ) {
+        $errstr = $msg;
+    }
+
+    return $errstr;
+}
+     
+
 
