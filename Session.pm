@@ -94,9 +94,21 @@ sub _init_old_session {
     my $data = $self->retrieve($claimed_id, $options);
 
     if ( defined $data ) {
+        # check if there're any parameters to be cleared out.
+        # It's also important that we do it before
+        # updating the session's access time (atime)
+        my $expire_list = $self->{_data}->{_session_expire_list};
+        while ( my ($param, $etime) = each %{$expire_list} ) {
+            if ( $etime <= $self->atime() ) {
+                $self->clear([$param]);
+            }
+        }
+
         $self->{_data} = $data;
         $self->{_data}->{_session_atime} = time();
-        $self->{_status} = MODIFIED,
+        $self->{_status} = MODIFIED;
+
+        
         return 1;
     }
 
@@ -117,6 +129,8 @@ sub _init_new_session {
         _session_atime => time(),
         _session_etime => undef,
         _session_remote_addr => $ENV{REMOTE_ADDR} || undef,
+        _session_expire_list => { },
+
     };
 
     $self->{_status} = MODIFIED;
@@ -341,13 +355,12 @@ sub clear {
     } else {
         @params = $self->param();
 
-    }
-
-    #confess "@params";
+    }    
 
     my $n = 0;
     for ( @params ) {
-        /^_session/ and next;
+        /^_session_/ and next;
+        $self->{_data}->{_session_expire_list}->{$_} && delete ( $self->{_data}->{_session_expire_list}->{$_} );
         delete ($self->{_data}->{$_}) && ++$n;
     }
 
@@ -431,7 +444,7 @@ sub load_param {
 
     my $n = 0;
     for ( @params ) {
-        $cgi->param(-name=>$_, -value=>$self->param($_));        
+        $cgi->param(-name=>$_, -value=>$self->get_param($_));        
     }
     return $n;
 }
@@ -458,5 +471,80 @@ sub error {
     return $errstr;
 }
      
+
+
+sub atime {
+    my $self = shift;
+
+    if ( @_ ) {
+        confess "_session_atime - read-only value";
+    }
+
+    return $self->{_data}->{_session_atime};
+}
+
+
+sub ctime {
+    my $self = shift;
+
+    if ( defined @_ ) {
+        confess "_session_atime - read-only value";
+    }
+
+    return $self->{_data}->{_session_ctime};
+}
+
+
+sub expire {
+    my $self = shift;
+
+    unless ( @_ ) {
+        return $self->{_data}->{_session_etime};
+    }
+    
+    # If there are two arguments, the user is trying to 
+    # set an expiration date for a single parameter
+    if ( @_ == 2 ) {
+        my ($param, $etime) = @_;
+        if ( defined $self->{_data}->{$param} ) {
+            return $self->{_data}->{_session_expire_list}->{$param} 
+                                = time() + $self->_time_alias( $etime );            
+        }
+
+        return undef;
+    
+    } elsif ( @_ == 1 ) {
+        return $self->{_data}->{_session_etime} = time() + $self->_time_alias( $_[0] );
+    
+    }
+
+    confess "expire(): too many arguments( @_ )";
+}
+
+
+sub _time_alias {
+    my ($self, $str) = @_;
+
+    # If $str consists of just digits, return them as they are
+    if ( $str =~ m/^\d+$/ ) {
+        return $str;
+    }
+
+    my %time_map = (
+        s           => 1,
+        m           => 60,
+        h           => 3600,
+        d           => 3600 * 24,
+        w           => 3600 * 24 * 7,
+        M           => 3600 * 24 * 30,
+        y           => 3600 * 24 * 365,
+    );
+
+    my ($koef, $d) = $str =~ m/([+-]?\d+)(\w)/;
+
+    if ( defined($koef) && defined($d) ) {
+        return $koef * $time_map{$d};
+    }
+}
 
 

@@ -6,7 +6,7 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test;
-BEGIN { plan tests => 7 };
+BEGIN { plan tests => 9  };
 use CGI::Session::File;
 ok(1); # If we made it this far, we're ok.
 
@@ -33,5 +33,11 @@ ok($s->param('version'));
 $s->param(-name=>'email', -value=>'sherzodr@cpan.org');
 
 ok($s->param(-name=>'email'));
+
+ok(!$s->expire() );
+
+$s->expire("+10m");
+
+ok($s->expire());
 
 #$s->delete();
