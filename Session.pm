@@ -3,8 +3,8 @@ package CGI::Session;
 # $Id$
 
 use strict;
-use diagnostics;
-use Carp ('confess', 'croak')   ;
+#use diagnostics;
+use Carp ('confess');
 use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $REVISION $errstr $IP_MATCH $NAME $API_3 $FROZEN);
@@ -45,16 +45,10 @@ sub new {
         _API3       => { },
     };
 
-    if ( $API_3 ) {
+    if ( $API_3 || (@_ == 3 ) ) {
         return $class->api_3(@_);
     }
-
-    # automatic detaction of api3. Make -api3 compile time switch
-    # obsolete
-    if ( @_ == 3 ) {
-        return $class->api_3(@_);
-    }
-
+    
     bless ($self, $class);
     $self->_validate_driver() && $self->_init() or return;
     return $self;
@@ -456,10 +450,6 @@ __END__;
 =head1 NAME
 
 CGI::Session - persistent session data in CGI applications
-
-=head1 WARNING
-
-This is the development release ($Revision$)
 
 =head1 SYNOPSIS
 
