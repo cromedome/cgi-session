@@ -27,7 +27,10 @@ sub setup {
         delete      => \&delete,
     );
     
-    $self->cgi_session();
+    my $session  = $self->cgi_session();    
+
+    my $cookie = $self->query()->cookie(-name=>'CGISESSID', -value=>$session->id);
+    $self->header_props(-type=>'text/html', -cookie=>$cookie);
 }
 
 
@@ -60,10 +63,12 @@ sub cgi_session {
     
     my $cgi = $self->query();
     my $sid = $cgi->cookie('CGISESSID') || $cgi->param('CGISESSID') || undef;
-    
-    my $session = new CGI::Session::File($sid, {Directory=>$self->param('temp_folder')})
-                    or die $CGI::Session::errstr;
+    my $dir = $self->param('temp') || '/tmp';
+    my $session = new CGI::Session::File($sid,
+                    { Directory=> $dir }) or die $CGI::Session::errstr;
+
     $self->param(cgi_session => $session);
+
     return $session;
 }
 
@@ -76,16 +81,14 @@ sub cgi_session {
 
 
 sub load_tmpl {
-    my ($self, $file, $params) = @_;
-
-    $params ||= {};
+    my ($self, $file, $params) = @_;       
 
     my $cgi = $self->query();
-    my $session = $self->cgi_session();
-
-    my $template = new HTML::Template(  filename=>$file, 
-                                        vanguard_compatibility_mode=>1,
-                                        associate=>[$session, $cgi] );
+    my $session = $self->cgi_session();    
+    my $template = new HTML::Template(filename=>$file,
+                                      vanguard_compatibility_mode=>1,
+                                      associate=>[$session, $cgi] );
+    $params->{version} = $session->version();
     $template->param( %{$params} );
     return $template->output();    
 }

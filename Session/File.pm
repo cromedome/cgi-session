@@ -15,7 +15,7 @@ sub store {
     my ($self, $sid, $options, $data) = @_;
 
     $self->File_init($sid, $options);
-    sysopen (FH, $self->{_file_path}, O_WRONLY|O_CREAT, 0644) or die "Couldn't store: $!";
+    sysopen (FH, $self->{_file_path}, O_WRONLY|O_CREAT, 0644) or die "Couldn't store $sid into $self->{_file_path}: $!";
     flock(FH, LOCK_EX) or die "Couldn't get LOCK_EX: $!";
     print FH $self->freeze($data);
     close(FH) or die "Couldn't close $self->{_file_path}: $!";
