@@ -11,7 +11,7 @@ sub new {
     my $self    = bless {
             dsn     => undef,
             args    => undef,
-            tests   => 50,
+            tests   => 51,
             @_
     }, $class;
 
@@ -43,7 +43,7 @@ sub run {
     FIRST: {
         ok(1, "=== 1 ===");
         my $session = CGI::Session->new($self->{dsn}, '_DOESN\'T EXIST_', $self->{args}) or die CGI::Session->errstr;
-        ok( $session, "Session created successfully!" . $session->dump);
+        ok( $session, "Session created successfully!");
 
         ok( $session->ctime && $session->atime, "ctime & atime are set");
         ok( $session->atime == $session->ctime, "ctime == atime");
@@ -79,7 +79,7 @@ sub run {
         ok(1, "=== 2 ===");
         my $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
         ok($session, "Session was retreived successfully");
-        ok(!$session->expired, "session isn't expired yet");
+        ok(!$session->is_expired, "session isn't expired yet");
 
         ok($session->id eq $sid, "session IDs are consistent: " . $session->id);
         ok($session->atime > $session->ctime, "ctime should be older than atime");
@@ -102,7 +102,7 @@ sub run {
     }
 
 
-    sleep(2);   # <-- have to wait untill the session expires!
+    sleep(1);   # <-- have to wait untill the session expires!
 
     my $driver;
     THREE: {
@@ -112,7 +112,8 @@ sub run {
         ok(!$session->id, "session doesn't have ID");
         ok($session->empty, "session is empty, which is the same as above");
         #print $session->dump;
-        ok($session->expired, "session was expired");
+        ok($session->is_expired, "session was expired");
+        ok(!$session->param('author'), "session data cleared");
 
         sleep(1);
 
@@ -120,7 +121,7 @@ sub run {
         #print $session->dump();
         ok($session, "new session created");
         ok($session->id, "session has id :" . $session->id );
-        ok(!$session->expired, "session isn't expired");
+        ok(!$session->is_expired, "session isn't expired");
         ok(!$session->empty, "session isn't empty");
         ok($session->atime == $session->ctime, "access and creation times are same");
 
