@@ -18,58 +18,78 @@ $CGI::Session::NAME       = 'CGISESSID';
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
 sub STATUS_MODIFIED () { 2 }        # denotes session that's needs synchronization
 sub STATUS_DELETED  () { 4 }        # denotes session that needs deletion
-sub STATUS_EXPIRED  () { 8 }        # denotes session that was expired. 
+sub STATUS_EXPIRED  () { 8 }        # denotes session that was expired.
 
 
 sub new {
-    my $class = shift;
+    my $class   = shift;
 
-    my $self = undef;
-    if ( (@_ == 1) && ref( $_[0] ) && $_[0]->isa($class) ) {
-        $self = shift;
+    # If called as object method as in $session->new()...
+    my $self;
+    if ( ref $class ) {
+        $self   = bless { %$class }, ref($class);
+        $class  = ref($class);
+        $self->_reset_status();
+
+        # Object may still have public data associated with it, but we don't care about that,
+        # since we wanna leave that to the client's disposal. However, if new() was requested on
+        # an expired session, we already know that '_DATA' table is empty, since it was the
+        # job of flush() to empty '_DATA' after deleting. How do we know flush() was already
+        # called on an expired session? Because load() - constructor always calls flush()
+        # on all to-be expired sessions
     } else {
-        defined($self = $class->instance( @_ )) or return;
+        defined($self = $class->load( @_ ))
+            or return $class->set_error( "new(): failed: " . $class->errstr );
     }
-    
-    $self->_reset_status();         # <-- we do not want status information passing to the new object
-                                    # since it would confuse everyone
 
-    if ( $self->empty ) {
+    # Absence of '_SESSION_ID' can only signal:
+    #   * expired session
+    #       Because load() - constructor is required to empty contents of _DATA - table
+    #   * unavailable session
+    #       Such sessions are the ones that don't exist on datastore, but we requested by client
+    #   * new sessions
+    #       When no specific session is requested to be loaded
+    unless ( $self->{_DATA}->{_SESSION_ID} ) {
         $self->{_DATA}->{_SESSION_ID} = $self->_id_generator()->generate_id($self->{_DRIVER_ARGS}, $self->{_CLAIMED_ID});
         unless ( defined $self->{_DATA}->{_SESSION_ID} ) {
-            return $self->error( "Couldn't generate new SID" );
+            return $self->set_error( "Couldn't generate new SID" );
         }
+        $self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
         $self->_set_status(STATUS_NEW);
     }
     return $self;
 }
 
 
-sub instance {
+sub load {
     my $class = shift;
 
-    return $class->error( "new(): called as instance method")    if ref $class;
-    return $class->error( "new(): invalid number of arguments")  if @_ > 3;
+    return $class->set_error( "new(): called as instance method")    if ref $class;
+    return $class->set_error( "new(): invalid number of arguments")  if @_ > 3;
 
     my $self = bless {
         _DATA       => {
             _SESSION_ID     => undef,
             _SESSION_CTIME  => undef,
             _SESSION_ATIME  => undef,
-            _SESSION_ETIME  => undef,
             _SESSION_REMOTE_ADDR => $ENV{REMOTE_ADDR} || "",
-            _SESSION_EXPIRE_LIST => {}
+            #
+            # Following two attributes may not exist in every single session, and declaring
+            # them now will forse these to get serialized into database, wasting space. But they
+            # are here to remind the coder of their purpose
+            #
+#            _SESSION_ETIME  => undef,
+#            _SESSION_EXPIRE_LIST => {}
         },          # session data
         _DSN        => {},          # parsed DSN params
         _OBJECTS    => {},          # keeps necessary objects
         _DRIVER_ARGS=> {},          # arguments to be passed to driver
         _CLAIMED_ID => undef,       # id **claimed** by client
         _STATUS     => 0,           # status of the session object
-        _QUERY      => undef,       # query object
-        _errstr     => "",
+        _QUERY      => undef        # query object
     }, $class;
 
-    $self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
+    #$self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
 
     if ( @_ == 1 ) {
         if ( ref $_[0] ){ $self->{_QUERY}       = $_[0]  }
@@ -80,7 +100,7 @@ sub instance {
     if ( @_ > 1 ) {
         if ( defined $_[0] ) {      # <-- to avoid 'Uninitialized value...' carpings
             %{ $self->{_DSN} } = map { split /:/ } split /;/, $_[0];
-            # 
+            #
             # convertingn all the values to lowercase
             while ( my($key, $value) = each %{ $self->{_DSN} } ) {
                 $self->{_DSN}->{$key} = lc $value;
@@ -102,22 +122,13 @@ sub instance {
     $self->{_DSN}->{serializer} ||= "default";
     $self->{_DSN}->{id}         ||= "md5";
 
+
+
+
     #
-    unless ( $self->{_CLAIMED_ID} ) {
-        my $query = $self->query();
-        eval {
-            $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
-        };
-        if ( my $errmsg = $@ ) {
-            return $class->error( "couldn't acquire: " .  $errmsg );
-        }
-    }
-    return $self->init ? $self : undef;
-}
-
-
-sub init {
-    my $self = shift;
+    # Beyond this point used to be '_init()' method. But I had to merge them together
+    # since '_init()' did not serve specific purpose
+    #
 
     my @pms = ();
     $pms[0] = "CGI::Session::Driver::"      . $self->{_DSN}->{driver};
@@ -127,42 +138,52 @@ sub init {
     for ( @pms ) {
         eval "require $_";
         if ( my $errmsg = $@ ) {
-            return $self->error("couldn't load $_: " . $errmsg);
+            return $self->set_error("couldn't load $_: " . $errmsg);
         }
     }
 
     #
     # Creating & caching driver object
     defined($self->{_OBJECTS}->{driver} = $pms[0]->new( $self->{_DRIVER_ARGS} ) )
-        or return $self->error( "init(): couldn't create driver object: " .  $pms[0]->errstr );
+        or return $self->set_error( "init(): couldn't create driver object: " .  $pms[0]->errstr );
 
     $self->{_OBJECTS}->{serializer} = $pms[1];
     $self->{_OBJECTS}->{id}         = $pms[2];
 
-    return 1 unless  $self->{_CLAIMED_ID};
-    
+    #
+    unless ( $self->{_CLAIMED_ID} ) {
+        my $query = $self->query();
+        eval {
+            $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
+        };
+        if ( my $errmsg = $@ ) {
+            return $class->set_error( "couldn't acquire: " .  $errmsg );
+        }
+    }
+
+
+    return $self unless  $self->{_CLAIMED_ID};
+
     my $raw_data = $self->{_OBJECTS}->{driver}->retrieve( $self->{_CLAIMED_ID} );
     unless ( defined $raw_data ) {
-        return $self->error( "init(): couldn't retireve data: " . $self->{_OBJECTS}->{driver}->errstr );
+        return $self->set_error( "init(): couldn't retireve data: " . $self->{_OBJECTS}->{driver}->errstr );
     }
-    unless ( $raw_data ) {                              # <-- such session doesn't exist in storage
-        return 1;
-    }
+    return $self unless $raw_data;                              # <-- such session doesn't exist in storage
 
     $self->{_DATA} = $self->{_OBJECTS}->{serializer}->thaw($raw_data);
     unless ( defined $self->{_DATA} ) {
-        return $self->error( $self->{_OBJECTS}->{serializer}->errstr );
+        return $self->set_error( $self->{_OBJECTS}->{serializer}->errstr );
     }
     unless ( ref ($self->{_DATA}) && (ref $self->{_DATA} eq 'HASH') ) {
-        return $self->error( "Invalid data structure returned from thaw()" );
-    }    
+        return $self->set_error( "Invalid data structure returned from thaw()" );
+    }
     # checking for expiration ticker
     if ( $self->{_DATA}->{_SESSION_ETIME} ) {
         if ( ($self->{_DATA}->{_SESSION_ATIME} + $self->{_DATA}->{_SESSION_ETIME}) <= time() ) {
-            #$self->{_DATA} = {};                    # <-- resetting expired session data
             $self->_set_status( STATUS_EXPIRED );   # <-- so client can detect expired sessions
             $self->_set_status( STATUS_DELETED );   # <-- session should be removed from database
-            return 1;
+            $self->flush();                         # <-- flush() will do the actual removal!
+            return $self;
         }
     }
 
@@ -177,7 +198,7 @@ sub init {
     $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
     $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
 
-    return 1;
+    return $self;
 }
 
 
@@ -187,7 +208,7 @@ sub DESTROY         {   $_[0]->flush()  }
 sub dataref         { $_[0]->{_DATA}    }
 sub empty           { !$_[0]->id        }
 sub expired         { $_[0]->_test_status( STATUS_EXPIRED ) }
-#sub error           { croak $_[1]       }
+sub error           { croak $_[1]       }
 sub id              { $_[0]->dataref->{_SESSION_ID}     }
 sub atime           { $_[0]->dataref->{_SESSION_ATIME}  }
 sub ctime           { $_[0]->dataref->{_SESSION_CTIME}  }
@@ -258,26 +279,29 @@ sub flush {
     return if $self->{_STATUS} == 0;    # <-- neither new, nor deleted nor modified
 
     if ( $self->_test_status(STATUS_NEW) && $self->_test_status(STATUS_DELETED) ) {
-        return $self->_reset_status();
+        $self->{_DATA} = {};
+        return $self->_unset_status(STATUS_NEW, STATUS_DELETED);
     }
-    
+
     my $driver      = $self->_driver();
     my $serializer  = $self->_serializer();
 
     if ( $self->_test_status(STATUS_DELETED) ) {
         defined($driver->remove($self->id)) or
-            return $self->error( "flush(): couldn't remove session data: " . $driver->errstr );
-        return $self->_reset_status();
+            return $self->set_error( "flush(): couldn't remove session data: " . $driver->errstr );
+        $self->{_DATA} = {};                        # <-- removing all the data, making sure
+                                                    # it won't be accessible after flush()
+        return $self->_unset_status(STATUS_DELETED);
     }
 
     if ( $self->_test_status(STATUS_NEW) || $self->_test_status(STATUS_MODIFIED) ) {
         my $datastr = $serializer->freeze( $self->dataref );
         unless ( defined $datastr ) {
-            return $self->error( "flush(): couldn't freeze data: " . $serializer->errstr );
+            return $self->set_error( "flush(): couldn't freeze data: " . $serializer->errstr );
         }
         defined( $driver->store($self->id, $datastr) ) or
-            return $self->error( "flush(): couldn't store datastr: " . $driver->errstr);
-        $self->_reset_status();
+            return $self->set_error( "flush(): couldn't store datastr: " . $driver->errstr);
+        $self->_unset_status(STATUS_NEW, STATUS_MODIFIED);
     }
     return 1;
 }
@@ -289,18 +313,25 @@ sub expire {
 
     return $self->{_DATA}->{_SESSION_ETIME} unless @_;
     if ( @_ == 1 ) {
-        if ( ($_[0] =~ m/^\d$/) && ($_[0] == 0) ) {
+        if ( defined($_[0]) && ($_[0] =~ m/^\d$/) && ($_[0] == 0) ) {
             $self->{_DATA}->{_SESSION_ETIME} = undef;
+            $self->_set_status( STATUS_MODIFIED );
         } else {
             $self->{_DATA}->{_SESSION_ETIME} = $self->_str2seconds( $_[0] );
+            $self->_set_status( STATUS_MODIFIED );
         }
         return 1;
     }
 
+    #
+    # If we get this far more than one arguments passed. We only care about the first
+    # two:
     if ( ($_[1] =~ m/^\d$/) && ($_[1] == 0) ) {
         delete $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] };
+        $self->_set_status( STATUS_MODIFIED );
     } else {
         $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] } = $self->_str2seconds( $_[1] );
+        $self->_set_status( STATUS_MODIFIED );
     }
 }
 
@@ -327,7 +358,7 @@ sub _str2seconds {
 
     my ($koef, $d) = $str =~ m/^([+-]?\d+)([smhdwMy])$/;
     unless ( defined($koef) && defined($d) ) {
-        die "_str2seconds(): couldn't parse $str into \$koef and \$d parts. Possible invalid syntax";
+        die "_str2seconds(): couldn't parse '$str' into \$koef and \$d parts. Possible invalid syntax";
     }
     return $koef * $_map{ $d };
 }
@@ -348,10 +379,17 @@ sub param {
     my $self = shift;
 
     carp "param(): attempt to read/write deleted session" if $self->_test_status(STATUS_DELETED);
-    
+
+    #
+    # USAGE: $s->param();
+    # DESC: returns all the **public** parameters
     unless ( @_ ) {
         return grep { !/^_SESSION_/ } keys %{ $self->{_DATA} };
     }
+
+    #
+    # USAGE: $s->param($p);
+    # DESC: returns a specific session parameter
     return $self->{_DATA}->{$_[0]} if @_ == 1;
 
     my %args = (
@@ -360,6 +398,10 @@ sub param {
         @_
     );
 
+    #
+    # USAGE: $s->param(-name=>$n, -value=>$v);
+    # DESC:  updates session data using CGI.pm's 'named parameter' syntax. Only
+    # public records can be set!
     if ( defined( $args{'-name'} ) && defined( $args{'-value'} ) ) {
         if ( $args{'-name'} =~ m/^_SESSION_/ ) {
             carp "param(): attempt to write to private parameter";
@@ -369,19 +411,14 @@ sub param {
         return $self->{_DATA}->{ $args{'-name'} } = $args{'-value'};
     }
 
-    if ( defined $args{'-name'} ) {
-        return $self->{_DATA}->{ $args{'-name'} };
-    }
+    #
+    # USAGE: $s->param(-name=>$n);
+    # DESC:  access to session data (public & private) using CGI.pm's 'named parameter' syntax.
+    return $self->{_DATA}->{ $args{'-name'} } if defined $args{'-name'};
 
-    if ( @_ == 2 ) {
-        if ( $_[0] =~ m/^_SESSION_/ ) {
-            carp "param(): attempt to write to private parameter";
-            return undef;
-        }
-        $self->_set_status(STATUS_MODIFIED);
-        return $self->{_DATA}->{ $_[0] } = $_[1];
-    }
-
+    # USAGE: $s->param($name, $value);
+    # USAGE: $s->param($name1 => $value1, $name2 => $value2 [,...]);
+    # DESC:  updates one or more **public** records using simple syntax
     unless ( @_ % 2 ) {
         for ( my $i=0; $i < @_; $i += 2 ) {
             if ( $_[$i] =~ m/^_SESSION_/) {
@@ -390,9 +427,13 @@ sub param {
             }
             $self->{_DATA}->{ $_[$i] } = $_[$i+1];
         }
-        return $self->_set_status(STATUS_MODIFIED);
+        $self->_set_status(STATUS_MODIFIED);
+        return 1;
     }
-    croak "param(): usage error";
+
+    #
+    # If we reached this far none of the expected syntaxes were detected. Syntax error
+    croak "param(): usage error. Invalid numbe";
 }
 
 
@@ -404,10 +445,29 @@ sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 sub http_header {
     my $self = shift;
 
-    my $query = $self->query();
-    my $cookie = $query->cookie( -name => $self->name, -value => $self->id );
-    return $query->header(-cookie=>$cookie, type=>'text/html', @_);
+    return $self->query->header(-cookie=>$self->cookie, type=>'text/html', @_);
 }
+
+
+
+sub cookie {
+    my $self = shift;
+
+    my $query = $self->query();
+    my $cookie= undef;
+
+    if ( $self->expired ) {
+        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '-1d', @_ );
+    } elsif ( my $t = $self->expire ) {
+        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> $t . 's', @_ );
+    } else {
+        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, @_ );
+    }
+
+    return $cookie;
+}
+
+
 
 
 
@@ -447,7 +507,7 @@ sub load_param {
 sub clear {
     my $self = shift;
     my ($params) = @_;
-    
+
     $params ||= [ $self->param ];
     for ( @$params ) {
         delete $self->{_DATA}->{$_};
@@ -476,11 +536,12 @@ CGI::Session - persistent session data in CGI applications
 
     # Object initialization:
     use CGI::Session;
+    $session = new CGI::Session();
 
-    my $session = new CGI::Session("driver:File", undef, {Directory=>'/tmp'});
+    $CGISESSID = $session->id();
 
-    # getting the effective session id:
-    my $CGISESSID = $session->id();
+    # send proper HTTP header with cookies:
+    print $session->header();
 
     # storing data in the session
     $session->param('f_name', 'Sherzod');
@@ -493,7 +554,7 @@ CGI::Session - persistent session data in CGI applications
     my $l_name = $session->param(-name=>'l_name');
 
     # clearing a certain session parameter
-    $session->clear(["_IS_LOGGED_IN"]);
+    $session->clear(["l_name", "f_name"]);
 
     # expire '_IS_LOGGED_IN' flag after 10 idle minutes:
     $session->expire(_IS_LOGGED_IN => '+10m')
@@ -506,15 +567,14 @@ CGI::Session - persistent session data in CGI applications
 
 =head1 DESCRIPTION
 
-CGI-Session is a Perl5 library that provides an easy, reliable and modular
-session management system across HTTP requests. Persistency is a key feature for
-such applications as shopping carts, login/authentication routines, and
-application that need to carry data accross HTTP requests. CGI::Session
-does that and many more
+CGI-Session is a Perl5 library that provides an easy, reliable and modular session management system across HTTP requests.
+Persistency is a key feature for such applications as shopping carts, login/authentication routines, and application that
+need to carry data accross HTTP requests. CGI::Session does that and many more.
 
 =head1 TO LEARN MORE
 
-Current manual is optimized to be used as a quick reference. To learn more both about the logic behind session management and CGI::Session programming style, consider the following:
+Current manual is optimized to be used as a quick reference. To learn more both about the philosofy and CGI::Session
+programming style, consider the following:
 
 =over 4
 
@@ -540,185 +600,203 @@ L<CGI|CGI> - standard CGI library
 
 =item *
 
-L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
+L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session.
 
 =back
 
 =head1 METHODS
 
-Following is the overview of all the available methods accessible via
-CGI::Session object.
+Following is the overview of all the available methods accessible via CGI::Session object.
 
 =over 4
 
-=item C<new( DSN, SID, HASHREF )>
+=item new()
 
-Requires three arguments. First is the Data Source Name, second should be
-the session id to be initialized or an object which provides either of 'param()'
-or 'cookie()' mehods. If Data Source Name is undef, it will fall back
-to default values, which are "driver:File;serializer:Default;id:MD5".
+=item new( $sid )
 
-If session id is missing, it will force the library to generate a new session
-id, which will be accessible through C<id()> method.
+=item new( $query )
 
-Examples:
+=item new( $dsn, $query||$sid )
 
-    $session = new CGI::Session(undef, undef, {Directory=>'/tmp'});
-    $session = new CGI::Session("driver:File;serializer:Storable", undef,  {Directory=>'/tmp'})
-    $session = new CGI::Session("driver:MySQL;id:Incr", undef, {Handle=>$dbh});
-    $session = new CGI::Session(undef, \&get_sid, {Directory=>'/tmp'});
+=item new( $dsn, $query||$sid, \%dsn_args )
 
-Following data source variables are supported:
+Constructor. Returns new session object, or undef on failure. Error message is accessible through
+L<errstr() - class method|/"errstr()">. If called on an already initialized session will re-initialize
+the session based on already configured object. This is only useful after a call to L<load()|/"load()">.
+
+Can accept upto three arguments, $dsn - Data Source Name, $query||$sid - query object OR a string
+representing session id, and finally, \%dsn_args, arguments used by $dsn components.
+
+If called without any arguments, $dsn defaults to I<driver:file;serializer:default;id:md5>, $query||$sid defaults to
+C<< CGI->new() >>, and C<\%dsn_args> defaults to I<undef>.
+
+If called with a single argument, it will be treated either as $query object, or $sid, depending on its type. If argument is
+a string , C<new()> will treat it as session id and will attempt to retrieve the session from datastore. If it fails,
+will create a new session id, which will be accessible through L<id() method|/"id()">. If argument is an object, cookie() and
+param() methods will be called on that object to recover a potential $sid and retrieve it from datastore. If it fails, C<new()>
+will create a new session id, which will be accessible through L<id() method|/"id()">. L<$CGI::Session::NAME> will define the name
+of the query parameter and/or cookie name to be requested, defaults to I<CGISESSID>.
+
+If called with two arguments first will be treated as $dsn, and second will be treated as $query or $sid or undef,
+depending on its type. Some examples of this syntax are:
+
+    $s = CGI::Session->new("driver:mysql", undef);
+    $s = CGI::Session->new("driver:sqlite", $sid);
+    $s = CGI::Session->new("driver:db_file", $query);
+    $s = CGI::Session->new("serializer:storable", $sid);
+    # etc...
+
+
+Following data source components are supported:
 
 =over 4
 
 =item *
 
-C<driver> - CGI::Session driver. Available drivers are "File", "DB_File" and
-"MySQL". Default is "File".
+C<driver> - CGI::Session driver. Available drivers are L<file|CGI::Session::Driver::file>,
+L<db_file|CGI::Session::Driver::db_file>, L<mysql|CGI::Session::Driver::mysql> and
+L<sqlite|CGI::Session::Driver::sqlite>. Third party drivers are welcome. For driver specs consider L<CGI::Session::Driver>
 
 =item *
 
 C<serializer> - serializer to be used to encode the data structure before saving
-in the disk. Available serializers are "Storable", "FreezeThaw" and "Default".
-Default is "Default", which uses standard L<Data::Dumper|Data::Dumper>
+in the disk. Available serializers are L<storable|CGI::Session::Serialize::storable>, <freezethaw|CGI::Session::Serialize::freezethaw> and L<default|CGI::Session::Serialize::default>. Default serializer will use L<Data::Dumper|Data::Dumper>.
 
 =item *
 
-C<id> - ID generator to use when new session is to be created. Available ID generators
-are "MD5" and "Incr". Default is "MD5".
+C<id> - ID generator to use when new session is to be created. Available ID generator is L<md5|CGI::Session::ID::md5>
 
 =back
 
-Note: you can also use unambiguous abbreviations of the DSN parameters. Examples:
+If called with three arguments, first two will be treated as in the previous example, and third argument will be \%dsn_args,
+which will be passed to $dsn components (namely, driver, serializer and id generators) for initialization purposes. Since all the
+$dsn components must initialize to some default value, this third argument is not required.
 
-    new CGI::Session("dr:File;ser:Storable", undef, {Diretory=>'/tmp'});
+undef is acceptable as a valid placeholder to any of the above arguments, which will force default behavior.
 
-=item C<touch()>
+=item load()
 
-Constructor. Used in cleanup scripts. Example:
+=item load($query||$sid)
 
-    tie my %dir, "IO::Dir", "/usr/tmp";
-    while ( my ($filename, $stat) = each %dir ) {
-        my ($sid) = $filename = m/^cgisess_(\w{32})$/;
-        CGI::Session->touch(undef, $sid, {Directory=>"/tmp"});
+=item load($dsn, $query||$sid)
+
+=item load($dsn, $query, \%dsn_args);
+
+Constructor. Usage is identical to C<new()|/"new()">, so is the return value. Major difference is, new() can create new session if it detects expired and non-existing sessions, but load() does not.
+
+load() is useful to detect expired or non-existing sessions without forcing the library to create new sessions. So now you can do
+something like this:
+
+    $s = CGI::Session->load() or die CGI::Session->errstr();
+    if ( $s->expired ) {
+        print $s->header(),
+            $cgi->start_html(),
+            $cgi->p("Your session timedout! Refresh the screen to start new session!")
+            $cgi->end_html();
+        exit(0);
     }
-    untie(%dir);
 
-touch() accepts the same arguments as new() does, but it doesn't necessarily
-returns object instance. It simply expires old sessions without updating their
-last access time parameter.
+    if ( $s->empty ) {
+        $s = $s->new() or die $s->errstr;
+    }
 
-=item C<id()>
+Notice, all I<expired> sessions are empty, but not all I<empty> sessions are expired!
 
-Returns effective ID for a session. Since effective ID and claimed ID
-can differ, valid session id should always be retrieved using this
-method.
+=item id()
 
-=item C<param($name)>
+Returns effective ID for a session. Since effective ID and claimed ID can differ, valid session id should always
+be retrieved using this method.
 
-=item C<param(-name=E<gt>$name)>
+=item param($name)
 
-this method used in either of the above syntax returns a session
-parameter set to C<$name> or undef on failure.
+=item param(-name=E<gt>$name)
 
-=item C<param( $name, $value)>
+Used in either of the above syntax returns a session parameter set to $name or undef if it doesn't exist. If it's called on a deleted method param() will issue a warning but return value is not defined.
 
-=item C<param(-name=E<gt>$name, -value=E<gt>$value)>
+=item param( $name, $value)
 
-method used in either of the above syntax assigns a new value to $name
-parameter, which can later be retrieved with previously introduced
-param() syntax.
+=item param(-name=E<gt>$name, -value=E<gt>$value)
 
-=item C<param_hashref()>
+Used in either of the above syntax assigns a new value to $name parameter, which can later be retrieved with previously introduced
+param() syntax. Attempt setting parameter names that start with I<_SESSION_> will trigger warning and undef will be returned.
 
-returns all the session parameters as a reference to a hash
+=item param_hashref()
 
+B<Obsoleted> by L<data()|/"data()">. Returns reference to session's data table, which is represented as native HASH.
 
-=item C<save_param($cgi)>
+=item save_param()
 
-=item C<save_param($cgi, $arrayref)>
+=item save_param($cgi)
 
-Saves CGI parameters to session object. In otherwords, it's calling
-C<param($name, $value)> for every single CGI parameter. The first
-argument should be either CGI object or any object which can provide
-param() method. If second argument is present and is a reference to an
-array, only those CGI parameters found in the array will be stored in the session
+=item save_param($cgi, \@list)
 
-=item C<load_param($cgi)>
+Saves query parameters to session object. In otherwords, it's the same as calling C<param($name, $value)> for every single
+query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query() method|/"query()">, which returns C<< CGI->new >>.
+If second argument is present and is a reference to an array, only those query parameters found in the array will be stored
+in the session. undef is a valid placeholder for any argument to force default behavior.
 
-=item C<load_param($cgi, $arrayref)>
+=item load_param()
 
-loads session parameters to CGI object. The first argument is required
-to be either CGI.pm object, or any other object which can provide
-param() method. If second argument is present and is a reference to an
-array, only the parameters found in that array will be loaded to CGI
-object.
+=item load_param($query)
 
-=item C<sync_param($cgi)>
+=item load_param($query, \@list)
 
-=item C<sync_param($cgi, $arrayref)>
+Loads session parameters into a query object. The first argument, if present, should be query object, or any other object which can provide param() method. If second argument is present and is a reference to an array, only parameters found in that array will be loaded to the query object.
 
-experimental feature. Synchronizes CGI and session objects. In other words,
-it's the same as calling respective syntaxes of save_param() and load_param().
+=item clear()
 
-=item C<clear()>
+=item clear(\@list)
 
-=item C<clear([@list])>
+Clears parameters from the session object. If passed a reference to an array, clears only those parameters found in the list.
 
-clears parameters from the session object. If passed an argument as an
-arrayref, clears only those parameters found in the list.
+=item flush()
 
-=item C<flush()>
+Synchronizes data in the buffer with its copy in disk. Normally it will be called for you just before the program terminates, or session object goes out of scope, so you should never have to flush() on your own.
 
-synchronizes data in the buffer with its copy in disk. Normally it will
-be called for you just before the program terminates, session object
-goes out of scope or close() is called.
+=item atime()
 
-=item C<close()>
+Read-only method. Returns the last access time of the session in seconds from epoch. This time is used internally while
+auto-expiring sessions and/or session parameters.
 
-closes the session temporarily until new() is called on the same session
-next time. In other words, it's a call to flush() and DESTROY(), but
-a lot slower. Normally you never have to call close().
+=item ctime()
 
-=item C<atime()>
+Read-only method. Returns the time when the session was first created in seconds from epoch.
 
-returns the last access time of the session in the form of seconds from
-epoch. This time is used internally while auto-expiring sessions and/or session
-parameters.
+=item expire()
 
-=item C<ctime()>
+=item expire($time)
 
-returns the time when the session was first created.
+=item expire($param, $time)
 
-=item C<expire()>
+Sets expiration date relative to L<atime()|/"atime()">. If used with no arguments, returns the expiration date
+if it was ever set. If no expiration was ever set, returns undef.
 
-=item C<expire($time)>
+Second form sets an expiration time. This value is checked when previously stored session is asked to be retrieved,
+and if its expiration date has passed will be expunged from the disk immediately. Passing 0 cancels expiration.
 
-=item C<expire($param, $time)>
+By using the third syntax you can set expiration date for a particular session parameter, say I<~logged-in>. This would
+cause the library call clear() on the parameter when its time is up. Passing 0 cancels expiration.
 
-Sets expiration date relative to atime(). If used with no arguments, returns
-the expiration date if it was ever set. If no expiration was ever set, returns
-undef.
+Only way of catching expired session in applications is through L<load()|/"load()"> only:
 
-Second form sets an expiration time. This value is checked when previously stored
-session is asked to be retrieved, and if its expiration date has passed will be
-expunged from the disk immediately and new session is created accordingly.
-Passing 0 would cancel expiration date.
+    $s = CGI::Session->load() or die CGI::Session->errstr;
+    if ( $s->expired ) {
+        die "Your session has expired, please refresh your browser to restart";
+    }
 
-By using the third syntax you can also set an expiration date for a
-particular session parameter, say "~logged-in". This would cause the
-library call clear() on the parameter when its time is up.
+    if ( $s->empty ) {
+        $s =  $s->new();
+    }
 
-All the time values should be given in the form of seconds. Following
-time aliases are also supported for your convenience:
+All the time values should be given in the form of seconds. Following keywords are also supported for your convenience:
 
-    +===========+===============+
+    +-----------+---------------+
     |   alias   |   meaning     |
-    +===========+===============+
+    +-----------+---------------+
     |     s     |   Second      |
     |     m     |   Minute      |
     |     h     |   Hour        |
+    |     d     |   Day         |
     |     w     |   Week        |
     |     M     |   Month       |
     |     y     |   Year        |
@@ -726,62 +804,51 @@ time aliases are also supported for your convenience:
 
 Examples:
 
-    $session->expire("+1y");   # expires in one year
-    $session->expire(0);       # cancel expiration
-    $session->expire("~logged-in", "+10m");# expires ~logged-in flag in 10 mins
+    $session->expire("2h");                # expires in two days
+    $session->expire(0);                   # cancel expiration
+    $session->expire("~logged-in", "10m"); # expires '~logged-in' parameter after 10 idle minutes
 
-Note: all the expiration times are relative to session's last access time, not to
-its creation time. To expire a session immediately, call C<delete()>. To expire
-a specific session parameter immediately, call C<clear()> on that parameter.
+B<Note:> all the expiration times are relative to session's last access time, not to its creation time.
+To expire a session immediately, call L<delete()|/"delete()">. To expire a specific session parameter immediately, call L<clear()|/"clear()"> and the name of the parameter as an element of \@list.
 
-=item C<remote_addr()>
+=item expired()
 
-returns the remote address of the user who created the session for the
-first time. Returns undef if variable REMOTE_ADDR wasn't present in the
-environment when the session was created
+Tests whether session initialized using L<load()|/"load()"> is to be expired. This method works only on sessions initialized
+with load():
 
-=item C<delete()>
+    $s = CGI::Session->load() or die CGI::Session->errstr;
+    if ( $s->expired ) {
+        die "Your session expired. Please refresh";
+    }
+    if ( $s->empty ) {
+        $s = $s->new() or die $s->errstr;
+    }
 
-deletes the session from the disk. In other words, it calls for
-immediate expiration after which the session will not be accessible
+=item remote_addr()
 
-=item C<error()>
+Returns the remote address of the user who created the session for the first time. Returns undef if variable REMOTE_ADDR
+wasn't present in the environment when the session was created.
 
-returns the last error message from the library. It's the same as the
-value of $CGI::Session::errstr. Example:
+=item error()
 
-    $session->flush() or die $session->error();
+Class method. Returns last error message from the library.
 
-=item C<dump()>
+=item dump()
 
-=item C<dump("file.txt")>
+Returns a dump of the session object. Useful for debugging purposes only.
 
-=item C<dump("file.txt", 1)>
+=item header()
 
-=item C<dump("file.txt", 1, 2)>
-
-creates a dump of the session object. The first argument, if passed,
-will be interperated as the name of the file dump should be written into.
-The second argument, if true, creates a dump of only the B<_DATA> table.
-This table contains only the session data that is stored in to the file.
-Otherwise, dump() will return the whole objecet dump, including object's
-run time attributes, in addition to B<_DATA> table.
-
-The third argument can be between 0 to 3. It denotes what indentation to use
-for the dump. Default is 2.
-
-=item C<header()>
-
-header() is simply a replacement for L<CGI.pm|CGI>'s header() method. Without this
+Simply a replacement for L<CGI.pm|CGI>'s header() method. Without this
 method, you usually need to create a CGI::Cookie object and send it as part of the
 HTTP header:
 
-    $cookie = new CGI::Cookie(-name=>'CGISESSID', -value=>$session->id);
+    $cookie = CGI::Cookie->new(-name=>$session->name, -value=>$session->id);
     print $cgi->header(-cookie=>$cookie);
 
 You can minimize the above into:
 
-    $session->header()
+    print $session->header();
 
 It will retrieve the name of the session cookie from $CGI::Session::NAME variable,
 which can also be accessed via CGI::Session->name() method. If you want to use a
@@ -793,219 +860,26 @@ creating session object:
 
 Now, $session->header() uses "MY_SID" as a name for the session cookie.
 
-=item C<cache()>
+=item data()
 
-a way of caching certain values in session object during the process.
-This is normally used exclusively from within CGI::Session drivers to
-pass certain values from a method to another. It used to be done by setting
-a new object attribute from within the driver like so:
+Returns CGI::Session::Data object. CGI::Session::Data represents in-memory session data, although in applications there's
+never a need for this method.
 
-    $self->{MYSQL_DBH} = $dbh;
+=item delete()
 
-It would cause attribute collisions between the base class and session
-driver. cache() method prevents against such unpleasant surprises:
+Deletes a session from the datastore and empties session data, completely, so subsequent read/write requests on the same object
+will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush()">, and 
+flush() will do the actual removal.
 
-    $self->cache(DBH => $dbh);
+=item query()
 
-=item trace()
-
-Note: this is an experimental feature
-
-Turns debugging mode on. Expects two arguments; the first is a boolean
-value indicating if debugging mode is on or off. Default is 0, which denotes
-off. The second argument is the path to a file trace/debugging messages
-should be written into:
-
-    $session->trace(1, "logs/trace.log");
-
-=item tracemsg()
-
-Note: this is an experimental feature
-
-If, for any reason, you want to write your own message into the trace file,
-this is the message you need. Expects a single argument, message to be logged:
-
-    $self->tracemsg("Initializing the old session");
+Returns query object associated with current session object. Default query object class is L<CGI.pm|CGI>.
 
 =back
-
-=head1 TIE INTERFACE
-
-In addition to the above described Object Oriented, method-call interface,
-CGI::Session supports Apache::Session-like tie() interface as well.
-According to this syntax, you first tie() a hash variable with the
-library, and use that hash to read and write session data to it.
-After tying the hash, that hash becomes a magick variable, and each
-your action on that hash triggers disk access accordingly:
-
-    tie %session, "CGI::Session", undef, undef, {Directory=>"/tmp"};
-
-After tying the above %session hash to "CGI::Session", we can now
-use it as an ordinary Perl's built-in hash, and guaranteed that Perl
-tranparently will be calling respective syntaxes of CGI::Session->param()
-as we do
-
-Here are some other operation in the above two syntaxes (OO vs TIE):
-
-=head2 READING FROM THE SESSION
-
-Simply read the key from the %session hash:
-
-    print qq~Hello <a href="mailto:$session{email}">$session{name}</a>~;
-
-=head2 STORING IN THE SESSION
-
-    # In OO:
-    $session->param(name=>"Sherzod Ruzmetov",
-                    email => 'sherzodr@cpan.org');
-
-    # In tie:
-    $session{name} = "Sherzod Ruzmetov";
-    $session{email} = 'sherzodr@cpan.org';
-
-=head2 CLEARING CERTAIN SESSION PARAMETERS:
-
-    # In OO:
-    $session->clear(["some_param"])
-
-    # In tie:
-    delete $session{some_param}
-
-=head2 CLEARING ALL THE SESSION PARAMETERS:
-
-    # In OO:
-    $session->clear()
-
-    # In tie:
-    %session = ();
-
-=head2 TO DELETE THE SESSION:
-
-    # In OO:
-    $session->delete();
-
-    # In tie:
-    tied(%session)->delete();
-
-=head2 TO SET EXPIRATION ON SESSION
-
-    # In OO:
-    $session->expire("+10m");
-    $session->expire(_logged_in=>"+10h");
-
-    # In tie:
-    tied(%session)->expire("+10m");
-    tied(%session)->expire(_logged_in=>"+10h");
-
-=head2 TO GET SESSION ID
-
-    # In OO:
-    $session->id()
-
-    # In tie:
-    $session{_SESSION_ID}
-
-For more information on getting the session's private records
-such as session id, last access time, remote_addr and such, refer
-to the next section L<DATA TABLE>.
-
-=head2 SAVING CGI PARAMETERS
-
-    # In OO:
-    $session->save_param($cgi);
-
-    # In tie:
-    tied(%session)->save_param($cgi);
-
-=head2 TIE VS. OO INTERFACE. WHICH ONE IS BETTER?
-
-We, definitely, prefer Object Oriented interface for it offers
-more features. Besides, TIE interface of the library uses this
-interface as well. But again, it's the matter of preference.
-Play around with both syntaxes, and find out for yourself
-which one you may prefer.
-
-You can still have access to CGI::Session's OO methods
-through the built-in tied() function. Simply pass the
-tied hash to tied(), and it will return the CGI::Session
-object you can use to call the methods you need, such as,
-"load_param()":
-
-  tied(%session)->load_param($cgi)
-
-=head1 DATA TABLE
-
-Session data is stored in the form of hash table, in key value pairs.
-All the parameter names you assign through param() method become keys
-in the table, and whatever value you assign become a value associated with
-that key. Every key/value pair is also called a record.
-
-All the data you save through param() method are called public records.
-These records are both readable and writable by the programmer implementing
-the library. There are several read-only private records as well.
-Normally, you don't have to know anything about them to make the best use
-of the library. But knowing wouldn't hurt either. Here are the list of the
-private records and some description  of what they hold:
-
-=over 4
-
-=item _SESSION_ID
-
-Session id of that data. Accessible through id() method.
-
-=item _SESSION_CTIME
-
-Session creation time. Accessible through ctime() method.
-
-=item _SESSION_ATIME
-
-Session last access time. Accessible through atime() method.
-
-=item _SESSION_ETIME
-
-Session's expiration time, if any. Accessible through expire() method.
-
-=item _SESSION_REMOTE_ADDR
-
-IP address of the user who create that session. Accessible through remote_addr()
-method
-
-=item _SESSION_EXPIRE_LIST
-
-Another internal hash table that holds the expiration information for each
-expirable public record, if any. This table is updated with the two-argument-syntax
-of expires() method.
-
-=back
-
-These private methods are essential for the proper operation of the library
-while working with session data. For this purpose, CGI::Session doesn't allow
-overriding any of these methods through the use of param() method. In addition,
-it doesn't allow any parameter names that start with string B<_SESSION_> either
-to prevent future collisions.
-
-So the following attempt will have no effect on the session data whatsoever
-
-    $session->param(_SESSION_XYZ => 'xyz');
-
-Although private methods are not writable, the library allows reading them
-using param() method:
-
-    my $sid = $session->param('_SESSION_ID');
-
-The above is the same as:
-
-    my $sid = $session->id();
-
-But we discourage people from accessing private records using param() method.
-In the future we are planning to store private records in their own namespace
-to avoid name collisions and remove restrictions on session parameter names.
 
 =head1 DISTRIBUTION
 
-CGI::Session consists of several modular components such as L<drivers|"DRIVERS">,
-L<serializers|"SERIALIZERS"> and L<id generators|"ID Generators">. This section
-lists what is available.
+CGI::Session consists of several components such as L<drivers|"DRIVERS">, L<serializers|"SERIALIZERS"> and L<id generators|"ID Generators">. This section lists what is available.
 
 =head2 DRIVERS
 
@@ -1015,18 +889,22 @@ Following drivers are included in the standard distribution:
 
 =item *
 
-L<File|CGI::Session::File> - default driver for storing session data in plain files.
-Full name: B<CGI::Session::File>
+L<file|CGI::Session::Driver::file> - default driver for storing session data in plain files. Full name: B<CGI::Session::Driver::file>
 
 =item *
 
-L<DB_File|CGI::Session::DB_File> - for storing session data in BerkelyDB.
-Requires: L<DB_File>. Full name: B<CGI::Session::DB_File>
+L<db_file|CGI::Session::Driver::db_file> - for storing session data in BerkelyDB. Requires: L<DB_File>. 
+Full name: B<CGI::Session::Driver::db_file>
 
 =item *
 
-L<MySQL|CGI::Session::MySQL> - for storing session data in MySQL tables.
-Requires L<DBI|DBI> and L<DBD::mysql|DBD::mysql>. Full name: B<CGI::Session::MySQL>
+L<mysql|CGI::Session::Driver::mysql> - for storing session data in MySQL tables. Requires L<DBI|DBI> and L<DBD::mysql|DBD::mysql>. 
+Full name: B<CGI::Session::Driver::mysql>
+
+=item * 
+
+L<sqlite|CGI::Session::Driver::sqlite> - for storing session data in SQLite. Requires L<DBI|DBI> and L<DBD::SQLite|DBD::SQLite>.
+Full name: B<CGI::Session::Driver::sqlite>
 
 =back
 
@@ -1036,18 +914,18 @@ Requires L<DBI|DBI> and L<DBD::mysql|DBD::mysql>. Full name: B<CGI::Session::MyS
 
 =item *
 
-L<Default|CGI::Session::Serialize::Default> - default data serializer.
-Uses standard L<Data::Dumper|Data::Dumper>. Full name: B<CGI::Session::Serialize::Default>.
+L<default|CGI::Session::Serialize::default> - default data serializer. Uses standard L<Data::Dumper|Data::Dumper>. 
+Full name: B<CGI::Session::Serialize::default>.
 
 =item *
 
-L<Storable|CGI::Session::Serialize::Storable> - serializes data using L<Storable>.
-Requires L<Storable>. Full name: B<CGI::Session::Serialize::Storable>.
+L<storable|CGI::Session::Serialize::storable> - serializes data using L<Storable>. Requires L<Storable>. 
+Full name: B<CGI::Session::Serialize::storable>.
 
 =item *
 
-L<FreezeThaw|CGI::Session::Serialize::FreezeThaw> - serializes data using L<FreezeThaw>.
-Requires L<FreezeThaw>. Full name: B<CGI::Session::Serialize::FreezeThaw>
+L<freezethaw|CGI::Session::Serialize::freezethaw> - serializes data using L<FreezeThaw>. Requires L<FreezeThaw>. 
+Full name: B<CGI::Session::Serialize::freezethaw>
 
 =back
 
@@ -1059,24 +937,20 @@ Following ID generators are available:
 
 =item *
 
-L<MD5|CGI::Session::ID::MD5> - generates 32 character long hexidecimal string.
-Requires L<Digest::MD5|Digest::MD5>. Full name: B<CGI::Session::ID::MD5>.
+L<md5|CGI::Session::ID::md5> - generates 32 character long hexidecimal string. Requires L<Digest::MD5|Digest::MD5>. 
+Full name: B<CGI::Session::ID::md5>.
 
 =item *
 
-L<Incr|CGI::Session::ID::Incr> - generates auto-incrementing ids. Full name: B<CGI::Session::ID::Incr>
-
-=item *
-
-L<Static|CGI::Session::ID::Static> - generates static, session ids. B<CGI::Session::ID::Static>
-
+L<static|CGI::Session::ID::static> - generates static, session ids. B<CGI::Session::ID::static>
 
 =back
 
+
 =head1 CREDITS
 
-Following people contributed with their patches and/or suggestions to
-the development of CGI::Session. Names are in chronological order:
+Over time I just lost track of this list, and I'm feeling terrible for it. If anyone notices his/her missing name,
+please send me a note.
 
 =over 4
 
@@ -1092,14 +966,11 @@ the development of CGI::Session. Names are in chronological order:
 
 =back
 
-
 =head1 COPYRIGHT
 
-Copyright (C) 2001, 2002 Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>.
-All rights reserved.
+Copyright (C) 2001-2005 Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>. All rights reserved.
 
-This library is free software. You can modify and or distribute it under
-the same terms as Perl itself.
+This library is free software. You can modify and or distribute it under the same terms as Perl itself.
 
 =head1 AUTHOR
 
