@@ -3,14 +3,14 @@ package CGI::Session;
 # $Id$
 
 use strict;
-#use diagnostics;
+use diagnostics;
 use Carp ('confess');
 use AutoLoader 'AUTOLOAD';
 
 use vars qw($VERSION $REVISION $errstr $IP_MATCH $NAME $API_3 $FROZEN);
 
 ($REVISION) = '$Revision$' =~ m/Revision:\s*(\S+)/;
-$VERSION    = '3.8';
+$VERSION    = '3.9';
 $NAME       = 'CGISESSID';
 
 # import() - we do not import anything into the callers namespace, however,
@@ -653,11 +653,11 @@ epoch. This time is used internally while auto-expiring sessions and/or session 
 
 returns the time when the session was first created.
 
-=item C<expires()>
+=item C<expire()>
 
-=item C<expires($time)>
+=item C<expire($time)>
 
-=item C<expires($param, $time)>
+=item C<expire($param, $time)>
 
 Sets expiration date relative to atime(). If used with no arguments, returns the expiration date if it was ever set. If no expiration was ever set, returns undef.
 
@@ -1137,7 +1137,7 @@ sub expire {
     # in the '_DATA' table. Otherwise, return now!
     defined ($self->{_DATA}->{$param} ) || return;
 
-    if ( $etime == -1 ) {
+    if ( $etime eq '-1' ) {
         delete $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$param};
         return;
     }
@@ -1145,6 +1145,11 @@ sub expire {
     $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{$param} = _time_alias( $etime );
 }
 
+
+# expires() - alias to expire(). For backward compatibility
+sub expires {
+	return expire(@_);
+}
 
 
 # parses such strings as '+1M', '+3w', accepted by expire()

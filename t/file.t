@@ -42,9 +42,9 @@ $s->param(-name=>'email', -value=>'sherzodr@cpan.org');
 
 ok($s->param(-name=>'email'));
 
-ok(!$s->expire() );
+ok(!$s->expires() );
 
-$s->expire("+10m");
+$s->expires("+10m");
 
 ok($s->expire());
 
