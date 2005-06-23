@@ -2,6 +2,7 @@ my %dsn = (
     DataSource  => $ENV{CGISESS_MYSQL_DSN}      || "dbi:mysql:test",
     User        => $ENV{CGISESS_MYSQL_USER}     || $ENV{USER},
     Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
+    Socket      => $ENV{CGISESS_MYSQL_SOCKET}   || undef,
     TableName   => 'sessions'
 );
 
@@ -19,7 +20,9 @@ for ( "DBI", "DBD::mysql", "FreezeThaw" ) {
     }
 }
 
-my $dbh = DBI->connect($dsn{DataSource}, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>0});
+require CGI::Session::Driver::mysql;
+my $dsnstring = CGI::Session::Driver::mysql->_mk_dsnstr(\%dsn);
+my $dbh = DBI->connect($dsnstring, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>0});
 unless ( $dbh ) {
     plan(skip_all=>"Couldn't establish connection with the server");
     exit(0);

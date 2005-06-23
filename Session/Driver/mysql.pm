@@ -11,10 +11,36 @@ use CGI::Session::Driver::DBI;
 @CGI::Session::Driver::mysql::ISA       = qw( CGI::Session::Driver::DBI );
 $CGI::Session::Driver::mysql::VERSION   = "2.01";
 
+
+sub _mk_dsnstr {
+    my ($class, $dsn) = @_;
+    unless ( $class && $dsn && ref($dsn) && (ref($dsn) eq 'HASH')) {
+        croak "_mk_dsnstr(): usage error";
+    }
+
+    my $dsnstr = $dsn->{DataSource};
+    if ( $dsn->{Socket} ) {
+        $dsnstr .= sprintf(";mysql_socket=%s", $dsn->{Socket});
+    }
+    if ( $dsn->{Host} ) {
+        $dsnstr .= sprintf(";host=%s", $dsn->{Host});
+    }
+    if ( $dsn->{Port} ) {
+        $dsnstr .= sprintf(";port=%s", $dsn->{Port});
+    }
+
+    return $dsnstr;
+}
+
+
 sub init {
     my $self = shift;
     if ( $self->{DataSource} && ($self->{DataSource} !~ /^dbi:mysql/i) ) {
         $self->{DataSource} = "dbi:mysql:database=" . $self->{DataSource};
+    }
+
+    if ( $self->{Socket} && $self->{DataSource} ) {
+        $self->{DataSource} .= ';mysql_socket=' . $self->{Socket};
     }
     return $self->SUPER::init();
 }
