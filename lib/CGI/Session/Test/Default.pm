@@ -9,6 +9,22 @@ use Data::Dumper;
 
 $CGI::Session::Test::Default::VERSION = '1.3';
 
+=head1 CGI::Session::Test::Default
+
+Run a suite of tests for a given CGI::Session::Driver
+
+=head2 new()
+
+ my $t = CGI::Session::Test::Default->new(
+    # These are all optional, with default as follows
+    dsn   => "driver:file",
+    args  => undef,
+    tests => 77,
+ );
+
+Create a new test object, possibly overriding some defaults. 
+
+=cut 
 
 sub new {
     my $class   = shift;
@@ -22,6 +38,15 @@ sub new {
     return $self;
 }
 
+=head2 number_of_tests()
+ 
+ my $new_num = $t->number_of_tests($new_num);
+
+A setter/accessor method to affect the number of tests to run,
+after C<new()> has been called and before C<run()>.
+
+=cut
+
 sub number_of_tests {
     my $self = shift;
 
@@ -32,9 +57,13 @@ sub number_of_tests {
     return $self->{tests};
 }
 
+=head2 run()
 
+ $t->run();
 
+Run the test suite. See C<new()> for setting related options. 
 
+=cut
 
 sub run {
     my $self = shift;
