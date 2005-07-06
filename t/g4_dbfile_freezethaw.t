@@ -16,4 +16,5 @@ my $t = CGI::Session::Test::Default->new(
     dsn => "dr:DB_File;ser:FreezeThaw",
     args=>{FileName => File::Spec->catfile('t', 'sessiondata', 'cgisess.db')});
 
+plan tests => $t->number_of_tests;
 $t->run();

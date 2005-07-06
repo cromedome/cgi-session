@@ -45,4 +45,5 @@ my $t = CGI::Session::Test::Default->new(
     dsn => "dr:mysql;ser:Storable",
     args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
 
+plan tests => $t->number_of_tests;
 $t->run();

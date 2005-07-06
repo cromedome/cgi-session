@@ -42,4 +42,5 @@ my $t = CGI::Session::Test::Default->new(
     args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
     #args => \%dsn);
 
+plan tests => $t->number_of_tests;
 $t->run();
