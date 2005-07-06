@@ -778,8 +778,12 @@ Used in either of the above syntax returns a session parameter set to $name or u
 
 =item param(-name=E<gt>$name, -value=E<gt>$value)
 
-Used in either of the above syntax assigns a new value to $name parameter, which can later be retrieved with previously introduced
-param() syntax. Attempt setting parameter names that start with I<_SESSION_> will trigger warning and undef will be returned.
+Used in either of the above syntax assigns a new value to $name parameter,
+which can later be retrieved with previously introduced param() syntax. C<$value>
+may be a scalar, arrayref or hashref.
+
+Attempts to set parameter names that start with I<_SESSION_> will trigger
+a warning and undef will be returned.
 
 =item param_hashref()
 
