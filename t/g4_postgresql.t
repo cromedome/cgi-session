@@ -1,15 +1,9 @@
 my %dsn = (
-    DataSource  => $ENV{CGISESS_PGSQL_DSN}      || "dbi:mysql:test",
+    DataSource  => $ENV{CGISESS_PGSQL_DSN}      || "dbi:Pg:dbname=test",
     User        => $ENV{CGISESS_PGSQL_USER}     || $ENV{USER},
     Password    => $ENV{CGISESS_PGSQL_PASSWORD} || undef,
     TableName   => 'sessions'
 );
-
-
-
-
-
-
 
 use strict;
 use File::Spec;
@@ -26,7 +20,7 @@ for ( "DBI", "DBD::Pg" ) {
 
 my $dbh = DBI->connect($dsn{DataSource}, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>0});
 unless ( $dbh ) {
-    plan(skip_all=>"Couldn't establish connection with the server");
+    plan(skip_all=>"Couldn't establish connection with the PostgreSQL server");
     exit(0);
 }
 
