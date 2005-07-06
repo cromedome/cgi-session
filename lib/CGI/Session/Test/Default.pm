@@ -68,7 +68,7 @@ Run the test suite. See C<new()> for setting related options.
 sub run {
     my $self = shift;
     
-    plan(tests => $self->{tests});
+    plan(tests => $self->number_of_tests() );
 
     use_ok("CGI::Session", "CGI::Session loaded successfully!");
 
