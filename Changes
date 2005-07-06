@@ -18,7 +18,7 @@ CGI::Session Change Log
 
 4.00_05 - Tuesday, February 22, 2005
 
-    * FIX: case insesitivity was not enforced properly in CGI::Session::parse_dsn()
+    * FIX: case insensitivity was not enforced properly in CGI::Session::parse_dsn()
 
 4.00_04 - Wednesday, February 16, 2005
 
