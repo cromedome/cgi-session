@@ -1,15 +1,19 @@
-my %dsn = (
-    DataSource  => $ENV{CGISESS_PGSQL_DSN}      || "dbi:mysql:test",
-    User        => $ENV{CGISESS_PGSQL_USER}     || $ENV{USER},
-    Password    => $ENV{CGISESS_PGSQL_PASSWORD} || undef,
-    TableName   => 'sessions'
-);
-
-
-
-
-
-
+my %dsn;
+if ($ENV{DBI_DSN} =~ m/^dbi:Pg:/) {
+    %dsn = (
+        DataSource  => $ENV{DBI_DSN},
+        Password    => $ENV{CGISESS_PGSQL_PASSWORD} || undef,
+        TableName   => 'sessions'
+    );
+}
+else {
+    %dsn = (
+        DataSource  => $ENV{CGISESS_PGSQL_DSN},
+        User        => $ENV{CGISESS_PGSQL_USER}     || $ENV{USER},
+        Password    => $ENV{CGISESS_PGSQL_PASSWORD} || undef,
+        TableName   => 'sessions'
+    );
+}
 
 use strict;
 use File::Spec;
