@@ -28,6 +28,8 @@ sub init {
     }
 }
 
+# A setter/accessor method for the table name, defaulting to 'sessions'
+
 sub table_name {
     my $self = shift;
     my $class = ref( $self ) || $self;
