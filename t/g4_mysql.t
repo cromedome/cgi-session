@@ -57,5 +57,20 @@ my $t = CGI::Session::Test::Default->new(
     args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
 
 
-plan tests => $t->number_of_tests;
+plan tests => $t->number_of_tests + 2;
 $t->run();
+
+{
+    # This was documented to work in 3.95 and should be supported for compatibility
+    my $obj;
+    eval {
+        # test.sessions will refer to the same 'sessions' table but is a unique name to test with
+        $CGI::Session::MySQL::TABLE_NAME = 'test.sessions';
+        my $avoid_warning = $CGI::Session::MySQL::TABLE_NAME;
+        require CGI::Session::Driver::mysql;
+        $obj = CGI::Session::Driver::mysql->new( {Handle=>$dbh} );
+    };
+    is($@,'', 'survived eval');
+    is($obj->table_name, 'test.sessions', "setting table name through CGI::Session::MySQL::TABLE_NAME works");
+}
+

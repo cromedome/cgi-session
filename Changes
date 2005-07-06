@@ -3,6 +3,8 @@ CGI::Session Change Log
 
    * FIX: Added back is_new() for compatibility with 3.95. (Mark Stosberg)
    * FIX: Support for CGI::Simple is confirmed, resolving RT#6141 (Mark Stosberg) 
+   * FIX: Add code and tests for $CGI::Session::MySQL::TABLE_NAME, 
+     which worked in 3.x (Mark Stosberg) 
 
 4.00_08 - Tuesday, March 15, 2005
 

@@ -56,6 +56,15 @@ sub store {
     return 1;
 }
 
+# If the table name hasn't been defined yet, check this location for 3.x compatibility
+sub table_name {
+    my $self = shift;
+    unless (defined $self->{TableName}) {
+        $self->{TableName} = $CGI::Session::MySQL::TABLE_NAME;
+    }
+    return  $self->SUPER::table_name(@_);
+}
+
 1;
 
 __END__;
@@ -85,6 +94,14 @@ B<mysql> driver supports all the arguments documented in CGI::Session::Driver::D
     $s = new CGI::Session( "driver:mysql", $sid, {DataSource=>'shopping_cart'});
     # is the same as:
     $s = new CGI::Session( "driver:mysql", $sid, {DataSource=>'dbi:mysql:shopping_cart'});
+
+=head2 BACKWARDS COMPATIBILITY
+
+For backwards compatibility, you can also set the table like this before
+calling C<new()>. However, it is not recommended because it can cause conflicts
+in a persistent environment. 
+
+ $CGI::Session::MySQL::TABLE_NAME = 'my_sessions';
 
 =head1 LICENSING
 
