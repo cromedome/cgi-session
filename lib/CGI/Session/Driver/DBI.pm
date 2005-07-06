@@ -38,9 +38,16 @@ sub table_name {
 
     no strict 'refs';
     if ( @_ ) {
-        ${ $class . "::TABLE_NAME" } = $_[0];
+        my $new_name = shift;
+        $self->{TableName}           = $new_name;
+        ${ $class . "::TABLE_NAME" } = $new_name;
     }
-    return ${ $class . "::TABLE_NAME" } || "sessions";
+
+    unless (defined $self->{TableName}) {
+        $self->{TableName} = "sessions";
+    }
+
+    return $self->{TableName};
 }
 
 
