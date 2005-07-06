@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+   * FIX: Added back is_new() for compatibility with 3.95. (Mark Stosberg)
+
 4.00_08 - Tuesday, March 15, 2005
 
     * FIX: Changes made in 4.00_07 rolled back

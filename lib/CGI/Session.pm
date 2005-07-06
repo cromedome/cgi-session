@@ -210,6 +210,8 @@ sub is_empty        { !defined($_[0]->id)   }
 
 sub is_expired      { $_[0]->_test_status( STATUS_EXPIRED ) }
 
+sub is_new          { $_[0]->_test_status( STATUS_NEW ) }
+
 sub id              { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ID}    : undef }
 
 sub atime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ATIME} : undef }
@@ -869,6 +871,10 @@ Examples:
 
 B<Note:> all the expiration times are relative to session's last access time, not to its creation time.
 To expire a session immediately, call L<delete()|/"delete">. To expire a specific session parameter immediately, call L<clear([$name])|/"clear">.
+
+=item is_new()
+
+Returns true only for a brand new session.
 
 =item is_expired()
 
