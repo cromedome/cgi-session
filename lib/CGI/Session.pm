@@ -524,9 +524,14 @@ sub load_param {
 
 sub clear {
     my $self = shift;
-    my ($params) = @_;
+    my $params = shift;
+    if (defined $params) {
+        $params =  [ $params ] unless ref $params;
+    }
+    else {
+        $params = [ $self->param ];
+    }
 
-    $params ||= [ $self->param ];
     for ( @$params ) {
         delete $self->{_DATA}->{$_};
     }
@@ -821,9 +826,14 @@ Loads session parameters into a query object. The first argument, if present, sh
 
 =item clear()
 
+=item clear('field')
+
 =item clear(\@list)
 
-Clears parameters from the session object. If passed a reference to an array, clears only those parameters found in the list.
+Clears parameters from the session object. 
+
+With no parameters, all fields are cleared. If passed a single parameter or a
+reference to an array, only the named parameters are cleared. 
 
 =item flush()
 

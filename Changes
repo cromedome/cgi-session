@@ -1,6 +1,7 @@
 CGI::Session Change Log
 =====================================================================
 
+   * FIX: Make ->clear('email') work, for 3.95 compatibility (Mark Stosberg)
    * FIX: Added back is_new() for compatibility with 3.95. (Mark Stosberg)
    * FIX: Support for CGI::Simple is confirmed, resolving RT#6141 (Mark Stosberg) 
    * FIX: Add code and tests for $CGI::Session::MySQL::TABLE_NAME, 
