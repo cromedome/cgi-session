@@ -6,10 +6,15 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test;
-BEGIN { plan tests => 11  };
-use CGI::Session::File;
-ok(1); # If we made it this far, we're ok.
+use Test::More tests => 12;
+BEGIN { 
+    # Don't find old versions in the system lib
+    my @saved_inc = @INC;
+    @INC = './lib';
+    use_ok('CGI::Session::File');
+    # restore INC;
+    @INC = @saved_inc;
+};
 
 #########################
 

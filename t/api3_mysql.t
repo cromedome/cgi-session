@@ -7,35 +7,29 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 BEGIN { 
+    use Test::More;
 
-    # If you want to run MySQL tests, uncomment the following two
-    # lines, create a table called "sessions" according to the
-    # CGI::Session::MySQL table in the test database. 
-    print "1..0\n";
-    exit();
+    # If you want to run MySQL tests, uncomment the following line,
+    # create a table called "sessions" in the test database according to the
+    # CGI::Session::MySQL docs.
+    plan skip_all => 'MySQL needs to be manually set up. See this file for details';
 
     # Check if DB_File is avaialble. Otherwise, skip this test
-    eval 'require DBI';    
+    eval { require DBI };    
     if ( $@ ) {
-        print "1..0\n";
-        exit(0);
+        plan skip_all => "DBI not available";
     }
 
-    eval 'require DBD::mysql';
+    eval { require DBD::mysql };
     if ( $@ ) {
-        print "1..0\n";
-        exit(0);
+        plan skip_all => 'DBD::mysql not available';
     }
 
-    require Test;
-    Test->import();
-    
     plan(tests => 14); 
+    use_ok('CGI::Session');
 };
 
 
-use CGI::Session;
-ok(1); # If we made it this far, we're ok.
 
 #########################
 
