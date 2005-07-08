@@ -8,22 +8,18 @@
 
 
 BEGIN { 
-    # Check if DB_File is avaialble. Otherwise, skip this test
+    use Test::More;
+    # Check if DB_File is available. Otherwise, skip this test
     eval 'require DB_File';    
     if ( $@ ) {
-        print "1..0\n";
-        exit(0);
+        plan skip_all => "DB_File not available";
     }
 
     eval 'require Storable';
     if ( $@ ) {
-        print "1..0\n";
-        exit(0);
+        plan skip_all => "Storable not available";
     }    
 
-    require Test;
-    Test->import();
-    
     plan(tests => 14); 
 };
 use CGI::Session qw/-api3/;

@@ -7,15 +7,12 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 BEGIN { 
-    # Check if DB_File is avaialble. Otherwise, skip this test
-    eval 'require DB_File';
+    use Test::More;
+    # Check if DB_File is available. Otherwise, skip this test
+    eval 'require DB_File';    
     if ( $@ ) {
-        print "1..0\n";
-        exit(0);
+        plan skip_all => "DB_File not available";
     }
-
-    require Test;
-    Test->import();
     
     plan(tests => 14); 
 };
