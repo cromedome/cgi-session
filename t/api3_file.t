@@ -4,13 +4,10 @@
 # $Id: api3_file.t,v 1.3.4.1 2003/07/26 13:37:36 sherzodr Exp $
 #########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 BEGIN {     
-    require Test;
-    Test->import();
+    use Test::More;
     
-    plan(tests => 16); 
+    plan(tests => 17); 
 };
 
 use CGI::Session;
@@ -54,13 +51,14 @@ ok($s2);
 
 ok($s2->id() eq $sid);
 
-ok($s2->param('email'));
-ok($s2->param('author'));
-ok($s2->expire());
+ok( $s2->param('email'),  "found email param in session");
+ok( $s2->param('author'), "found author param in session");
+ok( $s2->expire() );
 
-$s2->clear('email');
-ok($s2->param('email') ? 0 : 1);
-ok($s2->param('author'));
+eval { $s2->clear('email'); };
+is($@, '', '$s->clear("name") survives eval');
+ok(($s2->param('email') ? 0 : 1), "email param is cleared from session");
+ok($s2->param('author'), "author param is still in session");
 
 $s2->delete();
 
