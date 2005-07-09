@@ -1,0 +1,29 @@
+This is a working collaborative TODO list. Please keep it up to date as you see
+fit. In the short term, let's focus on what it takes to make a solid 4.0
+release!
+
+[COMPATIBILITY]
+
+ - close() existed in 3.x, but has no code, tests or documentation in 4.x yet.
+   See also:
+   http://sourceforge.net/mailarchive/forum.php?thread_id=7169823&forum_id=17960
+
+ - Using the 3.x module loading syntax like this should work:
+      CGI::Session::MySQL
+
+[TEST COVERAGE]
+ - All existing tests need to pass. 
+
+ - expire() needs more test. Right now we just test:
+    - expire()
+    - expire('+10m');
+    - expire('1s');
+
+[INTERNALS]
+
+ - Make the code easier to follow by moving subroutines
+   next to their documentation. That allows you to confirm
+   at a glance that the code and documentation for a routine
+   match, and keep them in sync easier. 
+
+[ MISSING FEATURES ] 
