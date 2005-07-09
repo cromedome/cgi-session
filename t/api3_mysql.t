@@ -42,7 +42,8 @@ my %options = (
     Password    => "marley01"
 );
 
-my $s = new CGI::Session("driver:MySQL", undef, \%options );
+my $s = new CGI::Session::MySQL(undef, \%options) 
+    or die $CGI::Session::errstr;
 
 ok($s);
     
