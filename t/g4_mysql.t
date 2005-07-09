@@ -1,5 +1,5 @@
 my %dsn;
-if ($ENV{DBI_DSN} =~ m/^dbi:mysql:/) {
+if (defined $ENV{DBI_DSN} && ($ENV{DBI_DSN} =~ m/^dbi:mysql:/)) {
     %dsn = (
         DataSource  => $ENV{DBI_DSN},
         Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
@@ -22,12 +22,9 @@ use File::Spec;
 use Test::More;
 use CGI::Session::Test::Default;
 
-for ( "DBI", "DBD::mysql" ) {
-    eval "require $_";
-    if ( $@ ) {
-        plan(skip_all=>"$_ is NOT available");
-        exit(0);
-    }
+for (qw/DBI DBD::mysql/) {
+    eval { require $_ };
+    plan(skip_all=>"$_ is NOT available") if $@;
 }
 
 require CGI::Session::Driver::mysql;
@@ -73,4 +70,7 @@ $t->run();
     is($@,'', 'survived eval');
     is($obj->table_name, 'test.sessions', "setting table name through CGI::Session::MySQL::TABLE_NAME works");
 }
+
+
+
 

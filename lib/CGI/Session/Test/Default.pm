@@ -142,6 +142,7 @@ sub run {
         ok( $session->param('blogs')->{'./lost+found'} eq 'http://author.handalak.com/', "first blog is correct!");
         ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "second blog is correct!");
 
+        # TODO: test many any other variations of expire() syntax
         $session->expire('1s');
         ok($session->etime, "etime set");
     }
