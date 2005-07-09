@@ -204,6 +204,7 @@ sub load {
 sub DESTROY         {   $_[0]->flush()      }
 
 *param_hashref      = \&dataref;
+my $avoid_single_use_warning = *param_hashref;
 sub dataref         { $_[0]->{_DATA}        }
 
 sub is_empty        { !defined($_[0]->id)   }
@@ -324,36 +325,6 @@ sub flush {
     return 1;
 }
 
-
-*expires = \&expire;
-sub expire {
-    my $self = shift;
-
-    return $self->{_DATA}->{_SESSION_ETIME} unless @_;
-    if ( @_ == 1 ) {
-        if ( defined($_[0]) && ($_[0] =~ m/^\d$/) && ($_[0] == 0) ) {
-            $self->{_DATA}->{_SESSION_ETIME} = undef;
-            $self->_set_status( STATUS_MODIFIED );
-        } else {
-            $self->{_DATA}->{_SESSION_ETIME} = $self->_str2seconds( $_[0] );
-            $self->_set_status( STATUS_MODIFIED );
-        }
-        return 1;
-    }
-
-    #
-    # If we get this far more than one arguments passed. We only care about the first
-    # two:
-    if ( ($_[1] =~ m/^\d$/) && ($_[1] == 0) ) {
-        delete $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] };
-        $self->_set_status( STATUS_MODIFIED );
-    } else {
-        $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] } = $self->_str2seconds( $_[1] );
-        $self->_set_status( STATUS_MODIFIED );
-    }
-}
-
-
 sub trace {}
 sub tracemsg {}
 
@@ -460,6 +431,7 @@ sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 
 
 *header = \&http_header;
+my $avoid_single_use_warning_again = *header;
 sub http_header {
     my $self = shift;
 
@@ -885,6 +857,38 @@ Examples:
 
 B<Note:> all the expiration times are relative to session's last access time, not to its creation time.
 To expire a session immediately, call L<delete()|/"delete">. To expire a specific session parameter immediately, call L<clear([$name])|/"clear">.
+
+=cut 
+
+*expires = \&expire;
+sub expire {
+    my $self = shift;
+
+    return $self->{_DATA}->{_SESSION_ETIME} unless @_;
+    if ( @_ == 1 ) {
+        if ( defined($_[0]) && ($_[0] =~ m/^\d$/) && ($_[0] == 0) ) {
+            $self->{_DATA}->{_SESSION_ETIME} = undef;
+            $self->_set_status( STATUS_MODIFIED );
+        } else {
+            $self->{_DATA}->{_SESSION_ETIME} = $self->_str2seconds( $_[0] );
+            $self->_set_status( STATUS_MODIFIED );
+        }
+        return 1;
+    }
+
+    #
+    # If we get this far more than one arguments passed. We only care about the first
+    # two:
+    if ( ($_[1] =~ m/^\d$/) && ($_[1] == 0) ) {
+        delete $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] };
+        $self->_set_status( STATUS_MODIFIED );
+    } else {
+        $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] } = $self->_str2seconds( $_[1] );
+        $self->_set_status( STATUS_MODIFIED );
+    }
+}
+
+=pod
 
 =item is_new()
 
