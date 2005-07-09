@@ -23,7 +23,7 @@ print "-" x	40,	"\n";
 
 WriteMakefile(
 	NAME			=> 'CGI::Session',
-	VERSION_FROM	=> 'Session.pm',
+	VERSION_FROM	=> 'lib/CGI/Session.pm',
 	PREREQ_PM		=> {
 		'Digest::MD5'	=> undef,
 		'Data::Dumper'	=> undef,
