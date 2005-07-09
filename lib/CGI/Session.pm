@@ -864,28 +864,37 @@ To expire a session immediately, call L<delete()|/"delete">. To expire a specifi
 sub expire {
     my $self = shift;
 
-    return $self->{_DATA}->{_SESSION_ETIME} unless @_;
-    if ( @_ == 1 ) {
-        if ( defined($_[0]) && ($_[0] =~ m/^\d$/) && ($_[0] == 0) ) {
+    # no params, just return the expiration time. 
+    if (not @_) {
+        return $self->{_DATA}->{_SESSION_ETIME};
+    }
+    # We have just a time
+    elsif ( @_ == 1 ) {
+        my $time = $_[0];
+        # If 0 is passed, cancel expiration 
+        if ( defined $time && ($time =~ m/^\d$/) && ($time == 0) ) {
             $self->{_DATA}->{_SESSION_ETIME} = undef;
             $self->_set_status( STATUS_MODIFIED );
-        } else {
-            $self->{_DATA}->{_SESSION_ETIME} = $self->_str2seconds( $_[0] );
+        } 
+        # set the expiration to this time
+        else {
+            $self->{_DATA}->{_SESSION_ETIME} = $self->_str2seconds( $time );
             $self->_set_status( STATUS_MODIFIED );
         }
-        return 1;
     }
-
-    #
-    # If we get this far more than one arguments passed. We only care about the first
-    # two:
-    if ( ($_[1] =~ m/^\d$/) && ($_[1] == 0) ) {
-        delete $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] };
-        $self->_set_status( STATUS_MODIFIED );
-    } else {
-        $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $_[0] } = $self->_str2seconds( $_[1] );
-        $self->_set_status( STATUS_MODIFIED );
+    # If we get this far, we expect expire($param,$time)
+    # ( This would be a great use of a Perl6 multi sub! )
+    else {
+        my ($param, $time) = @_;
+        if ( ($time =~ m/^\d$/) && ($time == 0) ) {
+            delete $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $param };
+            $self->_set_status( STATUS_MODIFIED );
+        } else {
+            $self->{_DATA}->{_SESSION_EXPIRE_LIST}->{ $param } = $self->_str2seconds( $time );
+            $self->_set_status( STATUS_MODIFIED );
+        }
     }
+    return 1;
 }
 
 =pod
