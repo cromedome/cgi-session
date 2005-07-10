@@ -3,31 +3,7 @@ package CGI::Session::ErrorHandler;
 # $Id$
 
 use strict;
-#use diagnostics;
-
-$CGI::Session::ErrorHandler::VERSION = "4.00";
-
-sub set_error {
-    my $class = shift;
-    $class = ref($class) || $class;
-    no strict 'refs';
-    ${ "$class\::errstr" } = $_[0] || "";
-    return undef;
-}
-
-
-*error = \&errstr;
-sub errstr {
-    my $class = shift;
-    $class = ref( $class ) || $class;
-
-    no strict 'refs';
-    return ${ "$class\::errstr" };
-}
-
-1;
-
-__END__;
+$CGI::Session::ErrorHandler::VERSION = "4.01";
 
 =pod
 
@@ -63,14 +39,42 @@ handling routines for their code
 
 Implicitly defines $pkg_name::errstr and sets its value to $message. Return value is B<always> undef.
 
+=cut
+
+sub set_error {
+    my $class = shift;
+    $class = ref($class) || $class;
+    no strict 'refs';
+    ${ "$class\::errstr" } = $_[0] || "";
+    return undef;
+}
+
 =item errstr()
 
-Returns whatever value was set by the most recent call to set_error().
+Returns whatever value was set by the most recent call to set_error(). 
+If no message as has been set yet, the empty string is returned so 
+the message can still concatenate without a warning. 
 
 =back
+
+=cut 
+
+*error = \&errstr;
+sub errstr {
+    my $class = shift;
+    $class = ref( $class ) || $class;
+
+    no strict 'refs';
+    return ${ "$class\::errstr" } || '';
+}
 
 =head1 LICENSING
 
 For support and licensing information see L<CGI::Session|CGI::Session>.
 
 =cut
+
+1;
+
+1;
+
