@@ -114,13 +114,8 @@ sub load {
     $self->{_DSN}->{serializer} ||= "default";
     $self->{_DSN}->{id}         ||= "md5";
 
-
-
-
-    #
     # Beyond this point used to be '_init()' method. But I had to merge them together
     # since '_init()' did not serve specific purpose
-    #
 
     my @pms = ();
     $pms[0] = "CGI::Session::Driver::"      . $self->{_DSN}->{driver};
@@ -227,14 +222,18 @@ sub _serializer     { $_[0]->{_OBJECTS}->{serializer} }
 
 sub _id_generator   { $_[0]->{_OBJECTS}->{id} }
 
+# parses the DSN string and returns it as a hash.
+# Notably: Allows unique abbreviations of the keys: driver, serializer and 'id'.
+# Also, keys and values of the returned hash are lower-cased. 
 sub parse_dsn {
     my $self = shift;
-    croak "parse_dsn(): usage error" unless $_[0];
+    my $dsn_str = shift;
+    croak "parse_dsn(): usage error" unless $dsn_str;
 
     require Text::Abbrev;
     my $abbrev = Text::Abbrev::abbrev( "driver", "serializer", "id" );
-    my %temp = map { split /:/ } (split /;/, $_[0]);
-    my %dsn  = map { $abbrev->{lc $_}, lc $temp{$_} } keys %temp;
+    my %dsn_map = map { split /:/ } (split /;/, $dsn_str);
+    my %dsn  = map { $abbrev->{lc $_}, lc $dsn_map{$_} } keys %dsn_map;
     return \%dsn;
 }
 
