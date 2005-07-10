@@ -2,8 +2,8 @@ CGI::Session Change Log
 =====================================================================
 
    * CHANGE: Starting with 4.0, it will no longer work to use the syntax
-             of CGI::Session::DriverName(). This hasn't even been a documented
-             API for over three years. 
+             of CGI::Session::DriverName(). This hasn't been a documented
+             API since CGI::Session 2.94, released in August, 2002.
 
    * FIX: Make ->clear('email') work, for 3.95 compatibility (Mark Stosberg)
    * FIX: Added back is_new() for compatibility with 3.95. (Mark Stosberg)
