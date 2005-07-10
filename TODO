@@ -26,4 +26,13 @@ release!
    at a glance that the code and documentation for a routine
    match, and keep them in sync easier. 
 
-[ MISSING FEATURES ] 
+[ MISSING FEATURES / WISHLIST ] 
+
+ - Allow CGI::Session->new( $dbh );
+   This syntax would automatically figure out the CGI::Session driver name
+   based on the DBI driver. This can't work in every case because there is
+   not a 1-to-1 correspondence. For example, the PureSQL driver is an alternate
+   database backend. Still, becaues it can address the common cases with MySQL
+   and PostgreSQL drivers, it seems worthwhile. 
+
+
