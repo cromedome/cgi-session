@@ -23,7 +23,7 @@ use Test::More;
 use CGI::Session::Test::Default;
 
 for (qw/DBI DBD::mysql/) {
-    eval { require $_ };
+    eval "require $_";
     plan(skip_all=>"$_ is NOT available") if $@;
 }
 

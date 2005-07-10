@@ -1,13 +1,13 @@
 package CGI::Session::Test::Default;
 
 use strict;
-use diagnostics;
+#use diagnostics;
 use overload;
 use Carp;
 use Test::More;
 use Data::Dumper;
 
-$CGI::Session::Test::Default::VERSION = '1.3';
+$CGI::Session::Test::Default::VERSION = '1.4';
 
 =head1 CGI::Session::Test::Default
 
@@ -31,7 +31,7 @@ sub new {
     my $self    = bless {
             dsn     => "driver:file",
             args    => undef,
-            tests   => 77,
+            tests   => 78,
             @_
     }, $class;
 
@@ -121,30 +121,32 @@ sub run {
     sleep(1);
 
     SECOND: {
-        ok(1, "=== 2 ===");
-        my $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
-        ok($session, "Session was retreived successfully");
-        ok(!$session->is_expired, "session isn't expired yet");
+            ok(1, "=== 2 ===");
+            my $session;
+            eval { $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) };
+            is($@.CGI::Session->errstr,'','survived eval without error.');
+            ok($session, "Session was retreived successfully");
+            ok(!$session->is_expired, "session isn't expired yet");
 
-        ok($session->id eq $sid, "session IDs are consistent: " . $session->id);
-        ok($session->atime > $session->ctime, "ctime should be older than atime");
-        ok(!$session->etime, "etime shouldn't be set yet");
+            ok($session->id eq $sid, "session IDs are consistent: " . $session->id);
+            ok($session->atime > $session->ctime, "ctime should be older than atime");
+            ok(!$session->etime, "etime shouldn't be set yet");
 
-        ok( ($session->param) == 3, "session should hold params" );
-        ok( $session->param('author') eq "Sherzod Ruzmetov", "my name's correct");
+            ok( ($session->param) == 3, "session should hold params" );
+            ok( $session->param('author') eq "Sherzod Ruzmetov", "my name's correct");
 
-        ok( ref ($session->param('emails')) eq 'ARRAY', "'emails' should hold list of values" );
-        ok( @{ $session->param('emails') } == 2, "'emails' should hold list of two values");
-        ok( $session->param('emails')->[0] eq 'sherzodr@cpan.org', "first value is correct!");
-        ok( $session->param('emails')->[1] eq 'sherzodr@handalak.com', "second value is correct!");
+            ok( ref ($session->param('emails')) eq 'ARRAY', "'emails' should hold list of values" );
+            ok( @{ $session->param('emails') } == 2, "'emails' should hold list of two values");
+            ok( $session->param('emails')->[0] eq 'sherzodr@cpan.org', "first value is correct!");
+            ok( $session->param('emails')->[1] eq 'sherzodr@handalak.com', "second value is correct!");
 
-        ok( ref( $session->param('blogs') ) eq 'HASH', "'blogs' holds a hash");
-        ok( $session->param('blogs')->{'./lost+found'} eq 'http://author.handalak.com/', "first blog is correct!");
-        ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "second blog is correct!");
+            ok( ref( $session->param('blogs') ) eq 'HASH', "'blogs' holds a hash");
+            ok( $session->param('blogs')->{'./lost+found'} eq 'http://author.handalak.com/', "first blog is correct!");
+            ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "second blog is correct!");
 
-        # TODO: test many any other variations of expire() syntax
-        $session->expire('1s');
-        ok($session->etime, "etime set");
+            # TODO: test many any other variations of expire() syntax
+            $session->expire('1s');
+            ok($session->etime, "etime set");
     }
 
 

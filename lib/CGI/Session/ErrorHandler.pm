@@ -76,5 +76,3 @@ For support and licensing information see L<CGI::Session|CGI::Session>.
 
 1;
 
-1;
-

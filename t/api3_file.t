@@ -1,22 +1,10 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
 # $Id: api3_file.t,v 1.3.4.1 2003/07/26 13:37:36 sherzodr Exp $
-#########################
-
 BEGIN {     
     use Test::More;
-    
     plan(tests => 17); 
+    use_ok('CGI::Session');
 };
 
-use CGI::Session;
-ok(1); # If we made it this far, we're ok.
-
-#########################
-
-# Insert your test code below, the Test module is use()ed here so read
-# its man page ( perldoc Test ) for help writing this test script.
 my $s = new CGI::Session("dr:File;ser:Default;id:MD5", undef, {Directory=>"t"} );
 
 ok($s);

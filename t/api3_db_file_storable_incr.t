@@ -1,36 +1,19 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
 # $Id: api3_db_file_storable_incr.t,v 1.2 2002/11/22 22:54:41 sherzodr Exp $
-#########################
-
-# change 'tests => 1' to 'tests => last_test_to_print';
 
 BEGIN { 
     use Test::More;
     # Check if DB_File is available. Otherwise, skip this test
     eval 'require DB_File';    
-    if ( $@ ) {
-        plan skip_all => "DB_File not available";
-    }
+    plan skip_all => "DB_File not available" if $@;
 
     eval 'require Storable';
-    if ( $@ ) {
-        plan skip_all => "Storable not available";
-    }    
-
+    plan skip_all => "Storable not available" if $@;
     
-    plan(tests => 14); 
+    plan(tests => 15); 
+
+    use_ok('File::Spec');
+    use_ok('CGI::Session',qw/-api3/);
 };
-
-use File::Spec;
-use CGI::Session qw/-api3/;
-ok(1); # If we made it this far, we're ok.
-
-#########################
-
-# Insert your test code below, the Test module is use()ed here so read
-# its man page ( perldoc Test ) for help writing this test script.
 
 my $dr_args = {Directory=>'t', IDFile=>File::Spec->catfile('t', 'cgisess.id')};
 my $args    = "driver:DB_File;serializer;Storable;id:Incr";

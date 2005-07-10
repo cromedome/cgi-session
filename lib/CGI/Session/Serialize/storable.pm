@@ -3,30 +3,13 @@ package CGI::Session::Serialize::storable;
 # $Id$ 
 
 use strict;
-#use diagnostics;
 
 use Storable;
-use CGI::Session::ErrorHandler;
+require CGI::Session::ErrorHandler;
 
-$CGI::Session::Serialize::storable::VERSION = '1.5';
-@CGI::Session::Serialize::storable::ISA     = qw( CGI::Session::ErrorHandler );
-
-sub freeze {
-    my ($self, $data) = @_;
-
-    return Storable::freeze($data);
-}
-
-
-sub thaw {
-    my ($self, $string) = @_;
-
-    return Storable::thaw($string);
-}
-
-1;
-
-__END__;
+use vars qw/$VERSION @ISA/;
+$VERSION = '1.5';
+@ISA     = qw( CGI::Session::ErrorHandler );
 
 =pod
 
@@ -48,6 +31,13 @@ Receives two arguments. First is the class name, the second is the data to be se
 Should return serialized string on success, undef on failure. Error message should be set using
 C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
+=cut
+
+sub freeze {
+    my ($self, $data) = @_;
+    return Storable::freeze($data);
+}
+
 =item thaw($class, $string)
 
 Received two arguments. First is the class name, second is the I<frozen> data string. Should return
@@ -56,8 +46,17 @@ using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 =back
 
+=cut 
+
+sub thaw {
+    my ($self, $string) = @_;
+    return Storable::thaw($string);
+}
+
 =head1 LICENSING
 
 For support and licensing see L<CGI::Session|CGI::Session>
 
 =cut
+
+1;

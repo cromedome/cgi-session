@@ -1,7 +1,7 @@
 # Test CGI::Simple support in CGI::Session
 use Test::More;
 
-if ( eval { require CGI::Simple; } ) {
+if ( eval {  require CGI::Simple }  ) {
     plan qw/no_plan/;
 }
 else {
