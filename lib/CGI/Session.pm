@@ -556,12 +556,6 @@ sub find {
     return 1;
 }
 
-
-1;
-
-__END__;
-
-
 # $Id$
 
 =pod
@@ -1144,3 +1138,8 @@ L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
 =back
 
 =cut
+
+1;
+
+__END__;
+
