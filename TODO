@@ -8,6 +8,9 @@ release!
    See also:
    http://sourceforge.net/mailarchive/forum.php?thread_id=7169823&forum_id=17960
 
+ - $CGI::Session::File::FileName = 'cgisession_%s.txt' was documented to work in 3.x,
+   but needs code test and docs for 4.x
+
 [TEST COVERAGE]
  - All existing tests need to pass. 
 

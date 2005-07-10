@@ -3,11 +3,8 @@ use Test::More;
 use File::Spec;
 use CGI::Session::Test::Default;
 
-eval "require Storable";
-if ( $@ ) {
-    plan(skip_all=>"Storable is NOT available");
-    exit(0);
-}
+eval { require Storable };
+plan(skip_all=>"Storable is NOT available") if $@;
 
 my $t = CGI::Session::Test::Default->new(
     dsn => "driver:file;serializer:Storable",

@@ -1,28 +1,16 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
 # $Id: complex_ds.t,v 1.2 2002/11/22 13:09:21 sherzodr Exp $
-#########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
-use Test::More tests => 12;
 BEGIN { 
-    # Don't find old versions in the system lib
-    my @saved_inc = @INC;
-    @INC = './lib';
-    use_ok('CGI::Session::File');
-    # restore INC;
-    @INC = @saved_inc;
+    use Test::More tests => 10;
 };
 
-#########################
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
 $CGI::Session::File::FileName = 'cgisession_%s.txt';
-my $s = new CGI::Session::File(undef, {Directory=>"t"} )
-    or die $CGI::Session::errstr;
+use CGI::Session;
+
+my $s = new CGI::Session('driver:File',undef, {Directory=>"t"} ) or die $CGI::Session::errstr;
 
 ok($s);
 ok($s->id());
@@ -38,9 +26,9 @@ $s->param(d3 => $d3);
 
 ok($s->param('d3'));
 
-ok( $s->param('d3')->{d1}->[0], 1);
+ok( $s->param('d3')->{d1}->[0], 'Test 1');
 
-ok( $s->param('d3')->{d1}->[1], 2);
+ok( $s->param('d3')->{d1}->[1], 'Test 2');
 
 ok( $s->param('d3')->{d2}->{1}, 'Bir');
 
@@ -48,16 +36,19 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s1 = new CGI::Session::File($sid, {Directory=>"t"})
+eval { 
+    my $s1 = new CGI::Session('driver:File',$sid, {Directory=>"t"})
         or die $CGI::Session::errstr;
 
-ok($s1->param('d3'));
+    ok($s1->param('d3'));
 
-ok( $s1->param('d3')->{d1}->[0], 1);
+    ok( $s1->param('d3')->{d1}->[0], 'Test 1');
 
-ok( $s1->param('d3')->{d1}->[1], 2);
+    ok( $s1->param('d3')->{d1}->[1], 'Test 2');
 
-ok( $s1->param('d3')->{d2}->{1}, 'Bir');
+    ok( $s1->param('d3')->{d2}->{1}, 'Bir');
 
-$s1->delete();
+    $s1->delete();
+};
+warn $@ if $@;
 
