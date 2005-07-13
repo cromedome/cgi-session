@@ -872,7 +872,7 @@ sub _str2seconds {
     my ($str) = @_;
 
     return unless defined $str;
-    return $str if $str =~ m/^\d+$/;
+    return $str if $str =~ m/^[-+]?\d+$/;
 
     my %_map = (
         s       => 1,

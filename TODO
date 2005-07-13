@@ -10,11 +10,6 @@ release!
 [TEST COVERAGE]
  - All existing tests need to pass. 
 
- - expire() needs more tests. Right now we just test:
-    - expire()
-    - expire('+10m');
-    - expire('1s');
-
 [INTERNALS]
 
  - Make the code easier to follow by moving subroutines
@@ -23,6 +18,10 @@ release!
    match, and keep them in sync easier. 
 
 [ MISSING FEATURES / WISHLIST ] 
+
+ - etime() needs an alias, because it's not a time at all, it's a interval.
+   I recommend duration().
+   
 
  - Allow CGI::Session->new( $dbh );
    This syntax would automatically figure out the CGI::Session driver name
