@@ -9,7 +9,6 @@ use DBI;
 use Carp;
 use CGI::Session::Driver;
 
-
 @CGI::Session::Driver::DBI::ISA = qw( CGI::Session::Driver );
 $CGI::Session::Driver::DBI::VERSION = "1.1";
 
