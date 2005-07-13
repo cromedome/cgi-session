@@ -19,6 +19,10 @@ sub init {
     my $self = shift;
     $self->{Directory} ||= File::Spec->tmpdir();
 
+    if (defined $CGI::Session::File::FileName) {
+        $FileName = $CGI::Session::File::FileName;
+    }
+
     unless ( -d $self->{Directory} ) {
         require File::Path;
         unless ( File::Path::mkpath($self->{Directory}) ) {
@@ -26,9 +30,6 @@ sub init {
         }
     }
 }
-
-
-
 
 sub retrieve {
     my $self = shift;
@@ -109,12 +110,8 @@ sub traverse {
     return 1;
 }
 
-
-
-
 sub DESTROY {
     my $self = shift;
-
 }
 
 1;
@@ -146,6 +143,9 @@ you wish to set your own FileName template, do so before requesting for session 
 
     $CGI::Session::Driver::file::FileName = "%s.dat";
     $s = new CGI::Session();
+
+For backwards compatibility with 3.x, you can also use the variable name
+C<$CGI::Session::File::FileName>, which will override one above. 
 
 =head2 DRIVER ARGUMENTS
 

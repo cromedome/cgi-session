@@ -129,7 +129,7 @@ sub run {
             ok($session, "Session was retreived successfully");
             ok(!$session->is_expired, "session isn't expired yet");
 
-            ok($session->id eq $sid, "session IDs are consistent: " . $session->id);
+            is($session->id,$sid, "session IDs are consistent: " . $session->id);
             ok($session->atime > $session->ctime, "ctime should be older than atime");
             ok(!$session->etime, "etime shouldn't be set yet");
 

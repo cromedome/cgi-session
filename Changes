@@ -5,6 +5,8 @@ CGI::Session Change Log
              of CGI::Session::DriverName(). This hasn't been a documented
              API since CGI::Session 2.94, released in August, 2002.
 
+   * FIX: Added code, test and docs to make $CGI::Session::File::FileName work,
+          for 3.x compatibility. (Mark Stosberg)
    * FIX: Providing an expire time like "-10" now works (Mark Stosberg)
    * FIX: Restored close() method, for 3.x compatibility. (Mark Stosberg) 
    * FIX: Make ->clear('email') work, for 3.95 compatibility (Mark Stosberg)
