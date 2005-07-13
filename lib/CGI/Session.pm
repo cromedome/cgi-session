@@ -328,42 +328,6 @@ sub flush {
 sub trace {}
 sub tracemsg {}
 
-sub _str2seconds {
-    my $self = shift;
-    my ($str) = @_;
-
-    return unless defined $str;
-    return $str if $str =~ m/^\d+$/;
-
-    my %_map = (
-        s       => 1,
-        m       => 60,
-        h       => 3600,
-        d       => 86400,
-        w       => 604800,
-        M       => 2592000,
-        y       => 31536000
-    );
-
-    my ($koef, $d) = $str =~ m/^([+-]?\d+)([smhdwMy])$/;
-    unless ( defined($koef) && defined($d) ) {
-        die "_str2seconds(): couldn't parse '$str' into \$koef and \$d parts. Possible invalid syntax";
-    }
-    return $koef * $_map{ $d };
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
 sub param {
     my $self = shift;
 
@@ -855,6 +819,7 @@ To expire a session immediately, call L<delete()|/"delete">. To expire a specifi
 =cut 
 
 *expires = \&expire;
+my $prevent_warning = \&expires;
 sub expire {
     my $self = shift;
 
@@ -890,6 +855,42 @@ sub expire {
     }
     return 1;
 }
+
+# =head2 _str2seconds()
+#
+# my $secs = $self->_str2seconds('1d')
+#
+# Takes a CGI.pm-style time representation and returns an equivalent number
+# of seconds.
+#
+# See the docs of expire() for more detail. 
+#
+# =cut
+
+sub _str2seconds {
+    my $self = shift;
+    my ($str) = @_;
+
+    return unless defined $str;
+    return $str if $str =~ m/^\d+$/;
+
+    my %_map = (
+        s       => 1,
+        m       => 60,
+        h       => 3600,
+        d       => 86400,
+        w       => 604800,
+        M       => 2592000,
+        y       => 31536000
+    );
+
+    my ($koef, $d) = $str =~ m/^([+-]?\d+)([smhdwMy])$/;
+    unless ( defined($koef) && defined($d) ) {
+        die "_str2seconds(): couldn't parse '$str' into \$koef and \$d parts. Possible invalid syntax";
+    }
+    return $koef * $_map{ $d };
+}
+
 
 =pod
 
