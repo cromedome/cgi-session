@@ -197,6 +197,7 @@ sub load {
 }
 
 sub DESTROY         {   $_[0]->flush()      }
+sub close           {   $_[0]->flush()      }
 
 *param_hashref      = \&dataref;
 my $avoid_single_use_warning = *param_hashref;
@@ -1004,6 +1005,17 @@ Now, $session->header() uses "MY_SID" as a name for the session cookie.
 Returns query object associated with current session object. Default query object class is L<CGI.pm|CGI>.
 
 =back
+
+=head2 DEPRECATED METHODS
+
+These methods exist solely for for compatibility with CGI::Session 3.x.
+
+=over 4
+
+=item close()
+
+Closes the session. Using flush() is recommended instead, since that's exactly what a call
+to close() does now. 
 
 =head1 DISTRIBUTION
 

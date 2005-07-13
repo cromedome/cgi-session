@@ -4,17 +4,13 @@ release!
 
 [COMPATIBILITY]
 
- - close() existed in 3.x, but has no code, tests or documentation in 4.x yet.
-   See also:
-   http://sourceforge.net/mailarchive/forum.php?thread_id=7169823&forum_id=17960
-
  - $CGI::Session::File::FileName = 'cgisession_%s.txt' was documented to work in 3.x,
    but needs code test and docs for 4.x
 
 [TEST COVERAGE]
  - All existing tests need to pass. 
 
- - expire() needs more test. Right now we just test:
+ - expire() needs more tests. Right now we just test:
     - expire()
     - expire('+10m');
     - expire('1s');
@@ -32,7 +28,7 @@ release!
    This syntax would automatically figure out the CGI::Session driver name
    based on the DBI driver. This can't work in every case because there is
    not a 1-to-1 correspondence. For example, the PureSQL driver is an alternate
-   database backend. Still, becaues it can address the common cases with MySQL
+   database backend. Still, because it can address the common cases with MySQL
    and PostgreSQL drivers, it seems worthwhile. 
 
 

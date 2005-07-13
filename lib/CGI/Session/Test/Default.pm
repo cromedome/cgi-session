@@ -7,7 +7,7 @@ use Carp;
 use Test::More;
 use Data::Dumper;
 
-$CGI::Session::Test::Default::VERSION = '1.4';
+$CGI::Session::Test::Default::VERSION = '1.5';
 
 =head1 CGI::Session::Test::Default
 
@@ -31,7 +31,7 @@ sub new {
     my $self    = bless {
             dsn     => "driver:file",
             args    => undef,
-            tests   => 78,
+            tests   => 79,
             @_
     }, $class;
 
@@ -116,6 +116,7 @@ sub run {
         ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "second blog is correct");
 
         $sid = $session->id;
+        $session->flush();
     }
 
     sleep(1);
@@ -147,6 +148,9 @@ sub run {
             # TODO: test many any other variations of expire() syntax
             $session->expire('1s');
             ok($session->etime, "etime set");
+
+            eval { $session->close(); };
+            is($@, '', 'calling close method survives eval');
     }
 
 
