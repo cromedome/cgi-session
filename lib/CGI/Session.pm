@@ -57,145 +57,6 @@ sub new {
     return $self;
 }
 
-
-sub load {
-    my $class = shift;
-
-    return $class->set_error( "new(): called as instance method")    if ref $class;
-    return $class->set_error( "new(): invalid number of arguments")  if @_ > 3;
-
-    my $self = bless {
-        _DATA       => {
-            _SESSION_ID     => undef,
-            _SESSION_CTIME  => undef,
-            _SESSION_ATIME  => undef,
-            _SESSION_REMOTE_ADDR => $ENV{REMOTE_ADDR} || "",
-            #
-            # Following two attributes may not exist in every single session, and declaring
-            # them now will forse these to get serialized into database, wasting space. But they
-            # are here to remind the coder of their purpose
-            #
-#            _SESSION_ETIME  => undef,
-#            _SESSION_EXPIRE_LIST => {}
-        },          # session data
-        _DSN        => {},          # parsed DSN params
-        _OBJECTS    => {},          # keeps necessary objects
-        _DRIVER_ARGS=> {},          # arguments to be passed to driver
-        _CLAIMED_ID => undef,       # id **claimed** by client
-        _STATUS     => 0,           # status of the session object
-        _QUERY      => undef        # query object
-    }, $class;
-
-    #$self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
-
-    if ( @_ == 1 ) {
-        if ( ref $_[0] ){ $self->{_QUERY}       = $_[0]  }
-        else            { $self->{_CLAIMED_ID}  = $_[0]  }
-    }
-
-    # Two or more args passed:
-    if ( @_ > 1 ) {
-        if ( defined $_[0] ) {      # <-- to avoid 'Uninitialized value...' warnings
-            $self->{_DSN} = $self->parse_dsn( $_[0] );
-        }
-        #
-        # second argument can either be $sid, or  $query
-        if ( ref $_[1] ){ $self->{_QUERY}       = $_[1] }
-        else            { $self->{_CLAIMED_ID}  = $_[1] }
-    }
-
-    #
-    # grabbing the 3rd argument, if any
-    if ( @_ == 3 ){ $self->{_DRIVER_ARGS} = $_[2] }
-
-    #
-    # setting defaults, since above arguments might be 'undef'
-    $self->{_DSN}->{driver}     ||= "file";
-    $self->{_DSN}->{serializer} ||= "default";
-    $self->{_DSN}->{id}         ||= "md5";
-
-    # Beyond this point used to be '_init()' method. But I had to merge them together
-    # since '_init()' did not serve specific purpose
-
-    my @pms = ();
-    $pms[0] = "CGI::Session::Driver::"      . $self->{_DSN}->{driver};
-    $pms[1] = "CGI::Session::Serialize::"  . $self->{_DSN}->{serializer};
-    $pms[2] = "CGI::Session::ID::"          . $self->{_DSN}->{id};
-
-    for ( @pms ) {
-        eval "require $_";
-        if ( my $errmsg = $@ ) {
-            return $self->set_error("couldn't load $_: " . $errmsg);
-        }
-    }
-
-    #
-    # Creating & caching driver object
-    defined($self->{_OBJECTS}->{driver} = $pms[0]->new( $self->{_DRIVER_ARGS} ) )
-        or return $self->set_error( "init(): couldn't create driver object: " .  $pms[0]->errstr );
-
-    $self->{_OBJECTS}->{serializer} = $pms[1];
-    $self->{_OBJECTS}->{id}         = $pms[2];
-
-    #
-    unless ( $self->{_CLAIMED_ID} ) {
-        my $query = $self->query();
-        eval {
-            $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
-        };
-        if ( my $errmsg = $@ ) {
-            return $class->set_error( "query object $query does not support cookie() and param() methods: " .  $errmsg );
-        }
-    }
-
-    #
-    # No session is being requested. Just return an empty session
-    return $self unless $self->{_CLAIMED_ID};
-
-    #
-    # Attempting to load the session
-    my $raw_data = $self->{_OBJECTS}->{driver}->retrieve( $self->{_CLAIMED_ID} );
-    unless ( defined $raw_data ) {
-        return $self->set_error( "load(): couldn't retireve data: " . $self->{_OBJECTS}->{driver}->errstr );
-    }
-    #
-    # Requested session couldn't be retrieved
-    return $self unless $raw_data;
-
-    $self->{_DATA} = $self->{_OBJECTS}->{serializer}->thaw($raw_data);
-    unless ( defined $self->{_DATA} ) {
-        return $self->set_error( "load(): couldn't thaw() data using $self->{_OBJECTS}->{serializer} :" . 
-                                $self->{_OBJECTS}->{serializer}->errstr );
-    }
-    unless (defined($self->{_DATA}) && ref ($self->{_DATA}) && (ref $self->{_DATA} eq 'HASH') && 
-            defined($self->{_DATA}->{_SESSION_ID}) ) {
-        return $self->set_error( "Invalid data structure returned from thaw()" );
-    }
-    #
-    # checking for expiration ticker
-    if ( $self->{_DATA}->{_SESSION_ETIME} ) {
-        if ( ($self->{_DATA}->{_SESSION_ATIME} + $self->{_DATA}->{_SESSION_ETIME}) <= time() ) {
-            $self->_set_status( STATUS_EXPIRED );   # <-- so client can detect expired sessions
-            $self->_set_status( STATUS_DELETED );   # <-- session should be removed from database
-            $self->flush();                         # <-- flush() will do the actual removal!
-            return $self;
-        }
-    }
-
-    # checking expiration tickers of individuals parameters, if any:
-    my @expired_params = ();
-    while (my ($param, $etime) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
-        if ( ($self->{_DATA}->{_SESSION_ATIME} + $etime) <= time() ) {
-            push @expired_params, $param;
-        }
-    }
-    $self->clear(\@expired_params) if @expired_params;
-    $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
-    $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
-
-    return $self;
-}
-
 sub DESTROY         {   $_[0]->flush()      }
 sub close           {   $_[0]->flush()      }
 
@@ -698,6 +559,148 @@ something like this:
 
 Notice, all I<expired> sessions are empty, but not all I<empty> sessions are expired!
 
+=cut
+
+sub load {
+    my $class = shift;
+
+    return $class->set_error( "new(): called as instance method")    if ref $class;
+    return $class->set_error( "new(): invalid number of arguments")  if @_ > 3;
+
+    my $self = bless {
+        _DATA       => {
+            _SESSION_ID     => undef,
+            _SESSION_CTIME  => undef,
+            _SESSION_ATIME  => undef,
+            _SESSION_REMOTE_ADDR => $ENV{REMOTE_ADDR} || "",
+            #
+            # Following two attributes may not exist in every single session, and declaring
+            # them now will forse these to get serialized into database, wasting space. But they
+            # are here to remind the coder of their purpose
+            #
+#            _SESSION_ETIME  => undef,
+#            _SESSION_EXPIRE_LIST => {}
+        },          # session data
+        _DSN        => {},          # parsed DSN params
+        _OBJECTS    => {},          # keeps necessary objects
+        _DRIVER_ARGS=> {},          # arguments to be passed to driver
+        _CLAIMED_ID => undef,       # id **claimed** by client
+        _STATUS     => 0,           # status of the session object
+        _QUERY      => undef        # query object
+    }, $class;
+
+    #$self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
+
+    if ( @_ == 1 ) {
+        if ( ref $_[0] ){ $self->{_QUERY}       = $_[0]  }
+        else            { $self->{_CLAIMED_ID}  = $_[0]  }
+    }
+
+    # Two or more args passed:
+    if ( @_ > 1 ) {
+        if ( defined $_[0] ) {      # <-- to avoid 'Uninitialized value...' warnings
+            $self->{_DSN} = $self->parse_dsn( $_[0] );
+        }
+        #
+        # second argument can either be $sid, or  $query
+        if ( ref $_[1] ){ $self->{_QUERY}       = $_[1] }
+        else            { $self->{_CLAIMED_ID}  = $_[1] }
+    }
+
+    #
+    # grabbing the 3rd argument, if any
+    if ( @_ == 3 ){ $self->{_DRIVER_ARGS} = $_[2] }
+
+    #
+    # setting defaults, since above arguments might be 'undef'
+    $self->{_DSN}->{driver}     ||= "file";
+    $self->{_DSN}->{serializer} ||= "default";
+    $self->{_DSN}->{id}         ||= "md5";
+
+    # Beyond this point used to be '_init()' method. But I had to merge them together
+    # since '_init()' did not serve specific purpose
+
+    my @pms = ();
+    $pms[0] = "CGI::Session::Driver::"      . $self->{_DSN}->{driver};
+    $pms[1] = "CGI::Session::Serialize::"  . $self->{_DSN}->{serializer};
+    $pms[2] = "CGI::Session::ID::"          . $self->{_DSN}->{id};
+
+    for ( @pms ) {
+        eval "require $_";
+        if ( my $errmsg = $@ ) {
+            return $self->set_error("couldn't load $_: " . $errmsg);
+        }
+    }
+
+    #
+    # Creating & caching driver object
+    defined($self->{_OBJECTS}->{driver} = $pms[0]->new( $self->{_DRIVER_ARGS} ) )
+        or return $self->set_error( "init(): couldn't create driver object: " .  $pms[0]->errstr );
+
+    $self->{_OBJECTS}->{serializer} = $pms[1];
+    $self->{_OBJECTS}->{id}         = $pms[2];
+
+    #
+    unless ( $self->{_CLAIMED_ID} ) {
+        my $query = $self->query();
+        eval {
+            $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
+        };
+        if ( my $errmsg = $@ ) {
+            return $class->set_error( "query object $query does not support cookie() and param() methods: " .  $errmsg );
+        }
+    }
+
+    #
+    # No session is being requested. Just return an empty session
+    return $self unless $self->{_CLAIMED_ID};
+
+    #
+    # Attempting to load the session
+    my $raw_data = $self->{_OBJECTS}->{driver}->retrieve( $self->{_CLAIMED_ID} );
+    unless ( defined $raw_data ) {
+        return $self->set_error( "load(): couldn't retireve data: " . $self->{_OBJECTS}->{driver}->errstr );
+    }
+    #
+    # Requested session couldn't be retrieved
+    return $self unless $raw_data;
+
+    $self->{_DATA} = $self->{_OBJECTS}->{serializer}->thaw($raw_data);
+    unless ( defined $self->{_DATA} ) {
+        return $self->set_error( "load(): couldn't thaw() data using $self->{_OBJECTS}->{serializer} :" . 
+                                $self->{_OBJECTS}->{serializer}->errstr );
+    }
+    unless (defined($self->{_DATA}) && ref ($self->{_DATA}) && (ref $self->{_DATA} eq 'HASH') && 
+            defined($self->{_DATA}->{_SESSION_ID}) ) {
+        return $self->set_error( "Invalid data structure returned from thaw()" );
+    }
+    #
+    # checking for expiration ticker
+    if ( $self->{_DATA}->{_SESSION_ETIME} ) {
+        if ( ($self->{_DATA}->{_SESSION_ATIME} + $self->{_DATA}->{_SESSION_ETIME}) <= time() ) {
+            $self->_set_status( STATUS_EXPIRED );   # <-- so client can detect expired sessions
+            $self->_set_status( STATUS_DELETED );   # <-- session should be removed from database
+            $self->flush();                         # <-- flush() will do the actual removal!
+            return $self;
+        }
+    }
+
+    # checking expiration tickers of individuals parameters, if any:
+    my @expired_params = ();
+    while (my ($param, $etime) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
+        if ( ($self->{_DATA}->{_SESSION_ATIME} + $etime) <= time() ) {
+            push @expired_params, $param;
+        }
+    }
+    $self->clear(\@expired_params) if @expired_params;
+    $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
+    $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
+
+    return $self;
+}
+
+=pod
+
 =item id()
 
 Returns effective ID for a session. Since effective ID and claimed ID can differ, valid session id should always
@@ -1152,6 +1155,4 @@ L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session
 =cut
 
 1;
-
-__END__;
 
