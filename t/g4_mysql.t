@@ -36,7 +36,8 @@ unless ( $dbh ) {
     exit(0);
 }
 
-my ($count) = $dbh->selectrow_array("SELECT COUNT(*) FROM $dsn{TableName}");
+my $count;
+eval { ($count) = $dbh->selectrow_array("SELECT COUNT(*) FROM $dsn{TableName}") };
 unless ( defined $count ) {
     unless( $dbh->do(qq|
         CREATE TABLE $dsn{TableName} (

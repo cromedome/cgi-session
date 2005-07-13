@@ -7,7 +7,6 @@ BEGIN {
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
-$CGI::Session::File::FileName = 'cgisession_%s.txt';
 use CGI::Session;
 
 my $s = new CGI::Session('driver:File',undef, {Directory=>"t"} ) or die $CGI::Session::errstr;
