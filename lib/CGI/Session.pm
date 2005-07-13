@@ -564,8 +564,8 @@ Notice, all I<expired> sessions are empty, but not all I<empty> sessions are exp
 sub load {
     my $class = shift;
 
-    return $class->set_error( "new(): called as instance method")    if ref $class;
-    return $class->set_error( "new(): invalid number of arguments")  if @_ > 3;
+    return $class->set_error( "called as instance method")    if ref $class;
+    return $class->set_error( "invalid number of arguments")  if @_ > 3;
 
     my $self = bless {
         _DATA       => {
