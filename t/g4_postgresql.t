@@ -1,6 +1,6 @@
 
 my %dsn;
-if ($ENV{DBI_DSN} =~ m/^dbi:Pg:/) {
+if ($ENV{DBI_DSN} && $ENV{DBI_DSN} =~ m/^dbi:Pg:/) {
     %dsn = (
         DataSource  => $ENV{DBI_DSN},
         Password    => $ENV{CGISESS_PGSQL_PASSWORD} || undef,
