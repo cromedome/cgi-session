@@ -25,6 +25,7 @@ use CGI::Session::Test::Default;
 for (qw/DBI DBD::mysql/) {
     eval "require $_";
     plan(skip_all=>"$_ is NOT available") if $@;
+    exit(0);
 }
 
 require CGI::Session::Driver::mysql;
