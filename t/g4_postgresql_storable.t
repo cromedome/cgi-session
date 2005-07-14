@@ -21,6 +21,10 @@ use File::Spec;
 use Test::More;
 use CGI::Session::Test::Default;
 
+unless ( $dsn{DataSource} ) {
+    plan(skip_all=>"DataSource is not known");
+}
+
 for ( "DBI", "DBD::Pg", "Storable" ) {
     eval "require $_"; 
     if ( $@ ) {

@@ -118,6 +118,9 @@ sub remove {
 sub DESTROY {
     my $self = shift;
 
+    unless ( $self->{Handle}->{AutoCommit} ) {
+        $self->{Handle}->commit();
+    }
     if ( $self->{_disconnect} ) {
         $self->{Handle}->disconnect();
     }
