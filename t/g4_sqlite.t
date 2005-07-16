@@ -17,9 +17,9 @@ my %dsn = (
     TableName   => 'sessions'
 );
 
-my $dbh = DBI->connect($dsn{DataSource}, '', '', {RaiseError=>0, PrintError=>0});
+my $dbh = DBI->connect($dsn{DataSource}, '', '', {RaiseError=>0, PrintError=>1});
 unless ( $dbh ) {
-    plan(skip_all=>"Couldn't establish connection with the server");
+    plan(skip_all=>"Couldn't establish connection with the SQLite server");
     exit(0);
 }
 
