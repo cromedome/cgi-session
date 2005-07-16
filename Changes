@@ -5,6 +5,7 @@ CGI::Session Change Log
              of CGI::Session::DriverName(). This hasn't been a documented
              API since CGI::Session 2.94, released in August, 2002.
 
+   * FIX: documented etime(), which was present in 3.x (Mark Stosberg)
    * FIX: Added code, test and docs to make $CGI::Session::File::FileName work,
           for 3.x compatibility. (Mark Stosberg)
    * FIX: Providing an expire time like "-10" now works (Mark Stosberg)

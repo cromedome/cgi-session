@@ -18,10 +18,6 @@ release!
 
 [ MISSING FEATURES / WISHLIST ] 
 
- - etime() needs an alias, because it's not a time at all, it's a interval.
-   I recommend duration().
-   
-
  - Allow CGI::Session->new( $dbh );
    This syntax would automatically figure out the CGI::Session driver name
    based on the DBI driver. This can't work in every case because there is

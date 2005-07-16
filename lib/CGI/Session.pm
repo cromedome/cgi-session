@@ -76,8 +76,6 @@ sub atime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION
 
 sub ctime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_CTIME} : undef }
 
-sub etime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ETIME} : undef }
-
 sub _driver         { $_[0]->{_OBJECTS}->{driver} }
 
 sub _serializer     { $_[0]->{_OBJECTS}->{serializer} }
@@ -687,8 +685,8 @@ sub load {
 
     # checking expiration tickers of individuals parameters, if any:
     my @expired_params = ();
-    while (my ($param, $etime) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
-        if ( ($self->{_DATA}->{_SESSION_ATIME} + $etime) <= time() ) {
+    while (my ($param, $max_exp_interval) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
+        if ( ($self->{_DATA}->{_SESSION_ATIME} + $max_exp_interval) <= time() ) {
             push @expired_params, $param;
         }
     }
@@ -787,14 +785,18 @@ Read-only method. Returns the time when the session was first created in seconds
 
 =item expire($param, $time)
 
-Sets expiration date relative to L<atime()|/"atime">. If used with no arguments, returns the expiration date
-if it was ever set. If no expiration was ever set, returns undef.
+Sets expiration interval relative to L<atime()|/"atime">. 
+
+If used with no arguments, returns the expiration interval if it was ever set. If
+no expiration was ever set, returns undef. For backwards compatibility, a
+method named C<etime()> does the same thing. 
 
 Second form sets an expiration time. This value is checked when previously stored session is asked to be retrieved,
-and if its expiration date has passed will be expunged from the disk immediately. Passing 0 cancels expiration.
+and if its expiration interval has passed, it will be expunged from the disk immediately. Passing 0 cancels expiration.
 
-By using the third syntax you can set expiration date for a particular session parameter, say I<~logged-in>. This would
-cause the library call clear() on the parameter when its time is up. Passing 0 cancels expiration.
+By using the third syntax you can set the expiration interval for a particular
+session parameter, say I<~logged-in>. This would cause the library call clear()
+on the parameter when its time is up. Passing 0 cancels expiration.
 
 All the time values should be given in the form of seconds. Following keywords are also supported for your convenience:
 
@@ -823,6 +825,7 @@ To expire a session immediately, call L<delete()|/"delete">. To expire a specifi
 
 *expires = \&expire;
 my $prevent_warning = \&expires;
+sub etime           { $_[0]->expire()  }
 sub expire {
     my $self = shift;
 
