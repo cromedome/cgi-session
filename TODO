@@ -29,3 +29,6 @@ release!
    https://rt.cpan.org/Ticket/Display.html?id=2603 
    The bug report has some starter code, but docs and tests are still needed.  
 
+ - Ticket #8090 Change to clear method allows clearing based on regular expression. 
+   Code patch has been submitted. Still need docs and test. 
+   
