@@ -1126,9 +1126,16 @@ please send me a note.
 Copyright (C) 2001-2005 Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>. All rights reserved.
 This library is free software. You can modify and or distribute it under the same terms as Perl itself.
 
-=head1 AUTHOR
+=head1 PUBLIC CODE REPOSITORY
 
-Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>, http://author.handalak.com/
+You can see what the developers have been up to since the last release by
+checking out the code repository. You can browse the Subversion repository from here:
+
+ http://svn.cromedome.net/
+
+Or check it directly with C<svn> from here:
+
+ svn://svn.cromedome.net/CGI-Session
 
 =head1 SUPPORT
 
@@ -1136,6 +1143,12 @@ If you need help using CGI::Session consider the mailing list. You can ask the l
 cgi-session-user@lists.sourceforge.net .
 
 You can subscribe to the mailing list at https://lists.sourceforge.net/lists/listinfo/cgi-session-user .
+
+=head1 AUTHOR
+
+Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>, http://author.handalak.com/
+
+Mark Stosberg became a co-maintainer during the development of 4.0. C<markstos@cpan.org>.
 
 =head1 SEE ALSO
 

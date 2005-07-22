@@ -16,6 +16,9 @@ CGI::Session Change Log
    * FIX: Add code and tests for $CGI::Session::MySQL::TABLE_NAME, 
      which worked in 3.x (Mark Stosberg) 
 
+   * DOCS: CGI::Session now has a public Subversion repository, thanks to Jason
+           Crome. See the bottom of the CGI::Session docs for details. 
+
 4.00_08 - Tuesday, March 15, 2005
 
     * FIX: Changes made in 4.00_07 rolled back
