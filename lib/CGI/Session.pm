@@ -257,11 +257,8 @@ sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 my $avoid_single_use_warning_again = *header;
 sub http_header {
     my $self = shift;
-
     return $self->query->header(-cookie=>$self->cookie, type=>'text/html', @_);
 }
-
-
 
 sub cookie {
     my $self = shift;
