@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+4.00_09 - Thursday, July 21, 2005
+
    * CHANGE: Starting with 4.0, it will no longer work to use the syntax
              of CGI::Session::DriverName(). This hasn't been a documented
              API since CGI::Session 2.94, released in August, 2002.
