@@ -25,4 +25,7 @@ release!
    database backend. Still, because it can address the common cases with MySQL
    and PostgreSQL drivers, it seems worthwhile. 
 
+ - Consider adding a redirect() method, as proposed here:
+   https://rt.cpan.org/Ticket/Display.html?id=2603 
+   The bug report has some starter code, but docs and tests are still needed.  
 
