@@ -662,6 +662,7 @@ sub load {
 
     $self->{_DATA} = $self->{_OBJECTS}->{serializer}->thaw($raw_data);
     unless ( defined $self->{_DATA} ) {
+        #die $raw_data . "\n";
         return $self->set_error( "load(): couldn't thaw() data using $self->{_OBJECTS}->{serializer} :" . 
                                 $self->{_OBJECTS}->{serializer}->errstr );
     }
@@ -739,14 +740,10 @@ Useful for having all session data in a hashref, but too risky to update.
 
 =item save_param($query, \@list)
 
-Saves query parameters to session object. In other words, it's the same as
-calling C<param($name, $value)> for every single query parameter returned by
-C<< $query->param() >>. The first argument, if present, should be either CGI
-object or any object which can provide param() method. If it's undef, defaults
-to the return value of L<query()|/"query">, which returns C<< CGI->new >>.  If
-second argument is present and is a reference to an array, only those query
-parameters found in the array will be stored in the session. undef is a valid
-placeholder for any argument to force default behavior.
+Saves query parameters to session object. In other words, it's the same as calling C<param($name, $value)> for every single
+query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query()|/"query">, which returns C<< CGI->new >>.
+If second argument is present and is a reference to an array, only those query parameters found in the array will be stored
+in the session. undef is a valid placeholder for any argument to force default behavior.
 
 =item load_param()
 
@@ -754,10 +751,7 @@ placeholder for any argument to force default behavior.
 
 =item load_param($query, \@list)
 
-Loads session parameters into a query object. The first argument, if present,
-should be query object, or any other object which can provide param() method.
-If second argument is present and is a reference to an array, only parameters
-found in that array will be loaded to the query object.
+Loads session parameters into a query object. The first argument, if present, should be query object, or any other object which can provide param() method. If second argument is present and is a reference to an array, only parameters found in that array will be loaded to the query object.
 
 =item clear()
 

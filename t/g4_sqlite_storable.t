@@ -14,19 +14,18 @@ my %dsn = (
     TableName   => 'sessions'
 );
 
-my $dbh = DBI->connect($dsn{DataSource}, '', '', {RaiseError=>0, PrintError=>0});
+my $dbh = DBI->connect($dsn{DataSource}, '', '', {RaiseError=>0, PrintError=>0, sqlite_handle_binary_nulls=>1});
 unless ( $dbh ) {
     plan(skip_all=>"Couldn't establish connection with the server");
     exit(0);
 }
-$dbh->{sqlite_handle_binary_nulls} = 1;
 
 my ($count) = $dbh->selectrow_array("SELECT COUNT(*) FROM $dsn{TableName}");
 unless ( defined $count ) {
     unless( $dbh->do(qq|
         CREATE TABLE $dsn{TableName} (
             id CHAR(32) NOT NULL PRIMARY KEY,
-            a_session TEXT NULL
+            a_session BLOB NOT NULL
         )|) ) {
         plan(skip_all=>$dbh->errstr);
         exit(0);

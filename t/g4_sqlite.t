@@ -30,7 +30,7 @@ unless ( defined $count ) {
             id CHAR(32) NOT NULL PRIMARY KEY,
             a_session TEXT NULL
         )|) ) {
-        plan(skip_all=>$dbh->errstr);
+        plan(skip_all=>"Couldn't create table $dsn{TableName}: " . $dbh->errstr);
         exit(0);
     }
 }
