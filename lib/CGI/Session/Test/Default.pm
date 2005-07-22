@@ -2,10 +2,11 @@ package CGI::Session::Test::Default;
 
 use strict;
 #use diagnostics;
-use overload;
+#use overload;
 use Carp;
 use Test::More;
 use Data::Dumper;
+use Log::Log4perl qw( get_logger );
 
 $CGI::Session::Test::Default::VERSION = '1.5';
 
@@ -146,21 +147,20 @@ sub run {
             ok( $session->param('blogs')->{'Yigitlik sarguzashtlari'} eq 'http://author.handalak.com/uz/', "second blog is correct!");
 
             # TODO: test many any other variations of expire() syntax
-            $session->expire('1s');
-            ok($session->etime, "etime set");
+            $session->expire('+1s');
+            ok($session->etime, "etime set to " . $session->etime);
 
             eval { $session->close(); };
             is($@, '', 'calling close method survives eval');
     }
 
-
-    sleep(1);   # <-- have to wait until the session expires!
+    sleep(1);   # <-- letting the time tick
 
     my $driver;
     THREE: {
         ok(1, "=== 3 ===");
         my $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
-        ok($session, "Session instance loaded");
+        ok($session, "Session instance loaded " . $session->id);
         ok(!$session->id, "session doesn't have ID");
         ok($session->is_empty, "session is empty, which is the same as above");
         #print $session->dump;

@@ -22,6 +22,7 @@ use CGI::Session::Test::Default;
 
 unless ( $dsn{DataSource} ) {
     plan(skip_all=>"DataSource is not known");
+    exit(0);
 }
 
 for ( "DBI", "DBD::Pg", "FreezeThaw" ) {

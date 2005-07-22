@@ -57,40 +57,43 @@ sub retrieve {
     my ($sid) = @_;
     croak "retrieve(): usage error" unless $sid;
 
+
     my $dbh = $self->{Handle};
-    my $sth = $dbh->prepare_cached("SELECT a_session FROM " . $self->table_name . " WHERE id=?");
+    my $sth = $dbh->prepare_cached("SELECT a_session FROM " . $self->table_name . " WHERE id=?", undef, 3);
     unless ( $sth ) {
-        return $self->set_error( "retrieve(): DBI->prepare_cached failed with error message " . $dbh->errstr );
+        return $self->set_error( "retrieve(): DBI->prepare failed with error message " . $dbh->errstr );
     }
     $sth->execute( $sid ) or return $self->set_error( "retrieve(): \$sth->execute failed with error message " . $sth->errstr);
 
     my ($row) = $sth->fetchrow_array();
-    $sth->finish();
     return 0 unless $row;
     return $row;
 }
 
 
 sub store {
+#    die;
     my $self = shift;
     my ($sid, $datastr) = @_;
     croak "store(): usage error" unless $sid && $datastr;
 
+
     my $dbh = $self->{Handle};
-    my $sth = $dbh->prepare_cached("SELECT COUNT(*) FROM " . $self->table_name . " WHERE id=?");
+    my $sth = $dbh->prepare_cached("SELECT id FROM " . $self->table_name . " WHERE id=?", undef, 3);
     unless ( defined $sth ) {
-        return $self->set_error( "store(): \$dbh->prepare_cached failed with message " . $dbh->errstr );
+        return $self->set_error( "store(): \$dbh->prepare failed with message " . $sth->errstr );
     }
 
     $sth->execute( $sid ) or return $self->set_error( "store(): \$sth->execute failed with message " . $sth->errstr );
     my $action_sth;
     if ( $sth->fetchrow_array ) {
-        $action_sth = $dbh->prepare_cached("UPDATE " . $self->table_name . " SET a_session=? WHERE id=?");
+        $action_sth = $dbh->prepare_cached("UPDATE " . $self->table_name . " SET a_session=? WHERE id=?", undef, 3);
     } else {
-        $action_sth = $dbh->prepare_cached("INSERT INTO " . $self->table_name . " (id, a_session) VALUES(?, ?)");
+        $action_sth = $dbh->prepare_cached("INSERT INTO " . $self->table_name . " (a_session, id) VALUES(?, ?)", undef, 3);
     }
+    
     unless ( defined $action_sth ) {
-        return $self->set_error( "store(): \$dbh->prepare_cached failed with message " . $dbh->errstr );
+        return $self->set_error( "store(): \$dbh->prepare failed with message " . $dbh->errstr );
     }
     $action_sth->execute($datastr, $sid)
         or return $self->set_error( "store(): \$action_sth->execute failed " . $action_sth->errstr );
@@ -104,13 +107,11 @@ sub remove {
     croak "remove(): usage error" unless $sid;
 
     my $dbh = $self->{Handle};
-    my $sth = $dbh->prepare_cached("DELETE FROM " . $self->table_name . " WHERE id=?");
-    unless ( defined $sth ) {
-        return $self->set_error( "remove(): \$dbh->prepare_cached failed " . $dbh->errstr );
+    my $sql = sprintf("DELETE FROM %s WHERE id='%s'", $self->table_name, $sid);
+    unless ( $dbh->do($sql) ) {
+        croak "remove(): \$dbh->do failed!";
     }
-
-    $sth->execute($sid) 
-        or return $self->set_error( "remove(): \$sth->execute failed " . $sth->errstr );
+    
     return 1;
 }
 
@@ -136,7 +137,7 @@ sub traverse {
     }
 
     my $tablename = $self->table_name();
-    my $sth = $self->{Handle}->prepare_cached("SELECT id FROM $tablename") 
+    my $sth = $self->{Handle}->prepare_cached("SELECT id FROM $tablename", undef, 3) 
         or return $self->set_error("traverse(): couldn't prepare SQL statement. " . $self->{Handle}->errstr);
     $sth->execute() or return $self->set_error("traverse(): couldn't execute statement $sth->{Statement}. " . $sth->errstr);
 

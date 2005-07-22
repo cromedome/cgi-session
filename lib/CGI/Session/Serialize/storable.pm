@@ -40,7 +40,7 @@ sub freeze {
 
 =item thaw($class, $string)
 
-Received two arguments. First is the class name, second is the I<frozen> data string. Should return
+Receives two arguments. First is the class name, second is the I<frozen> data string. Should return
 thawed data structure on success, undef on failure. Error message should be set 
 using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
@@ -50,6 +50,7 @@ using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 sub thaw {
     my ($self, $string) = @_;
+#    warn "thawing $string...\n";
     return Storable::thaw($string);
 }
 

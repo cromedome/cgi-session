@@ -16,6 +16,7 @@ sub init {
     my $self = shift;
 
     if ( $self->{Handle} ) {
+        $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
         return $self->SUPER::init();
     }
 
@@ -24,7 +25,7 @@ sub init {
         $self->{DataSource} = "dbi:SQLite:dbname=" . $self->{DataSource};
     }
 
-    $self->{Handle} = DBI->connect( $self->{DataSource}, '', '', {RaiseError=>0, PrintError=>0, AutoCommit=>1});
+    $self->{Handle} = DBI->connect( $self->{DataSource}, '', '', {RaiseError=>1, PrintError=>1, AutoCommit=>1});
     unless ( $self->{Handle} ) {
         return $self->set_error( "init(): couldn't create \$dbh: " . $DBI::errstr );
     }

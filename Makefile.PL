@@ -45,3 +45,11 @@ prepare_dist :: metafile manifest dist
 	$(NOECHO) $(NOOP)
 MAKE_TEXT
 }
+
+sub libscan {
+    my ($self, $path) = @_;
+    return '' if $path =~ m/\.svn/;
+    return $path;
+}
+
+

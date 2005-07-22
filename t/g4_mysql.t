@@ -24,9 +24,13 @@ use CGI::Session::Test::Default;
 
 for (qw/DBI DBD::mysql/) {
     eval "require $_";
-    plan(skip_all=>"$_ is NOT available") if $@;
-    exit(0);
+    if ( $@ ) {
+        plan(skip_all=>"$_ is NOT available");
+        exit(0);
+    }
 }
+
+
 
 require CGI::Session::Driver::mysql;
 my $dsnstring = CGI::Session::Driver::mysql->_mk_dsnstr(\%dsn);
@@ -45,7 +49,7 @@ unless ( defined $count ) {
             id CHAR(32) NOT NULL PRIMARY KEY,
             a_session TEXT NULL
         )|) ) {
-        plan(skip_all=>$dbh->errstr);
+        plan(skip_all=>"Couldn't create $dsn{TableName}: " . $dbh->errstr);
         exit(0);
     }
 }
