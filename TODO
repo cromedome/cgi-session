@@ -4,7 +4,8 @@ release!
 
 [COMPATIBILITY]
 
- - What else? 
+ - '-ip_match' is missing in 4.x. The code should be easy port from 3.x, as well
+    as some docs. Also, $CGI::Session::IP_MATCH needs to be supported. 
 
 [TEST COVERAGE]
  - All existing tests need to pass. 

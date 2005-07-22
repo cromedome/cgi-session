@@ -411,30 +411,41 @@ Do not keep sessions open for very long. This will increase the possibility that
 
 =head2 SESSION IDs
 
-Session ids are not easily guessable (unless you're using L<incr ID generator|CGI::Session::ID::incr>)! Default configuration of 
-CGI::Session uses L<Digest::MD5|Digest::MD5> to generate random 32 character long string. Although this string cannot be guessable by 
-others, if they find it out somehow, can they use this identifier against the other person?
+Session ids are not easily guessable (unless you're using L<incr ID
+generator|CGI::Session::ID::incr>)! Default configuration of CGI::Session uses
+L<Digest::MD5|Digest::MD5> to generate random 32 character long string.
+Although this string cannot be guessable by others, if they find it out
+somehow, can they use this identifier against the other person?
 
-Consider the scenario, where you just give someone either via email or an instant messaging a link to a Web site where you're currently 
-logged in. The URL you give to that person contains a session id as part of a query string. If the site was initializing 
-the session solely using query string parameter, after clicking on that link that person now appears to that site as you, and might have 
-access to all of your private data instantly.
+Consider the scenario, where you just give someone either via email or an
+instant messaging a link to a Web site where you're currently logged in. The
+URL you give to that person contains a session id as part of a query string. If
+the site was initializing the session solely using query string parameter,
+after clicking on that link that person now appears to that site as you, and
+might have access to all of your private data instantly.
 
-Even if you're solely using cookies as the session id transporters, it's not that difficult to plant a cookie in the cookie file with the 
-same id and trick the web browser to send that particular session id to the server. So key for security is to check if the person who's 
-asking us to retrieve a session data is indeed the person who initially created the session data. CGI::Session helps you to watch out for 
-such cases by enabling "-ip_match" switch while "use"ing the library:
+Even if you're solely using cookies as the session id transporters, it's not
+that difficult to plant a cookie in the cookie file with the same id and trick
+the web browser to send that particular session id to the server. So key for
+security is to check if the person who's asking us to retrieve a session data
+is indeed the person who initially created the session data. CGI::Session helps
+you to watch out for such cases by enabling "-ip_match" switch while "use"ing
+the library:
 
-    use CGI::Session ('-ip-match');
+    use CGI::Session ('-ip_match');
 
-or alternatively, setting $CGI::Session::IP_MATCH to a true value, say to 1. This makes sure that before initializing a previously stored 
-session, it checks if the ip address stored in the session matches the ip address of the user asking for that session. In which case the 
-library returns the session, otherwise it dies with a proper error message.
+or alternatively, setting $CGI::Session::IP_MATCH to a true value, say to 1.
+This makes sure that before initializing a previously stored session, it checks
+if the ip address stored in the session matches the ip address of the user
+asking for that session. In which case the library returns the session,
+otherwise it dies with a proper error message.
 
-Enabling '-ip-match' is not always a solution. For some Web users (especially the ones using open proxies) '-ip-match' will render the 
-whole session management system useless, because their IP addresses will not be consistent. Another reason why '-ip-match' isn't as 
-reliable is, IP addresses do not always identify a single user. As you see, depending on your Web site audience, '-ip-match' can 
-introduce more problems than it solves. Use it with caution.
+Enabling '-ip_match' is not always a solution. For some Web users (especially
+the ones using open proxies) '-ip_match' will render the whole session
+management system useless, because their IP addresses will not be consistent.
+Another reason why '-ip_match' isn't as reliable is, IP addresses do not always
+identify a single user. As you see, depending on your Web site audience,
+'-ip_match' can introduce more problems than it solves. Use it with caution.
 
 =head1 LICENSING
 
