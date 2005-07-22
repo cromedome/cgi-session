@@ -11,7 +11,7 @@ else {
 use CGI::Session;
 my $q = CGI::Simple->new('sid=bob');
 my $s;
-eval { $s = CGI::Session->new(undef,$q); };
+eval { $s = CGI::Session->new($q); };
 is($@,'', "survives eval");
 
 ok( $s->id(), 'CGI::Simple object is accepted when passed to new()' );
@@ -19,3 +19,4 @@ ok( $s->id(), 'CGI::Simple object is accepted when passed to new()' );
 like( $s->cookie(), qr/CGISES/i, "cookie() method works with CGI::Simple");
 like( $s->http_header(), qr/Content-Type/i, "http_header() method works with CGI::Simple");
 
+$s->delete();

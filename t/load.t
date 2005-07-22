@@ -14,5 +14,6 @@ use CGI::Session;
     my $s = CGI::Session->new();
     $s->load();
     like($s->errstr, qr/instance method/, "expected error when load() called as instance method.");
+    $s->delete();
 }
 

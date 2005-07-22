@@ -15,6 +15,7 @@ my $ses2 = CGI::Session->load($ses_id);
 ok( ! $ses2->is_new(), "a session that has been closed and re-opened is not new");
 
 
-
+$ses->delete();
+$ses2->delete();
 
 

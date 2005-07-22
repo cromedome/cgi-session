@@ -9,3 +9,4 @@ is_deeply($s->parse_dsn('DR:FILE'),
   { driver => 'file'}, 
   "parse_dsn: abbreviation and lower-casing");
 
+$s->delete();

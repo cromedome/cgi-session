@@ -11,4 +11,4 @@ is($@, '','has header() method');
 eval { $s->http_header() };
 is($@, '','has http_header() method');
 
-
+$s->delete();
