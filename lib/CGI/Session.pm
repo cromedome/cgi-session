@@ -9,7 +9,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.00_08';
+$CGI::Session::VERSION  = '4.00_09';
 $CGI::Session::NAME     = 'CGISESSID';
 
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
