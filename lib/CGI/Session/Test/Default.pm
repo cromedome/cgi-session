@@ -6,7 +6,6 @@ use strict;
 use Carp;
 use Test::More;
 use Data::Dumper;
-use Log::Log4perl qw( get_logger );
 
 $CGI::Session::Test::Default::VERSION = '1.5';
 
