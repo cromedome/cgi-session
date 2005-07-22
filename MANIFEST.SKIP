@@ -1,3 +1,13 @@
 Makefile$
 CVS
 .svn
+^cover_db
+^report
+^blib
+^Build$
+^_build
+\.bak$
+\.orig$
+\.rej$
+.*sessiondata.*
+
