@@ -22,17 +22,33 @@ release!
 
 [ MISSING FEATURES / WISHLIST ] 
 
- - Allow CGI::Session->new( $dbh );
-   This syntax would automatically figure out the CGI::Session driver name
-   based on the DBI driver. This can't work in every case because there is
-   not a 1-to-1 correspondence. For example, the PureSQL driver is an alternate
-   database backend. Still, because it can address the common cases with MySQL
-   and PostgreSQL drivers, it seems worthwhile. 
+ - Develop a CGI application to duplicate all the tests in t/gr_*.t scripts
+   in its natural environment. This application should require separate run-modes to
+   thoroughly test all the features of CGI::Session. Its output and navigation, 
+   although meant for humans, should also be easy to be consumed by automated agents 
+   using WWW::Mechanize and similar.
+
+ - DBI-related drivers should provide a method for initializing required database tables
+   for storing sessions. This method must initialize tables only if they are missing. So
+   it should be safe to invoke the method on databases where session tables already exist.
 
  - Consider adding a redirect() method, as proposed here:
    https://rt.cpan.org/Ticket/Display.html?id=2603 
    The bug report has some starter code, but docs and tests are still needed.  
 
+ - Allow CGI::Session->new( $dbh );
+   This syntax would automatically figure out the CGI::Session driver name
+   based on the DBI driver. This can't work in every case because there is
+   not a 1-to-1 correspondence. For example, the PureSQL driver is an alternate
+   database back-end. Still, because it can address the common cases with MySQL
+   and PostgreSQL drivers, it seems worthwhile.
+
  - Ticket #8090 Change to clear method allows clearing based on regular expression. 
-   Code patch has been submitted. Still need docs and test. 
-   
+   Code patch has been submitted. Still need docs and test.
+
+ - Serialized session data should include some meta-information about the way
+   it is created. This will allow **truly** automated disk-cleanup features to be implemented.
+   This meta-table should have such information as the name of the serializer, id-generator,
+   name of the application that created it, version of CGI::Session, and version of the serializer
+   used. These changes, when properly implemented, should have no effect on current driver nor 
+   serializer specifications.
