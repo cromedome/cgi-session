@@ -428,24 +428,24 @@ Even if you're solely using cookies as the session id transporters, it's not
 that difficult to plant a cookie in the cookie file with the same id and trick
 the web browser to send that particular session id to the server. So key for
 security is to check if the person who's asking us to retrieve a session data
-is indeed the person who initially created the session data. CGI::Session helps
-you to watch out for such cases by enabling "-ip_match" switch while "use"ing
-the library:
+is indeed the person who initially created the session data. 
+
+One way to help with this is by also checking that the IP address that the
+session is being used from is always same. However, this turns out not to be
+practical in common cases because some large ISPs such as AOL use proxies which
+cause requests from the same user to come from different IP addresses. 
+
+If you have an application where you know users will come from the same IP addresses,
+you can consider enabling an option to make this check:
 
     use CGI::Session ('-ip_match');
 
-or alternatively, setting $CGI::Session::IP_MATCH to a true value, say to 1.
-This makes sure that before initializing a previously stored session, it checks
-if the ip address stored in the session matches the ip address of the user
-asking for that session. In which case the library returns the session,
-otherwise it dies with a proper error message.
-
-Enabling '-ip_match' is not always a solution. For some Web users (especially
-the ones using open proxies) '-ip_match' will render the whole session
-management system useless, because their IP addresses will not be consistent.
-Another reason why '-ip_match' isn't as reliable is, IP addresses do not always
-identify a single user. As you see, depending on your Web site audience,
-'-ip_match' can introduce more problems than it solves. Use it with caution.
+For backwards compatibility, you can also achieve this by setting
+$CGI::Session::IP_MATCH to a true value.  This makes sure that before
+initializing a previously stored session, it checks if the ip address stored in
+the session matches the ip address of the user asking for that session. In
+which case the library returns the session, otherwise it dies with a proper
+error message.
 
 =head1 LICENSING
 

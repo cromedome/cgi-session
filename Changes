@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+   * FIX: CGI::Session (qw/-ip_match/), a 3.x feature, works again (Shawn Sorichetti) 
+
 4.00_09 - Thursday, July 21, 2005
 
    * CHANGE: Starting with 4.0, it will no longer work to use the syntax

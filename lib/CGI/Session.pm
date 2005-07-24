@@ -11,12 +11,21 @@ use CGI::Session::ErrorHandler;
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
 $CGI::Session::VERSION  = '4.00_09';
 $CGI::Session::NAME     = 'CGISESSID';
+$CGI::Session::IP_MATCH = 0;
 
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
 sub STATUS_MODIFIED () { 2 }        # denotes session that's needs synchronization
 sub STATUS_DELETED  () { 4 }        # denotes session that needs deletion
 sub STATUS_EXPIRED  () { 8 }        # denotes session that was expired.
 
+sub import {
+  my $class = shift;
+  @_ or return;
+
+  for(@_) {
+    $CGI::Session::IP_MATCH = ( $_ eq '-ip_match' );
+  }
+}
 
 sub new {
     my $class   = shift;
@@ -81,6 +90,11 @@ sub _driver         { $_[0]->{_OBJECTS}->{driver} }
 sub _serializer     { $_[0]->{_OBJECTS}->{serializer} }
 
 sub _id_generator   { $_[0]->{_OBJECTS}->{id} }
+
+sub _ip_matches {
+  return ( $_[0]->{_DATA}->{_SESSION_REMOTE_ADDR} eq $ENV{REMOTE_ADDR} );
+}
+
 
 # parses the DSN string and returns it as a hash.
 # Notably: Allows unique abbreviations of the keys: driver, serializer and 'id'.
@@ -670,6 +684,17 @@ sub load {
             defined($self->{_DATA}->{_SESSION_ID}) ) {
         return $self->set_error( "Invalid data structure returned from thaw()" );
     }
+
+    #
+    # checking if previous session ip matches current ip
+    if($CGI::Session::IP_MATCH) {
+      unless($self->_ip_matches) {
+        $self->_set_status( STATUS_DELETED );
+        $self->flush;
+        return $self;
+      }
+    }
+
     #
     # checking for expiration ticker
     if ( $self->{_DATA}->{_SESSION_ETIME} ) {
