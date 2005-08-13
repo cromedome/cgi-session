@@ -1,6 +1,14 @@
 # Some unit tests for CGI::Session::Driver::DBI
 BEGIN{ 
-    use Test::More qw/no_plan/;
+    use Test::More; 
+    eval { require DBI; };
+    if ($@) {
+        plan skip_all => 'DBI module not found'; 
+    }
+    else {
+        plan qw/no_plan/;
+    }
+
     use_ok('CGI::Session::Driver::DBI');
 }
 
