@@ -159,7 +159,7 @@ sub run {
     THREE: {
         ok(1, "=== 3 ===");
         my $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) or die CGI::Session->errstr;
-        ok($session, "Session instance loaded " . $session->id);
+        ok($session, "Session instance loaded ");
         ok(!$session->id, "session doesn't have ID");
         ok($session->is_empty, "session is empty, which is the same as above");
         #print $session->dump;
