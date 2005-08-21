@@ -30,7 +30,7 @@ sub thaw {
     my ($class, $string) = @_;
 
     # To make -T happy
-    my ($safe_string) = $string =~ m/^(.*)$/;
+    my ($safe_string) = $string =~ m/^(.*)$/s;
     my $rv = Safe->new()->reval( $safe_string );
     if ( my $errmsg = $@ ) {
         return $class->set_error("thaw(): couldn't thaw. $@");
