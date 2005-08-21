@@ -3,6 +3,8 @@ CGI::Session Change Log
 
    * FIX: update to untaiting in default seralizer to make "-T" happy (Matt LeBlanc)
    * FIX: CGI::Session (qw/-ip_match/), a 3.x feature, works again (Shawn Sorichetti) 
+   * INTERNAL: Improved documentation shown during "make", wich explains how to run 
+     database-driven tests. (Mark Stosberg)
 
 4.00_09 - Thursday, July 21, 2005
 

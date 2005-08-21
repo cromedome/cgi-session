@@ -17,8 +17,31 @@ Fortunately, current driver specifications are a lot easier to adapt to. Should 
 re-coding your current drivers,	please let me know.
 
 Current driver specs are documented in CGI/Session/Driver.pm
-MESSAGE
 
+#### TESTING #####
+
+You are encouraged to run tests for the backend you will be using. The database backends
+that need a customized connection string won't by default. To run them, some environment
+variables must be set.
+
+The simplest method is to use the standard "DBI_DSN" environment variable to
+define a DBI connection string.
+
+Otherwise, you can set these variables as well:
+
+MESSAGE
+print "
+For PostgreSQL:
+ CGISESS_PGSQL_DSN
+ CGISESS_PGSQL_USER
+ CGISESS_PGSQL_PASSWORD
+
+For MySQL:
+ CGISESS_MYSQL_DSN
+ CGISESS_MYSQL_USER
+ CGISESS_MYSQL_PASSWORD
+ CGISESS_MYSQL_SOCKET
+";
 print "\n";
 print "-" x	40,	"\n";
 
