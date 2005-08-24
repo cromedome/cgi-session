@@ -46,7 +46,7 @@ sub set_error {
     $class = ref($class) || $class;
     no strict 'refs';
     ${ "$class\::errstr" } = $_[0] || "";
-    return undef;
+    return ;
 }
 
 =item errstr()
