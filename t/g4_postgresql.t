@@ -17,11 +17,6 @@ else {
 }
 
 
-
-
-
-
-
 use strict;
 use File::Spec;
 use Test::More;
@@ -58,10 +53,10 @@ unless ( defined $count ) {
     }
 }
 
-
 my $t = CGI::Session::Test::Default->new(
     dsn => "dr:postgresql",
     args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
 
 plan tests => $t->number_of_tests;
 $t->run();
+
