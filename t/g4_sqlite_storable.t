@@ -41,7 +41,9 @@ plan tests => $t->number_of_tests;
 
 TODO: {
     local $TODO = "SQLite doesn't work with Storable yet.";
+eval {
     $t->run();
+}
 }
 
 
