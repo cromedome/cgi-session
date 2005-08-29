@@ -8,7 +8,7 @@ use strict;
 use Digest::MD5;
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::ID::md5::VERSION = '1.3';
+$CGI::Session::ID::md5::VERSION = '1.4';
 @CGI::Session::ID::md5::ISA     = qw( CGI::Session::ErrorHandler );
 
 
@@ -26,12 +26,12 @@ sub generate_id {
 
 =head1 NAME
 
-CGI::Session::ID::MD5 - default CGI::Session ID generator
+CGI::Session::ID::md5 - default CGI::Session ID generator
 
 =head1 SYNOPSIS
 
     use CGI::Session;
-    $s = new CGI::Session("id:MD5", undef);
+    $s = new CGI::Session("id:md5", undef);
 
 =head1 DESCRIPTION
 
