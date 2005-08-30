@@ -1,3 +1,8 @@
+# $Id$
+
+use strict;
+use diagnostics;
+
 # Some unit tests for CGI::Session::Driver::DBI
 BEGIN{ 
     use Test::More; 

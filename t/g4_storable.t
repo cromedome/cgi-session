@@ -1,3 +1,7 @@
+# $Id$
+
+use strict;
+use diagnostics;
 
 use Test::More;
 use File::Spec;

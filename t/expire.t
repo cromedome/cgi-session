@@ -1,3 +1,8 @@
+# $Id$
+
+use strict;
+use diagnostics;
+
 use Test::More qw/no_plan/;
 
 # Tests for expire(), which doesn't directly use driver-specific code. 

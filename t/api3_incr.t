@@ -1,15 +1,11 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
 # $Id: api3_incr.t,v 1.2 2002/11/22 22:54:41 sherzodr Exp $
-#########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
+use strict;
+use diagnostics;
 
-BEGIN { 
-    
-    require Test;
-    Test->import();
+BEGIN {
+    require Test::More;
+    Test::More->import();
     
     plan(tests => 14); 
 };

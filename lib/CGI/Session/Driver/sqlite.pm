@@ -3,8 +3,8 @@ package CGI::Session::Driver::sqlite;
 # $Id$
 
 use strict;
-#use diagnostics;
 
+use MIME::Base64;
 use Carp;
 use File::Spec;
 use CGI::Session::Driver::DBI;
@@ -16,7 +16,7 @@ sub init {
     my $self = shift;
 
     if ( $self->{Handle} ) {
-        $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
+        $self->{Handle}->{sqlite_handle_binary_nulls} = 0;
         return $self->SUPER::init();
     }
 
@@ -33,6 +33,34 @@ sub init {
     $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
     return 1;
 }
+
+
+
+
+
+#
+# Temporary hack to get sqlite/storable get along
+#
+sub store {
+    my $self = shift;
+    return $self->SUPER::store($_[0], encode_base64($_[1], ''));
+}
+
+#
+# Temporary hack to get sqlite/storable get along
+#
+sub retrieve {
+    my $self    = shift;
+    my $datastr = $self->SUPER::retrieve(shift);
+    return $datastr unless $datastr;
+    return decode_base64($datastr);
+}
+
+
+
+
+
+
 
 
 1;
@@ -64,6 +92,10 @@ I<DataSource> should be in the form of C<dbi:SQLite:dbname=/path/to/db.sqlt>. If
 If I<Handle> is present it should be database handle ($dbh) returned by DBI->connect().
 
 It's OK to drop the third argument to new() alltogether, in which case a database named F<sessions.sqlt> will be created in your machine's TEMPDIR folder, which is F</tmp> in UNIX.
+
+=head1 BUGS AND LIMITATIONS
+
+To support binary serializers (L<CGI::Session::Serialize::storable>), currently, sqlite driver makes use of L<MIME::Base64|MIME::Base64> to encode and decode data string.
 
 =head1 LICENSING
 

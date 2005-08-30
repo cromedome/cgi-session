@@ -1,12 +1,18 @@
+# $Id$
 
 use strict;
+use diagnostics;
+
 use File::Spec;
 use Test::More;
 use CGI::Session::Test::Default;
 
-for ( "DBI", "DBD::SQLite", "Storable" ) {
-  eval "require $_"; 
-  plan(skip_all=>"$_ is NOT available") if $@;
+for ( "DBI", "DBD::SQLite", "Storable", "MIME::Base64" ) {
+    eval "require $_"; 
+    if ( $@ ) {
+        plan(skip_all=>"$_ is NOT available");
+        exit(0);
+    }
 }
 
 my %dsn = (
@@ -40,12 +46,7 @@ my $t = CGI::Session::Test::Default->new(
 plan tests => $t->number_of_tests;
 
 TODO: {
-    local $TODO = "SQLite doesn't work with Storable yet.";
-eval {
+#    local $TODO = "SQLite doesn't work with Storable yet.";
     $t->run();
 }
-}
-
-
-
 

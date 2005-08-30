@@ -3,8 +3,6 @@ package CGI::Session;
 # $Id$
 
 use strict;
-#use diagnostics;
-
 use Carp;
 use CGI::Session::ErrorHandler;
 
@@ -329,8 +327,9 @@ sub load_param {
 
 
 sub clear {
-    my $self = shift;
-    my $params = shift;
+    my $self    = shift;
+    my $params  = shift;
+    #warn ref($params);
     if (defined $params) {
         $params =  [ $params ] unless ref $params;
     }

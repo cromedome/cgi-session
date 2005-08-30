@@ -1,8 +1,6 @@
 package CGI::Session::Test::Default;
 
 use strict;
-#use diagnostics;
-#use overload;
 use Carp;
 use Test::More;
 use Data::Dumper;
@@ -31,7 +29,7 @@ sub new {
     my $self    = bless {
             dsn     => "driver:file",
             args    => undef,
-            tests   => 79,
+            tests   => 84,
             @_
     }, $class;
 
@@ -153,8 +151,26 @@ sub run {
 
             # TODO: test many any other variations of expire() syntax
             $session->expire('+1s');
-            ok($session->etime, "etime set to " . $session->etime);
+            ok($session->etime == 1, "etime set to 1 second");
 
+            $session->expire("+1m");
+            ok($session->etime == 60, "etime set to one minute");
+
+            $session->expires("2h");
+            ok($session->etime == 7200, "etime set to two hours");
+
+            $session->expires("5d");
+            ok($session->etime == 432000, "etime set to 5 days");
+
+            $session->expires("-10s");
+            ok($session->etime == -10, "etime set to 10 seconds in the past");
+
+            #
+            # Setting the expiration time back to 1s, so that subsequent tests
+            # relying on this value pass
+            #
+            $session->expire("1s");
+            ok($session->etime == 1, "etime set back to one second");
             eval { $session->close(); };
             is($@, '', 'calling close method survives eval');
         }

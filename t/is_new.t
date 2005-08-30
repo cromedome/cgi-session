@@ -1,3 +1,8 @@
+# $Id$
+
+use strict;
+use diagnostics;
+
 use Test::More qw/no_plan/;
 BEGIN { use_ok ('CGI::Session') };
 

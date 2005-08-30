@@ -1,11 +1,7 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
 # $Id: api3_obj_store_db_file.t,v 1.3.6.1 2003/07/26 13:37:36 sherzodr Exp $
-#########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
+use strict;
+use diagnostics;
 
 use CGI;
 use CGI::Session;

@@ -1,3 +1,8 @@
+# $Id$
+
+use strict;
+use diagnostics;
+
 use Test::More qw/no_plan/;
 
 # Some driver independent tests for header();

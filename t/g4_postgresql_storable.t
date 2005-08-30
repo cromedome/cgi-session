@@ -1,3 +1,8 @@
+# $Id$
+
+use strict;
+use diagnostics;
+
 my %dsn;
 if ($ENV{DBI_DSN} && $ENV{DBI_DSN} =~ m/^dbi:Pg:/) {
     %dsn = (
@@ -16,7 +21,6 @@ else {
 }
 
 
-use strict;
 use File::Spec;
 use Test::More;
 use CGI::Session::Test::Default;

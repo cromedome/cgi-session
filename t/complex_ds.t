@@ -1,5 +1,8 @@
 # $Id: complex_ds.t,v 1.2 2002/11/22 13:09:21 sherzodr Exp $
 
+use strict;
+use diagnostics;
+
 BEGIN { 
     use Test::More tests => 10;
 };

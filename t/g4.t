@@ -1,3 +1,7 @@
+# $Id$
+
+use strict;
+use diagnostics;
 
 use File::Spec;
 use CGI::Session::Test::Default;
