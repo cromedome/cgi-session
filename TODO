@@ -10,9 +10,6 @@ release!
  - Resolve this question of consistency versus compatibility for expires('param',0);
    http://sourceforge.net/mailarchive/message.php?msg_id=12244228
 
-[TEST COVERAGE]
- - All existing tests need to pass. 
-
 [INTERNALS]
 
  - Make the code easier to follow by moving subroutines
