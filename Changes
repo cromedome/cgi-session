@@ -1,12 +1,20 @@
 CGI::Session Change Log
 =====================================================================
 
+4.00
+
+   *** NOTE ***  
+   The 4.0 release represents a major overhaul of the CGI::Session code base.
+   Care has been taken to be 100% compatible applications developed with 3.x.
+   However, you are encouraged to run regression tests with your own
+   applications before using this in production. 
+
    * NEW: PostgreSQL driver enhanced to work better with binary serializers (Matt LeBlanc)
    * FIX: update to untainting in default seralizer to make "-T" happy (Matt LeBlanc)
    * FIX: CGI::Session (qw/-ip_match/), a 3.x feature, works again (Shawn Sorichetti) 
-   * INTERNAL: Improved documentation shown during "make", wich explains how to run 
+   * INTERNAL: Improved documentation shown during "make", which explains how to run 
      database-driven tests. (Mark Stosberg)
-   * FIX: to support binary serialiers sqlite driver uses MIME::Base64 (Sherzod Ruzmetov)
+   * FIX: to support binary serializers SQLite driver uses MIME::Base64 (Sherzod Ruzmetov)
 
 4.00_09 - Thursday, July 21, 2005
 
