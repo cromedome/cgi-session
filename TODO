@@ -46,3 +46,8 @@ release!
    name of the application that created it, version of CGI::Session, and version of the serializer
    used. These changes, when properly implemented, should have no effect on current driver nor 
    serializer specifications.
+
+ - CGI::Session should not depend on existence of ENV variables when running under mod_perl environment.
+ - Apache::Request needs to be used if running under mod_perl
+
+

@@ -4,8 +4,6 @@ package CGI::Session::Driver::postgresql;
 
 # CGI::Session::Driver::postgresql - PostgreSQL driver for CGI::Session
 #
-# Copyright (C) 2001-2002 Sherzod Ruzmetov, sherzodr@cpan.org
-#
 # Copyright (C) 2002 Cosimo Streppone, cosimo@cpan.org
 # This module is based on CGI::Session::Driver::mysql module
 # by Sherzod Ruzmetov, original author of CGI::Session modules
@@ -13,12 +11,11 @@ package CGI::Session::Driver::postgresql;
 
 use strict;
 use Carp "croak";
-#use diagnostics;
 
 use CGI::Session::Driver::DBI;
 use DBD::Pg qw(PG_BYTEA PG_TEXT);
 
-$CGI::Session::Driver::postgresql::VERSION = '2.01';
+$CGI::Session::Driver::postgresql::VERSION = '2.1';
 @CGI::Session::Driver::postgresql::ISA     = qw( CGI::Session::Driver::DBI );
 
 
@@ -42,12 +39,12 @@ sub store {
 
     my $dbh = $self->{Handle};
     my $type = $self->{ColumnType};
-    
+
     if ($type == PG_TEXT && $datastr =~ tr/\x00//) {
         croak "Unallowed characters used in session data. Please see CGI::Session::Driver::postgresql ".
-            "for more information about text columns and null characters.";
+            "for more information about null characters in text columns.";
     }
-   
+
     my $sth = $dbh->prepare("SELECT id FROM " . $self->table_name . " WHERE id=?");
     unless ( defined $sth ) {
         return $self->set_error( "store(): \$sth->prepare failed with message " . $dbh->errstr );
@@ -55,10 +52,10 @@ sub store {
 
     $sth->execute( $sid ) or return $self->set_error( "store(): \$sth->execute failed with message " . $dbh->errstr );
     if ( $sth->fetchrow_array ) {
-        __ex_and_ret($dbh,"UPDATE " . $self->table_name . " SET a_session=? WHERE id=?",$datastr,$sid, $type) 
+        __ex_and_ret($dbh,"UPDATE " . $self->table_name . " SET a_session=? WHERE id=?",$datastr,$sid, $type)
             or return $self->set_error( "store(): serialize to db failed " . $dbh->errstr );
     } else {
-        __ex_and_ret($dbh,"INSERT INTO " . $self->table_name . " (a_session,id) VALUES(?, ?)",$datastr, $sid, $type) 
+        __ex_and_ret($dbh,"INSERT INTO " . $self->table_name . " (a_session,id) VALUES(?, ?)",$datastr, $sid, $type)
             or return $self->set_error( "store(): serialize to db failed " . $dbh->errstr );
     }
     return 1;
@@ -92,7 +89,7 @@ CGI::Session::Driver::postgresql - PostgreSQL driver for CGI::Session
 
 =head1 DESCRIPTION
 
-CGI::Session::PostgreSQL is a CGI::Session driver to store session data in a PostgreSQL table.
+CGI::Session::PostgreSQL is a L<CGI::Session|CGI::Session> driver to store session data in a PostgreSQL table.
 
 =head1 STORAGE
 
@@ -106,32 +103,23 @@ Before you can use any DBI-based session drivers you need to make sure compatibl
 and within your code use:
 
     use CGI::Session;
-    $session = new CGI::Session("driver:PostgreSQL", undef, {Handle=>$dbh,ColumnType=>"binary"});
-    
-Please note the addition of a ColumnType parameter to the attributes hashref.
-PostgreSQL's text type has problems when trying to hold a null character.
-(Known as "\0" in Perl, not to be confused with SQL "NULL") If you know there
-is no chance of ever having a null character in the serialized data, you can leave
-off the ColumnType atribute
-Using a bytea column type and ColumnType => 'binary'  is recommended when using
-Storable as the serializer or if there's any possibility that a null value will
-appear in any of the serialized data.
-    
-For more details see L<CGI::Session::Driver::DBI|CGI::Session::Driver::DBI>,
-its parent class.
+    $session = new CGI::Session("driver:PostgreSQL", undef, {Handle=>$dbh, ColumnType=>"binary"});
+
+Please note the I<ColumnType> argument. PostgreSQL's text type has problems when trying to hold a null character. (Known as C<"\0"> in Perl, not to be confused with SQL I<NULL>). If you know there is no chance of ever having a null character in the serialized data, you can leave off the I<ColumnType> attribute. Using a I<BYTEA> column type and C<< ColumnType => 'binary' >> is recommended when using L<Storable|CGI::Session::Serialize::storable> as the serializer or if there's any possibility that a null value will appear in any of the serialized data.
+
+For more details see L<CGI::Session::Driver::DBI|CGI::Session::Driver::DBI>, parent class.
+
+Also see L<sqlite driver|CGI::Session::Driver::sqlite>, which exercises different method for dealing with binary data.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2002 Cosimo Streppone. All rights reserved. This library is free
-software and can be modified and distributed under the same terms as Perl
-itself.
+Copyright (C) 2002 Cosimo Streppone. All rights reserved. This library is free software and can be modified and distributed under the same terms as Perl itself.
 
 =head1 AUTHORS
 
-Cosimo Streppone <cosimo@cpan.org>, heavily based on the CGI::Session::MySQL
-driver by Sherzod Ruzmetov, original author of CGI::Session.
+Cosimo Streppone <cosimo@cpan.org>, heavily based on the CGI::Session::MySQL driver by Sherzod Ruzmetov, original author of CGI::Session.
 
-Matt LeBlanc contributed significant updates for the 4.0 release. 
+Matt LeBlanc contributed significant updates for the 4.0 release.
 
 =head1 LICENSING
 

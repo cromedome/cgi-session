@@ -12,3 +12,4 @@ use constant DSN_ARGS   => {};
 use CGI::Session;
 
 CGI::Session->find( DSN, sub {}, DSN_ARGS ) or die CGI::Session->errstr;
+

@@ -3,14 +3,11 @@ package CGI::Session::Driver::mysql;
 # $Id$
 
 use strict;
-#use diagnostics;
-
 use Carp;
 use CGI::Session::Driver::DBI;
 
 @CGI::Session::Driver::mysql::ISA       = qw( CGI::Session::Driver::DBI );
 $CGI::Session::Driver::mysql::VERSION   = "2.01";
-
 
 sub _mk_dsnstr {
     my ($class, $dsn) = @_;
@@ -28,7 +25,6 @@ sub _mk_dsnstr {
     if ( $dsn->{Port} ) {
         $dsnstr .= sprintf(";port=%s", $dsn->{Port});
     }
-
     return $dsnstr;
 }
 
@@ -55,6 +51,7 @@ sub store {
         or return $self->set_error( "store(): \$dbh->do failed " . $dbh->errstr );
     return 1;
 }
+
 
 # If the table name hasn't been defined yet, check this location for 3.x compatibility
 sub table_name {
@@ -89,7 +86,7 @@ B<mysql> stores session records in a MySQL table. For details see L<CGI::Session
 
 =head2 DRIVER ARGUMENTS
 
-B<mysql> driver supports all the arguments documented in CGI::Session::Driver::DBI. In addition, I<DataSource> argument can optionally leave leading "dbi:mysql:" string out:
+B<mysql> driver supports all the arguments documented in L<CGI::Session::Driver::DBI|CGI::Session::Driver::DBI>. In addition, I<DataSource> argument can optionally leave leading "dbi:mysql:" string out:
 
     $s = new CGI::Session( "driver:mysql", $sid, {DataSource=>'shopping_cart'});
     # is the same as:
@@ -97,15 +94,12 @@ B<mysql> driver supports all the arguments documented in CGI::Session::Driver::D
 
 =head2 BACKWARDS COMPATIBILITY
 
-For backwards compatibility, you can also set the table like this before
-calling C<new()>. However, it is not recommended because it can cause conflicts
-in a persistent environment. 
+For backwards compatibility, you can also set the table like this before calling C<new()>. However, it is not recommended because it can cause conflicts in a persistent environment. 
 
- $CGI::Session::MySQL::TABLE_NAME = 'my_sessions';
+    $CGI::Session::MySQL::TABLE_NAME = 'my_sessions';
 
 =head1 LICENSING
 
 For support and licensing see L<CGI::Session|CGI::Session>.
 
 =cut
-

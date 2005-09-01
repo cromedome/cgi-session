@@ -3,7 +3,6 @@ package CGI::Session::Driver::file;
 # $Id$
 
 use strict;
-#use diagnostics;
 
 use Carp;
 use File::Spec;
@@ -11,7 +10,7 @@ use Fcntl qw( :DEFAULT :flock :mode );
 use CGI::Session::Driver;
 use vars qw( $FileName);
 
-@CGI::Session::Driver::file::ISA        = qw( CGI::Session::Driver );
+@CGI::Session::Driver::file::ISA        = ( "CGI::Session::Driver" );
 $CGI::Session::Driver::file::VERSION    = "3.4";
 $FileName                               = "cgisess_%s";
 

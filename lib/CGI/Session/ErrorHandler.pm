@@ -16,7 +16,6 @@ CGI::Session::ErrorHandler - error handling routines for CGI::Session
     require CGI::Session::ErrorHandler
     @ISA = qw( CGI::Session::ErrorHandler );
 
-
     sub some_method {
         my $self = shift;
         unless (  $some_condition ) {
@@ -24,18 +23,15 @@ CGI::Session::ErrorHandler - error handling routines for CGI::Session
         }
     }
 
-
 =head1 DESCRIPTION
 
-CGI::Session::ErrorHandler provides set_error() and errstr() methods for setting and accessing error messages from within 
-CGI::Session's components. This method should be used by driver developers for providing CGI::Session-standard error 
-handling routines for their code
+CGI::Session::ErrorHandler provides set_error() and errstr() methods for setting and accessing error messages from within CGI::Session's components. This method should be used by driver developers for providing CGI::Session-standard error handling routines for their code
 
 =head2 METHODS
 
 =over 4
 
-=item set_error( $message )
+=item set_error($message)
 
 Implicitly defines $pkg_name::errstr and sets its value to $message. Return value is B<always> undef.
 
@@ -46,14 +42,12 @@ sub set_error {
     $class = ref($class) || $class;
     no strict 'refs';
     ${ "$class\::errstr" } = $_[0] || "";
-    return ;
+    return;
 }
 
 =item errstr()
 
-Returns whatever value was set by the most recent call to set_error(). 
-If no message as has been set yet, the empty string is returned so 
-the message can still concatenate without a warning. 
+Returns whatever value was set by the most recent call to set_error(). If no message as has been set yet, the empty string is returned so the message can still concatenate without a warning. 
 
 =back
 

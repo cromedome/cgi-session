@@ -3,13 +3,12 @@ package CGI::Session::Driver::DBI;
 # $Id$
 
 use strict;
-#use diagnostics;
 
 use DBI;
 use Carp;
 use CGI::Session::Driver;
 
-@CGI::Session::Driver::DBI::ISA = qw( CGI::Session::Driver );
+@CGI::Session::Driver::DBI::ISA = ( "CGI::Session::Driver" );
 $CGI::Session::Driver::DBI::VERSION = "1.1";
 
 
@@ -163,16 +162,11 @@ CGI::Session::Driver::DBI - Base class for native DBI-related CGI::Session drive
 
 =head1 DESCRIPTION
 
-In most cases you can create a new DBI-driven CGI::Session driver by simply creating an empty driver file
-that inherits from CGI::Session::Driver::DBI. That's exactly what L<sqlite|CGI::Session::Driver::sqlite> does.
-The only reason why this class doesn't suit for a valid driver is its name isn't in lowercase. I'm serious!
+In most cases you can create a new DBI-driven CGI::Session driver by simply creating an empty driver file that inherits from CGI::Session::Driver::DBI. That's exactly what L<sqlite|CGI::Session::Driver::sqlite> does. The only reason why this class doesn't suit for a valid driver is its name isn't in lowercase. I'm serious!
 
 =head2 NOTES
 
-CGI::Session::Driver::DBI defines init() method, which makes DBI handle available for drivers in 'Handle' attribute regardless
-of what \%dsn_args were used in creating session object. Should your driver require non-standard initialization you have to
-re-define init() method in your F<.pm> file, but make sure to set 'Handle' - object attribute to database handle (returned
-by DBI->connect(...)) if you wish to inherit any of the methods from CGI::Session::Driver::DBI.
+CGI::Session::Driver::DBI defines init() method, which makes DBI handle available for drivers in I<Handle> - object attribute regardless of what C<\%dsn_args> were used in creating session object. Should your driver require non-standard initialization you have to re-define init() method in your F<.pm> file, but make sure to set 'Handle' - object attribute to database handle (returned by DBI->connect(...)) if you wish to inherit any of the methods from CGI::Session::Driver::DBI.
 
 =head1 STORAGE
 
@@ -186,7 +180,9 @@ Before you can use any DBI-based session drivers you need to make sure compatibl
 Your session table can define additional columns, but the above two are required. Name of the session table is expected to be I<sessions> by default. You may use a different name if you wish. To do this you have to pass I<TableName> as part of your C< \%dsn_args >:
 
     $s = new CGI::Session("driver:sqlite", undef, {TableName=>'my_sessions'});
-    $s = new CGI::Session("driver:mysql", undef, {TableName=>'my_sessions', DataSource=>'dbi:mysql:shopping_cart'});
+    $s = new CGI::Session("driver:mysql", undef, {
+                                        TableName=>'my_sessions', 
+                                        DataSource=>'dbi:mysql:shopping_cart'});
 
 =head1 DRIVER ARGUMENTS
 
@@ -196,7 +192,7 @@ Following driver arguments are supported:
 
 =item DataSource
 
-First argument to be passed to L<DBI|DBI>->connect().
+First argument to be passed to L<DBI|DBI>->L<connect()|DBI/connect()>.
 
 =item User
 

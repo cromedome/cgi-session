@@ -3,28 +3,22 @@ package CGI::Session::Serialize::freezethaw;
 # $Id$ 
 
 use strict;
-#use diagnostics;
-
 use FreezeThaw;
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::Serialize::freezethaw::VERSION = '1.5';
-@CGI::Session::Serialize::freezethaw::ISA     = qw( CGI::Session::ErrorHandler );
+$CGI::Session::Serialize::freezethaw::VERSION = '1.6';
+@CGI::Session::Serialize::freezethaw::ISA     = ( "CGI::Session::ErrorHandler" );
 
 sub freeze {
     my ($self, $data) = @_;
-    
     return FreezeThaw::freeze($data);
 }
 
 
-
 sub thaw {
     my ($self, $string) = @_;
-
     return (FreezeThaw::thaw($string))[0];
 }
-
 
 1;
 
@@ -46,15 +40,11 @@ This library can be used by CGI::Session to serialize session data. Uses L<Freez
 
 =item freeze($class, \%hash)
 
-Receives two arguments. First is the class name, the second is the data to be serialized.
-Should return serialized string on success, undef on failure. Error message should be set using
-C<set_error()|CGI::Session::ErrorHandler/"set_error()">
+Receives two arguments. First is the class name, the second is the data to be serialized. Should return serialized string on success, undef on failure. Error message should be set using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 =item thaw($class, $string)
 
-Received two arguments. First is the class name, second is the I<frozen> data string. Should return
-thawed data structure on success, undef on failure. Error message should be set 
-using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
+Received two arguments. First is the class name, second is the I<frozen> data string. Should return thawed data structure on success, undef on failure. Error message should be set using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 =back
 

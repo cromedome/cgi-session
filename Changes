@@ -1,40 +1,38 @@
 CGI::Session Change Log
 =====================================================================
 
-4.00
+4.00 - Wednesday, August 31, 2005
 
-   *** NOTE ***  
-   The 4.0 release represents a major overhaul of the CGI::Session code base.
-   Care has been taken to be 100% compatible applications developed with 3.x.
-   However, you are encouraged to run regression tests with your own
-   applications before using this in production. 
+    *** NOTE ***
+    The 4.0 release represents a major overhaul of the CGI::Session code base.
+    Care has been taken to be 100% compatible with applications developed with 3.x.
+    However, you are encouraged to run regression tests with your own applications
+    before using this in production.
 
-   * NEW: PostgreSQL driver enhanced to work better with binary serializers (Matt LeBlanc)
-   * FIX: update to untainting in default seralizer to make "-T" happy (Matt LeBlanc)
-   * FIX: CGI::Session (qw/-ip_match/), a 3.x feature, works again (Shawn Sorichetti) 
-   * INTERNAL: Improved documentation shown during "make", which explains how to run 
-     database-driven tests. (Mark Stosberg)
-   * FIX: to support binary serializers SQLite driver uses MIME::Base64 (Sherzod Ruzmetov)
+    * NEW: PostgreSQL driver enhanced to work better with binary serializers (Matt LeBlanc)
+    * FIX: update to un tainting in default serializer to make "-T" happy (Matt LeBlanc)
+    * FIX: CGI::Session (qw/-ip_match/), a 3.x feature, works again (Shawn Sorichetti)
+    * INTERNAL: Improved documentation shown during "make", which explains how to run
+      database-driven tests. (Mark Stosberg)
+    * FIX: to support binary serializers SQLite driver uses MIME::Base64 (Sherzod Ruzmetov)
 
 4.00_09 - Thursday, July 21, 2005
 
-   * CHANGE: Starting with 4.0, it will no longer work to use the syntax
-             of CGI::Session::DriverName(). This hasn't been a documented
-             API since CGI::Session 2.94, released in August, 2002.
+    * CHANGE: Starting with 4.0, it will no longer work to use the syntax of
+      CGI::Session::DriverName(). This hasn't been a documented API since CGI::Session 2.94,
+      released in August, 2002.
+    * FIX: documented etime(), which was present in 3.x (Mark Stosberg)
+    * FIX: Added code, test and docs to make $CGI::Session::File::FileName work,
+      for 3.x compatibility. (Mark Stosberg)
+    * FIX: Providing an expire time like "-10" now works (Mark Stosberg)
+    * FIX: Restored close() method, for 3.x compatibility. (Mark Stosberg)
+    * FIX: Make ->clear('email') work, for 3.95 compatibility (Mark Stosberg)
+    * FIX: Added back is_new() for compatibility with 3.95. (Mark Stosberg)
+    * FIX: Support for CGI::Simple is confirmed, resolving RT#6141 (Mark Stosberg)
+    * FIX: Add code and tests for $CGI::Session::MySQL::TABLE_NAME, which worked in 3.x (Mark Stosberg)
 
-   * FIX: documented etime(), which was present in 3.x (Mark Stosberg)
-   * FIX: Added code, test and docs to make $CGI::Session::File::FileName work,
-          for 3.x compatibility. (Mark Stosberg)
-   * FIX: Providing an expire time like "-10" now works (Mark Stosberg)
-   * FIX: Restored close() method, for 3.x compatibility. (Mark Stosberg) 
-   * FIX: Make ->clear('email') work, for 3.95 compatibility (Mark Stosberg)
-   * FIX: Added back is_new() for compatibility with 3.95. (Mark Stosberg)
-   * FIX: Support for CGI::Simple is confirmed, resolving RT#6141 (Mark Stosberg) 
-   * FIX: Add code and tests for $CGI::Session::MySQL::TABLE_NAME, 
-     which worked in 3.x (Mark Stosberg) 
-
-   * DOCS: CGI::Session now has a public Subversion repository, thanks to Jason
-           Crome. See the bottom of the CGI::Session docs for details. 
+    * DOCS: CGI::Session now has a public Subversion repository, thanks to Jason Crome.
+      See the bottom of the CGI::Session docs for details.
 
 4.00_08 - Tuesday, March 15, 2005
 
@@ -72,7 +70,7 @@ CGI::Session Change Log
 
     * NEW: load() - constructor method to prevent unnecessary session creations
     * NEW: is_expired() - method to intercept expired sessions
-    * NEW: is_empty() - to intercept requests for unexisting sessions
+    * NEW: is_empty() - to intercept requests for un existing sessions
     * NEW: more optimized source code
     * NEW: updated and improved driver specs
     * NEW: standard testing framework
@@ -80,36 +78,36 @@ CGI::Session Change Log
 
 3.12
 
-	* cache() method introduced, which is normally used
-          by library drivers to cache certain value within the single process
-	* Apache::Session-like tie interface supported (EXPERIMENTAL!)
-	* trace() and tracemsg() methods added for debugging purposes
+    * cache() method introduced, which is normally used by library drivers to
+      cache certain value within the single process
+    * Apache::Session-like tie interface supported (EXPERIMENTAL!)
+    * trace() and tracemsg() methods added for debugging purposes
 
 3.8
 
-	* Abbreviations in DSN parameters are supported via Text::Abbrev.
-	* Automatic api3 detection makes "-api3" switch obsolete
-	* Experimental "-frozen" switch added, but not yet functional.
-	* sync_param() utility function added
-	* header() replacement to CGI::header() added, which outputs
-	  proper HTTP headers with session information
-	* Private data records have been documented.
-	* Bug in clear() kept failing if passed no arguments to be cleared.
+    * Abbreviations in DSN parameters are supported via Text::Abbrev.
+    * Automatic api3 detection makes "-api3" switch obsolete
+    * Experimental "-frozen" switch added, but not yet functional.
+    * sync_param() utility function added
+    * header() replacement to CGI::header() added, which outputs
+      proper HTTP headers with session information
+    * Private data records have been documented.
+    * Bug in clear() kept failing if passed no arguments to be cleared.
 
 3.x
 
-	* Ability to choose between serializers, drivers and id generators
-	  while creating the session object. Supported via '-api3' switch.
-	* New serializers added: Storable, FreezeThaw in addition to Default.
-	* New ID generator added: Incr, which generates auto incrementing
-	  id numbers, in addition to MD5
-	* "-ip_match" switch enabled for additional security
-	* Expire() method is fully functional
-	* Ability to expire certain session parameters
-	* Better documented drivers specifications
-	* Main documentation is split into two: 
-		CGI::Session and CGI::Session::Tutorial
-	* Bug in POD documentation is fixed (thanks to Graham Barr)	
+    * Ability to choose between serializers, drivers and id generators
+      while creating the session object. Supported via '-api3' switch.
+    * New serializers added: Storable, FreezeThaw in addition to Default.
+    * New ID generator added: Incr, which generates auto incrementing
+      id numbers, in addition to MD5
+    * "-ip_match" switch enabled for additional security
+    * Expire() method is fully functional
+    * Ability to expire certain session parameters
+    * Better documented drivers specifications
+    * Main documentation is split into two:
+        1) CGI::Session and 2) CGI::Session::Tutorial
+    * Bug in POD documentation is fixed (thanks to Graham Barr)
 
 
 $Id$

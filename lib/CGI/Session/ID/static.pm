@@ -3,9 +3,7 @@ package CGI::Session::ID::static;
 # $Id$
 
 use strict;
-#use diagnostics;
-
-use Carp;
+use Carp ("croak");
 use CGI::Session::ErrorHandler;
 
 $CGI::Session::ID::static::VERSION = '1.6';

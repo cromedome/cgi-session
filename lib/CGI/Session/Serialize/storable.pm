@@ -1,15 +1,13 @@
 package CGI::Session::Serialize::storable;
 
-# $Id$ 
+# $Id$
 
 use strict;
-
 use Storable;
 require CGI::Session::ErrorHandler;
 
-use vars qw/$VERSION @ISA/;
-$VERSION = '1.5';
-@ISA     = qw( CGI::Session::ErrorHandler );
+$CGI::Session::Serialize::storable::VERSION = "1.5";
+@CGI::Session::Serialize::ISA               = ( "CGI::Session::ErrorHandler" );
 
 =pod
 
@@ -41,16 +39,15 @@ sub freeze {
 =item thaw($class, $string)
 
 Receives two arguments. First is the class name, second is the I<frozen> data string. Should return
-thawed data structure on success, undef on failure. Error message should be set 
+thawed data structure on success, undef on failure. Error message should be set
 using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 =back
 
-=cut 
+=cut
 
 sub thaw {
     my ($self, $string) = @_;
-#    warn "thawing $string...\n";
     return Storable::thaw($string);
 }
 

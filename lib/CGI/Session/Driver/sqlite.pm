@@ -5,7 +5,6 @@ package CGI::Session::Driver::sqlite;
 use strict;
 
 use MIME::Base64;
-use Carp;
 use File::Spec;
 use CGI::Session::Driver::DBI;
 
@@ -16,7 +15,7 @@ sub init {
     my $self = shift;
 
     if ( $self->{Handle} ) {
-        $self->{Handle}->{sqlite_handle_binary_nulls} = 0;
+        $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
         return $self->SUPER::init();
     }
 
@@ -35,11 +34,8 @@ sub init {
 }
 
 
-
-
-
 #
-# Temporary hack to get sqlite/storable get along
+# Temporary hack to get SQLite and Storable get along
 #
 sub store {
     my $self = shift;
@@ -47,7 +43,7 @@ sub store {
 }
 
 #
-# Temporary hack to get sqlite/storable get along
+# Temporary hack to get SQLite and Storable get along
 #
 sub retrieve {
     my $self    = shift;
@@ -55,12 +51,6 @@ sub retrieve {
     return $datastr unless $datastr;
     return decode_base64($datastr);
 }
-
-
-
-
-
-
 
 
 1;
@@ -85,13 +75,11 @@ B<sqlite> driver stores session data in SQLite files using L<DBD::SQLite|DBD::SQ
 
 =head1 DRIVER ARGUMENTS
 
-Supported driver arguments are I<DataSource> and I<Handle>. B<At most> only one of these arguments can be
-set while creating session object.
+Supported driver arguments are I<DataSource> and I<Handle>. B<At most> only one of these arguments can be set while creating session object.
 
-I<DataSource> should be in the form of C<dbi:SQLite:dbname=/path/to/db.sqlt>. If C<dbi:SQLite> is missing it will be prepended for you.
-If I<Handle> is present it should be database handle ($dbh) returned by DBI->connect().
+I<DataSource> should be in the form of C<dbi:SQLite:dbname=/path/to/db.sqlt>. If C<dbi:SQLite:> is missing it will be prepended for you. If I<Handle> is present it should be database handle (C<$dbh>) returned by L<DBI::connect()|DBI/connect()>.
 
-It's OK to drop the third argument to new() alltogether, in which case a database named F<sessions.sqlt> will be created in your machine's TEMPDIR folder, which is F</tmp> in UNIX.
+It's OK to drop the third argument to L<new()|CGI::Session::Driver/new()> altogether, in which case a database named F<sessions.sqlt> will be created in your machine's TEMPDIR folder, which is F</tmp> in UNIX.
 
 =head1 BUGS AND LIMITATIONS
 
