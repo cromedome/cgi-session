@@ -7,22 +7,22 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.00';
+$CGI::Session::VERSION  = '4.01';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
 sub STATUS_NEW      () { 1 }        # denotes session that's just created
-sub STATUS_MODIFIED () { 2 }        # denotes session that's needs synchronization
+sub STATUS_MODIFIED () { 2 }        # denotes session that needs synchronization
 sub STATUS_DELETED  () { 4 }        # denotes session that needs deletion
 sub STATUS_EXPIRED  () { 8 }        # denotes session that was expired.
 
 sub import {
-  my $class = shift;
-  @_ or return;
+    my $class = shift;
+    @_ or return;
 
-  for(@_) {
-    $CGI::Session::IP_MATCH = ( $_ eq '-ip_match' );
-  }
+    for(@_) {
+        $CGI::Session::IP_MATCH = ( $_ eq '-ip_match' );
+    }
 }
 
 sub new {
@@ -481,13 +481,13 @@ Following is the overview of all the available methods accessible via CGI::Sessi
 
 =item new( $dsn, $query||$sid, \%dsn_args )
 
-Constructor. Returns new session object, or undef on failure. Error message is accessible through L<errstr() - class method|CGI::Session::ErrorHandler/errstr>. If called on an already initialized session will re-initialize the session based on already configured object. This is only useful after a call to L<load()|/"load()">.
+Constructor. Returns new session object, or undef on failure. Error message is accessible through L<errstr() - class method|CGI::Session::ErrorHandler/errstr>. If called on an already initialized session will re-initialize the session based on already configured object. This is only useful after a call to L<load()|/"load">.
 
 Can accept up to three arguments, $dsn - Data Source Name, $query||$sid - query object OR a string representing session id, and finally, \%dsn_args, arguments used by $dsn components.
 
 If called without any arguments, $dsn defaults to I<driver:file;serializer:default;id:md5>, $query||$sid defaults to C<< CGI->new() >>, and C<\%dsn_args> defaults to I<undef>.
 
-If called with a single argument, it will be treated either as C<$query> object, or C<$sid>, depending on its type. If argument is a string , C<new()> will treat it as session id and will attempt to retrieve the session from data store. If it fails, will create a new session id, which will be accessible through L<id() method|/"id()">. If argument is an object, L<cookie()|CGI/cookie()> and L<param()|CGI/param()> methods will be called on that object to recover a potential C<$sid> and retrieve it from data store. If it fails, C<new()> will create a new session id, which will be accessible through L<id() method|/"id()">. C<$CGI::Session::NAME> will define the name of the query parameter and/or cookie name to be requested, defaults to I<CGISESSID>.
+If called with a single argument, it will be treated either as C<$query> object, or C<$sid>, depending on its type. If argument is a string , C<new()> will treat it as session id and will attempt to retrieve the session from data store. If it fails, will create a new session id, which will be accessible through L<id() method|/"id">. If argument is an object, L<cookie()|CGI/cookie> and L<param()|CGI/param> methods will be called on that object to recover a potential C<$sid> and retrieve it from data store. If it fails, C<new()> will create a new session id, which will be accessible through L<id() method|/"id">. C<$CGI::Session::NAME> will define the name of the query parameter and/or cookie name to be requested, defaults to I<CGISESSID>.
 
 If called with two arguments first will be treated as $dsn, and second will be treated as $query or $sid or undef, depending on its type. Some examples of this syntax are:
 
@@ -533,7 +533,7 @@ undef is acceptable as a valid placeholder to any of the above arguments, which 
 
 =item load($dsn, $query, \%dsn_args);
 
-Constructor. Usage is identical to L<new()|/"new()">, so is the return value. Major difference is, L<new()|/"new()"> can create new session if it detects expired and non-existing sessions, but C<load()> does not.
+Constructor. Usage is identical to L<new()|/"new">, so is the return value. Major difference is, L<new()|/"new"> can create new session if it detects expired and non-existing sessions, but C<load()> does not.
 
 C<load()> is useful to detect expired or non-existing sessions without forcing the library to create new sessions. So now you can do something like this:
 
@@ -730,7 +730,7 @@ a warning and undef will be returned.
 
 =item param_hashref()
 
-B<Deprecated>. Use L<dataref()|/"dataref()"> instead.
+B<Deprecated>. Use L<dataref()|/"dataref"> instead.
 
 =item dataref()
 
@@ -749,7 +749,7 @@ Useful for having all session data in a hashref, but too risky to update.
 
 =item save_param($query, \@list)
 
-Saves query parameters to session object. In other words, it's the same as calling L<param($name, $value)|/"param($name, $value)"> for every single query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query()|/"query()">, which returns C<< CGI->new >>. If second argument is present and is a reference to an array, only those query parameters found in the array will be stored in the session. undef is a valid placeholder for any argument to force default behavior.
+Saves query parameters to session object. In other words, it's the same as calling L<param($name, $value)|/"param"> for every single query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query()|/"query">, which returns C<< CGI->new >>. If second argument is present and is a reference to an array, only those query parameters found in the array will be stored in the session. undef is a valid placeholder for any argument to force default behavior.
 
 =item load_param()
 
@@ -789,7 +789,7 @@ Read-only method. Returns the time when the session was first created in seconds
 
 =item expire($param, $time)
 
-Sets expiration interval relative to L<atime()|/"atime()">.
+Sets expiration interval relative to L<atime()|/"atime">.
 
 If used with no arguments, returns the expiration interval if it was ever set. If no expiration was ever set, returns undef. For backwards compatibility, a method named C<etime()> does the same thing.
 
@@ -813,11 +813,11 @@ All the time values should be given in the form of seconds. Following keywords a
 
 Examples:
 
-    $session->expire("2h");                # expires in two days
+    $session->expire("2h");                # expires in two hours
     $session->expire(0);                   # cancel expiration
     $session->expire("~logged-in", "10m"); # expires '~logged-in' parameter after 10 idle minutes
 
-Note: all the expiration times are relative to session's last access time, not to its creation time. To expire a session immediately, call L<delete()|/"delete()">. To expire a specific session parameter immediately, call L<clear([$name])|/"clear()">.
+Note: all the expiration times are relative to session's last access time, not to its creation time. To expire a session immediately, call L<delete()|/"delete">. To expire a specific session parameter immediately, call L<clear([$name])|/"clear">.
 
 =cut
 
@@ -904,7 +904,7 @@ Returns true only for a brand new session.
 
 =item is_expired()
 
-Tests whether session initialized using L<load()|/"load()"> is to be expired. This method works only on sessions initialized with load():
+Tests whether session initialized using L<load()|/"load"> is to be expired. This method works only on sessions initialized with load():
 
     $s = CGI::Session->load() or die CGI::Session->errstr;
     if ( $s->is_expired ) {
@@ -928,11 +928,11 @@ Actually, the above code is nothing but waste. The same effect could've been ach
 
     $s = CGI::Session->new( $sid );
 
-L<is_empty()|/"is_empty()"> is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<is_expired()|/"is_expired()"> for an example.
+L<is_empty()|/"is_empty"> is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<is_expired()|/"is_expired"> for an example.
 
 =item delete()
 
-Deletes a session from the data store and empties session data from memory, completely, so subsequent read/write requests on the same object will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush()">, and flush() will do the actual removal.
+Deletes a session from the data store and empties session data from memory, completely, so subsequent read/write requests on the same object will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush">, and flush() will do the actual removal.
 
 =item find( \&code )
 
