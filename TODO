@@ -4,9 +4,6 @@ release!
 
 [COMPATIBILITY]
 
- - '-ip_match' is missing in 4.x. The code should be easy port from 3.x, as well
-    as some docs. Also, $CGI::Session::IP_MATCH needs to be supported. 
-
  - Resolve this question of consistency versus compatibility for expires('param',0);
    http://sourceforge.net/mailarchive/message.php?msg_id=12244228
 
