@@ -1,6 +1,12 @@
 CGI::Session Change Log
 =====================================================================
 
+4.02 - Friday, September 02, 2005
+    * FIX: remote_addr() was missing (RT #14414])
+
+4.01 - Thursday, September 01, 2005
+    * FIX: Minor POD fix
+
 4.00 - Wednesday, August 31, 2005
 
     *** NOTE ***
