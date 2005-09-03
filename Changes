@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: Default serializer can now serialize objects (Matt LeBlanc)
+
 4.02 - Friday, September 02, 2005
     * FIX: remote_addr() was missing (RT #14414])
 

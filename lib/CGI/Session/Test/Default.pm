@@ -283,9 +283,6 @@ sub run {
 
         SKIP: {
             my $dsn = CGI::Session->parse_dsn($self->{dsn});
-            if ( !$dsn->{serializer} || ($dsn->{serializer} eq 'default') ) {
-                skip("Default serializer cannot serialize objects properly", 7);
-            }
             ok($simple_object->name eq "Sherzod Ruzmetov");
             ok($simple_object->emails(1) eq 'sherzodr@cpan.org');
             ok($simple_object->emails(0) eq 'sherzodr@handalak.com');

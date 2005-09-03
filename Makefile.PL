@@ -48,6 +48,7 @@ WriteMakefile(
         'Digest::MD5'   => undef,
         'Data::Dumper'  => undef,
         'Test::More'    => undef,
+        'Scalar::Util'  => undef,
     },
     ABSTRACT        => 'Persistent session data in CGI applications',
     AUTHOR          => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
