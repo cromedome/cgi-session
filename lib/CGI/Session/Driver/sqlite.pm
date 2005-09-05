@@ -4,9 +4,9 @@ package CGI::Session::Driver::sqlite;
 
 use strict;
 
-use MIME::Base64;
 use File::Spec;
 use CGI::Session::Driver::DBI;
+use DBI qw(SQL_BLOB);
 
 @CGI::Session::Driver::sqlite::ISA        = qw( CGI::Session::Driver::DBI );
 $CGI::Session::Driver::sqlite::VERSION    = "1.0";
@@ -33,25 +33,41 @@ sub init {
     return 1;
 }
 
-
-#
-# Temporary hack to get SQLite and Storable get along
-#
 sub store {
     my $self = shift;
-    return $self->SUPER::store($_[0], encode_base64($_[1], ''));
+    my ($sid, $datastr) = @_;
+    return $self->set_error("store(): usage error") unless $sid && $datastr;
+
+    my $dbh = $self->{Handle};
+
+    my $sth = $dbh->prepare("SELECT id FROM " . $self->table_name . " WHERE id=?");
+    unless ( defined $sth ) {
+        return $self->set_error( "store(): \$sth->prepare failed with message " . $dbh->errstr );
+    }
+
+    $sth->execute( $sid ) or return $self->set_error( "store(): \$sth->execute failed with message " . $dbh->errstr );
+    if ( $sth->fetchrow_array ) {
+        __ex_and_ret($dbh,"UPDATE " . $self->table_name . " SET a_session=? WHERE id=?",$datastr,$sid)
+            or return $self->set_error( "store(): serialize to db failed " . $dbh->errstr );
+    } else {
+        __ex_and_ret($dbh,"INSERT INTO " . $self->table_name . " (a_session,id) VALUES(?, ?)",$datastr, $sid)
+            or return $self->set_error( "store(): serialize to db failed " . $dbh->errstr );
+    }
+    return 1;
 }
 
-#
-# Temporary hack to get SQLite and Storable get along
-#
-sub retrieve {
-    my $self    = shift;
-    my $datastr = $self->SUPER::retrieve(shift);
-    return $datastr unless $datastr;
-    return decode_base64($datastr);
+sub __ex_and_ret {
+    my ($dbh,$sql,$datastr,$sid) = @_;
+    eval {
+        local @SIG{qw(__DIE__ __WARN__)};
+        my $sth = $dbh->prepare($sql) or return 0;
+        $sth->bind_param(1,$datastr,SQL_BLOB) or return 0;
+        $sth->bind_param(2,$sid) or return 0;
+        $sth->execute() or return 0;
+    };
+    return 0 if $@;
+    return 1;
 }
-
 
 1;
 
@@ -83,7 +99,7 @@ It's OK to drop the third argument to L<new()|CGI::Session::Driver/new()> altoge
 
 =head1 BUGS AND LIMITATIONS
 
-To support binary serializers (L<CGI::Session::Serialize::storable>), currently, sqlite driver makes use of L<MIME::Base64|MIME::Base64> to encode and decode data string.
+None known.
 
 =head1 LICENSING
 
