@@ -1,6 +1,7 @@
 CGI::Session Change Log
 =====================================================================
 
+    * INTERNAL: SQLite driver no longer needs MIME::Base64 for encoding (Matt LeBlanc)
     * FIX: Default serializer can now serialize objects (Matt LeBlanc)
 
 4.02 - Friday, September 02, 2005

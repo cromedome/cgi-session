@@ -64,7 +64,6 @@ sub store {
 sub __ex_and_ret {
     my ($dbh,$sql,$datastr,$sid,$type) = @_;
     eval {
-        local @SIG{qw(__DIE__ __WARN__)};
         my $sth = $dbh->prepare($sql) or return 0;
         $sth->bind_param(1,$datastr,{ pg_type => $type }) or return 0;
         $sth->bind_param(2,$sid) or return 0;
