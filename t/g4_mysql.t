@@ -39,7 +39,8 @@ for (qw/DBI DBD::mysql/) {
 require CGI::Session::Driver::mysql;
 my $dsnstring = CGI::Session::Driver::mysql->_mk_dsnstr(\%dsn);
 
-my $dbh = DBI->connect($dsnstring, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>1});
+my $dbh;
+eval { $dbh = DBI->connect($dsnstring, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>1}) };
 unless ( $dbh ) {
     plan(skip_all=>"Couldn't establish connection with the MySQL server: " . DBI->errstr);
     exit(0);
