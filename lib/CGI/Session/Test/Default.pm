@@ -29,7 +29,7 @@ sub new {
     my $self    = bless {
             dsn     => "driver:file",
             args    => undef,
-            tests   => 85,
+            tests   => 99,
             @_
     }, $class;
 
@@ -265,9 +265,26 @@ sub run {
         ok(overload::Overloaded($overloaded_class) , "OverloadedObjectClass is properly overloaded");
         ok(ref ($overloaded_class) eq "OverloadedObjectClass", "OverloadedObjectClass is an object");
         $session->param("overloaded_object", $overloaded_class);
-
+        
         ok($session->param("overloaded_object") eq "ABCDEFG");
+        
+        my $simple_class2 = SimpleObjectClass->new();
+        ok($simple_class2, "SimpleObjectClass created successfully");
 
+        $simple_class2->name("Sherzod Ruzmetov");
+        $simple_class2->emails(0, 'sherzodr@handalak.com');
+        $simple_class2->emails(1, 'sherzodr@cpan.org');
+        $simple_class2->blogs('lost+found', 'http://author.handalak.com/');
+        $simple_class2->blogs('yigitlik', 'http://author.handalak.com/uz/');
+        $session->param("embedded_simple_and_overloaded",[ undef, $simple_class2, OverloadedObjectClass->new("Embedded") ]);
+
+        ok(!defined($session->param("embedded_simple_and_overloaded")->[0]),"First element of anonymous array undef");
+
+        ok($session->param("embedded_simple_and_overloaded")->[1]->name eq "Sherzod Ruzmetov");
+        ok($session->param("embedded_simple_and_overloaded")->[1]->emails(1) eq 'sherzodr@cpan.org');
+        ok($session->param("embedded_simple_and_overloaded")->[1]->blogs('yigitlik') eq 'http://author.handalak.com/uz/');
+  
+        ok($session->param("embedded_simple_and_overloaded")->[2] eq "Embedded");
     }
 
 
@@ -281,16 +298,28 @@ sub run {
         my $simple_object = $session->param("simple_object");
         ok(ref $simple_object eq "SimpleObjectClass", "SimpleObjectClass loaded successfully");
 
-        SKIP: {
-            my $dsn = CGI::Session->parse_dsn($self->{dsn});
-            ok($simple_object->name eq "Sherzod Ruzmetov");
-            ok($simple_object->emails(1) eq 'sherzodr@cpan.org');
-            ok($simple_object->emails(0) eq 'sherzodr@handalak.com');
-            ok($simple_object->blogs('lost+found') eq 'http://author.handalak.com/');
-            ok(ref $session->param("overloaded_object") );
-            ok($session->param("overloaded_object") eq "ABCDEFG", "Object is still overloaded");
-            ok(overload::Overloaded($session->param("overloaded_object")), "Object is really overloaded");
-        }
+        my $dsn = CGI::Session->parse_dsn($self->{dsn});
+        ok($simple_object->name eq "Sherzod Ruzmetov");
+        ok($simple_object->emails(1) eq 'sherzodr@cpan.org');
+        ok($simple_object->emails(0) eq 'sherzodr@handalak.com');
+        ok($simple_object->blogs('lost+found') eq 'http://author.handalak.com/');
+        ok(ref $session->param("overloaded_object") );
+        ok($session->param("overloaded_object") eq "ABCDEFG", "Object is still overloaded");
+        ok(overload::Overloaded($session->param("overloaded_object")), "Object is really overloaded");
+
+        ok(!defined($session->param("embedded_simple_and_overloaded")->[0]),"First element of anonymous array undef");
+        
+        my $simple_object2 = $session->param("embedded_simple_and_overloaded")->[1];
+        ok(ref $simple_object2 eq "SimpleObjectClass", "SimpleObjectClass loaded successfully");
+
+        ok($simple_object2->name eq "Sherzod Ruzmetov");
+        ok($simple_object2->emails(1) eq 'sherzodr@cpan.org');
+        ok($simple_object2->emails(0) eq 'sherzodr@handalak.com');
+        ok($simple_object2->blogs('lost+found') eq 'http://author.handalak.com/');
+
+        
+        ok($session->param("embedded_simple_and_overloaded")->[2] eq "Embedded");
+        ok(overload::Overloaded($session->param("embedded_simple_and_overloaded")->[2]), "Object is really overloaded");
         $session->delete();
     }
 }

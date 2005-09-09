@@ -6,7 +6,7 @@ use strict;
 use Safe;
 use Data::Dumper;
 use CGI::Session::ErrorHandler;
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use Carp "croak";
 
 @CGI::Session::Serialize::default::ISA = ( "CGI::Session::ErrorHandler" );
@@ -44,7 +44,7 @@ sub __walk {
     my @filter = shift;
     
     while (defined(my $x = shift @filter)) {
-        $seen{$x}++ and next;
+        $seen{refaddr $x || ''}++ and next;
           
         my $r = reftype $x or next;
         if ($r eq "HASH") {
@@ -63,19 +63,20 @@ sub __scan {
             if (overload::Overloaded($_)) {
                 my $r = reftype $_;
                 if ($r eq "HASH") {
-                    $_ = bless { %$_ }, ref $_
+                    $_ = bless { %$_ }, ref $_;
                 } elsif ($r eq "ARRAY") {
-                    $_ = bless [ @$_ ], ref $_
+                    $_ = bless [ @$_ ], ref $_;
                 } elsif ($r eq "SCALAR" || $r eq "REF") {
-                    $_ = bless \do{my $o = $$_},ref $_
+                    $_ = bless \do{my $o = $$_},ref $_;
                 } else {
                     croak "Do not know how to reconstitute blessed object of base type $r";
                 }
             } else {
-                bless $_, ref $_
+                bless $_, ref $_;
             }
         }
     }
+    return @_;
 }
 
 
