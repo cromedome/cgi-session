@@ -83,11 +83,25 @@ sub atime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION
 
 sub ctime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_CTIME} : undef }
 
-sub _driver         { $_[0]->{_OBJECTS}->{driver} }
+sub _driver {
+    my $self = shift;
+    defined($self->{_OBJECTS}->{driver}) and return $self->{_OBJECTS}->{driver};
+    my $pm = "CGI::Session::Driver::" . $self->{_DSN}->{driver};
+    return $self->{_OBJECTS}->{driver} = $pm->new( $self->{_DRIVER_ARGS} );
+}
 
-sub _serializer     { $_[0]->{_OBJECTS}->{serializer} }
+sub _serializer     { 
+    my $self = shift;
+    defined($self->{_OBJECTS}->{serializer}) and return $self->{_OBJECTS}->{serializer};
+    return $self->{_OBJECTS}->{serializer} = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
+}
 
-sub _id_generator   { $_[0]->{_OBJECTS}->{id} }
+
+sub _id_generator   { 
+    my $self = shift;
+    defined($self->{_OBJECTS}->{id}) and return $self->{_OBJECTS}->{id};
+    return $self->{_OBJECTS}->{id} = "CGI::Session::ID::" . $self->{_DSN}->{id};
+}
 
 sub _ip_matches {
   return ( $_[0]->{_DATA}->{_SESSION_REMOTE_ADDR} eq $ENV{REMOTE_ADDR} );
@@ -613,11 +627,14 @@ sub load {
     # Beyond this point used to be '_init()' method. But I had to merge them together
     # since '_init()' did not serve specific purpose
 
+
+    #
+    # Checking and loading driver, serializer and id-generators
+    #
     my @pms = ();
     $pms[0] = "CGI::Session::Driver::"      . $self->{_DSN}->{driver};
     $pms[1] = "CGI::Session::Serialize::"  . $self->{_DSN}->{serializer};
     $pms[2] = "CGI::Session::ID::"          . $self->{_DSN}->{id};
-
     for ( @pms ) {
         eval "require $_";
         if ( my $errmsg = $@ ) {
@@ -625,15 +642,6 @@ sub load {
         }
     }
 
-    #
-    # Creating & caching driver object
-    defined($self->{_OBJECTS}->{driver} = $pms[0]->new( $self->{_DRIVER_ARGS} ) )
-        or return $self->set_error( "init(): couldn't create driver object: " .  $pms[0]->errstr );
-
-    $self->{_OBJECTS}->{serializer} = $pms[1];
-    $self->{_OBJECTS}->{id}         = $pms[2];
-
-    #
     unless ( $self->{_CLAIMED_ID} ) {
         my $query = $self->query();
         eval {
@@ -650,19 +658,21 @@ sub load {
 
     #
     # Attempting to load the session
-    my $raw_data = $self->{_OBJECTS}->{driver}->retrieve( $self->{_CLAIMED_ID} );
+    my $driver = $self->_driver();
+    my $raw_data = $driver->retrieve( $self->{_CLAIMED_ID} );
     unless ( defined $raw_data ) {
-        return $self->set_error( "load(): couldn't retrieve data: " . $self->{_OBJECTS}->{driver}->errstr );
+        return $self->set_error( "load(): couldn't retrieve data: " . $driver->errstr );
     }
     #
     # Requested session couldn't be retrieved
     return $self unless $raw_data;
 
-    $self->{_DATA} = $self->{_OBJECTS}->{serializer}->thaw($raw_data);
+    my $serializer = $self->_serializer();
+    $self->{_DATA} = $serializer->thaw($raw_data);
     unless ( defined $self->{_DATA} ) {
         #die $raw_data . "\n";
-        return $self->set_error( "load(): couldn't thaw() data using $self->{_OBJECTS}->{serializer} :" .
-                                $self->{_OBJECTS}->{serializer}->errstr );
+        return $self->set_error( "load(): couldn't thaw() data using $serializer:" .
+                                $serializer->errstr );
     }
     unless (defined($self->{_DATA}) && ref ($self->{_DATA}) && (ref $self->{_DATA} eq 'HASH') &&
             defined($self->{_DATA}->{_SESSION_ID}) ) {
@@ -700,7 +710,6 @@ sub load {
     $self->clear(\@expired_params) if @expired_params;
     $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
     $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
-
     return $self;
 }
 
@@ -1138,6 +1147,8 @@ If you need help using CGI::Session consider the mailing list. You can ask the l
 cgi-session-user@lists.sourceforge.net .
 
 You can subscribe to the mailing list at https://lists.sourceforge.net/lists/listinfo/cgi-session-user .
+
+Bug reports can be submitted at http://rt.cpan.org/NoAuth/ReportBug.html?Queue=CGI-Session
 
 =head1 AUTHOR
 

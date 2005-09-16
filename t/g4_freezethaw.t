@@ -16,7 +16,7 @@ my $t = CGI::Session::Test::Default->new(
     dsn => "Driver:file;serial:FreezeThaw",
     args=>{Directory=> $ses_dir });
 
-plan tests => $t->number_of_tests + 2;
+plan tests => $t->number_of_tests + 3;
 $t->run();
 
 TODO: {
@@ -27,11 +27,11 @@ TODO: {
     #my $s = CGI::Session->new('Driver:file;serial:FreezeThaw',undef, { Directory=>$ses_dir } );
 }
 
-
+$CGI::Session::File::FileName = 'test_%s.txt';
 {
-    $CGI::Session::File::FileName = 'test_%s.txt';
-    my $s = CGI::Session->new('Driver:file;serial:FreezeThaw',undef,
-            { Directory=> $ses_dir } );
+    
+    ok(my $s = CGI::Session->new('Driver:file;serial:FreezeThaw',undef,
+            { Directory=> $ses_dir } ));
     is( $CGI::Session::Driver::file::FileName,
         $CGI::Session::File::FileName,
         'compatibility with $CGI::Session::File::FileName has been preserved');
