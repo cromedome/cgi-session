@@ -42,7 +42,7 @@ unless ( exists $tables{ $dsn{TableName} } ) {
 
 my $t = CGI::Session::Test::Default->new(
     dsn => "driver:sqlite",
-    args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
+    args=>{Handle=> sub {$dbh}, TableName=>$dsn{TableName}});
 
 plan tests => $t->number_of_tests;
 $t->run();

@@ -1,6 +1,11 @@
 CGI::Session Change Log
 =====================================================================
 
+    * NEW: DBI Drivers now support a lazy loaded database handle. This is useful with the
+      CGI::Application plugin system. If the session is never used, the database handle may not
+      not need to be created. The syntax is to use a code ref: 
+        Handle => sub {DBI->connect} 
+      (Mark Stosberg)
     * INTERNAL: SQLite driver no longer needs MIME::Base64 for encoding (Matt LeBlanc)
     * FIX: Default serializer can now serialize objects (Matt LeBlanc)
 

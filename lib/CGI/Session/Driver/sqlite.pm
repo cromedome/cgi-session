@@ -5,28 +5,26 @@ package CGI::Session::Driver::sqlite;
 use strict;
 
 use File::Spec;
-use CGI::Session::Driver::DBI;
+use base 'CGI::Session::Driver::DBI';
 use DBI qw(SQL_BLOB);
 
-@CGI::Session::Driver::sqlite::ISA        = qw( CGI::Session::Driver::DBI );
-$CGI::Session::Driver::sqlite::VERSION    = "1.0";
+# @CGI::Session::Driver::sqlite::ISA        = qw( CGI::Session::Driver::DBI );
+$CGI::Session::Driver::sqlite::VERSION    = "1.1";
 
 sub init {
     my $self = shift;
-
-    if ( $self->{Handle} ) {
-        $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
-        return $self->SUPER::init();
-    }
 
     $self->{DataSource} ||= File::Spec->catfile( File::Spec->tmpdir, 'sessions.sqlt' );
     unless ( $self->{DataSource} =~ /^dbi:sqlite/i ) {
         $self->{DataSource} = "dbi:SQLite:dbname=" . $self->{DataSource};
     }
 
-    $self->{Handle} = DBI->connect( $self->{DataSource}, '', '', {RaiseError=>1, PrintError=>1, AutoCommit=>1});
+    $self->{Handle} ||= DBI->connect( $self->{DataSource}, '', '', {RaiseError=>1, PrintError=>1, AutoCommit=>1});
     unless ( $self->{Handle} ) {
         return $self->set_error( "init(): couldn't create \$dbh: " . $DBI::errstr );
+    }
+    if (ref $self->{Handle} eq 'CODE') {
+        $self->{Handle} = $self->{Handle}->();
     }
     $self->{_disconnect} = 1;
     $self->{Handle}->{sqlite_handle_binary_nulls} = 1;

@@ -14,7 +14,12 @@ $CGI::Session::Driver::DBI::VERSION = "1.1";
 
 sub init {
     my $self = shift;
-    unless ( defined $self->{Handle} ) {
+    if ( defined $self->{Handle} )  {
+        if (ref $self->{Handle} eq 'CODE') {
+            $self->{Handle} = $self->{Handle}->();
+        }
+    }
+    else {
         $self->{Handle} = DBI->connect( 
             $self->{DataSource}, $self->{User}, $self->{Password}, 
             { RaiseError=>0, PrintError=>0, AutoCommit=>1 }
