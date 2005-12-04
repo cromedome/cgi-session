@@ -10,6 +10,12 @@ use Fcntl qw( :DEFAULT :flock :mode );
 use CGI::Session::Driver;
 use vars qw( $FileName);
 
+# keep historical behavior
+{
+    no strict 'refs';
+    *FileName = \$CGI::Session::File::FileName;
+}
+
 @CGI::Session::Driver::file::ISA        = ( "CGI::Session::Driver" );
 $CGI::Session::Driver::file::VERSION    = "3.4";
 $FileName                               = "cgisess_%s";
