@@ -40,6 +40,9 @@ sub retrieve {
 
     return 0 unless -e $path;
 
+    # make certain our filehandle goes away when we fall out of scope
+    local *FH;
+
     unless ( sysopen(FH, $path, O_RDONLY) ) {
         return $self->set_error( "retrieve(): couldn't open '$path': $!" );
     }
@@ -61,6 +64,10 @@ sub store {
     my $directory = $self->{Directory};
     my $file      = sprintf( $FileName, $sid );
     my $path      = File::Spec->catfile($directory, $file);
+    
+    # make certain our filehandle goes away when we fall out of scope
+    local *FH;
+    
     sysopen(FH, $path, O_WRONLY|O_CREAT) or return $self->set_error( "store(): couldn't open '$path': $!" );
     flock(FH, LOCK_EX)      or return $self->set_error( "store(): couldn't lock '$path': $!" );
     truncate(FH, 0)         or return $self->set_error( "store(): couldn't truncate '$path': $!" );
