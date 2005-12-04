@@ -3,20 +3,30 @@
 use strict;
 use diagnostics;
 
-my %dsn = (
-    DataSource  => $ENV{CGISESS_MYSQL_DSN}      || "dbi:mysql:test",
-    User        => $ENV{CGISESS_MYSQL_USER}     || $ENV{USER},
-    Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
-    Socket      => $ENV{CGISESS_MYSQL_SOCKET}   || undef,
-    TableName   => 'sessions'
-);
+my %dsn;
+if (defined $ENV{DBI_DSN} && ($ENV{DBI_DSN} =~ m/^dbi:mysql:/)) {
+    %dsn = (
+        DataSource  => $ENV{DBI_DSN},
+        Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
+        TableName   => 'sessions'
+    );
+}
+else {
+    %dsn = (
+        DataSource  => $ENV{CGISESS_MYSQL_DSN},
+        User        => $ENV{CGISESS_MYSQL_USER}     || $ENV{USER},
+        Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
+        Socket      => $ENV{CGISESS_MYSQL_SOCKET}   || undef,
+        TableName   => 'sessions'
+    );
+}
 
 
 use File::Spec;
 use Test::More;
 use CGI::Session::Test::Default;
 
-for ( "DBI", "DBD::mysql", "FreezeThaw" ) {
+for (qw/DBI DBD::mysql/) {
     eval "require $_";
     if ( $@ ) {
         plan(skip_all=>"$_ is NOT available");
@@ -24,11 +34,15 @@ for ( "DBI", "DBD::mysql", "FreezeThaw" ) {
     }
 }
 
+
+
 require CGI::Session::Driver::mysql;
 my $dsnstring = CGI::Session::Driver::mysql->_mk_dsnstr(\%dsn);
-my $dbh = DBI->connect($dsnstring, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>0});
+
+my $dbh;
+eval { $dbh = DBI->connect($dsnstring, $dsn{User}, $dsn{Password}, {RaiseError=>0, PrintError=>1}) };
 unless ( $dbh ) {
-    plan(skip_all=>"Couldn't establish connection with the server");
+    plan(skip_all=>"Couldn't establish connection with the MySQL server: " . (DBI->errstr || $@));
     exit(0);
 }
 
