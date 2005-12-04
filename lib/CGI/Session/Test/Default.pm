@@ -4,6 +4,7 @@ use strict;
 use Carp;
 use Test::More;
 use Data::Dumper;
+use Scalar::Util "refaddr";
 
 $CGI::Session::Test::Default::VERSION = '1.52';
 
@@ -29,7 +30,7 @@ sub new {
     my $self    = bless {
             dsn     => "driver:file",
             args    => undef,
-            tests   => 99,
+            tests   => 101,
             @_
     }, $class;
 
@@ -276,7 +277,8 @@ sub run {
         $simple_class2->emails(1, 'sherzodr@cpan.org');
         $simple_class2->blogs('lost+found', 'http://author.handalak.com/');
         $simple_class2->blogs('yigitlik', 'http://author.handalak.com/uz/');
-        $session->param("embedded_simple_and_overloaded",[ undef, $simple_class2, OverloadedObjectClass->new("Embedded") ]);
+        my $embedded = OverloadedObjectClass->new("Embedded");
+        $session->param("embedded_simple_and_overloaded",[ undef, $simple_class2, $embedded, $embedded ]);
 
         ok(!defined($session->param("embedded_simple_and_overloaded")->[0]),"First element of anonymous array undef");
 
@@ -285,6 +287,9 @@ sub run {
         ok($session->param("embedded_simple_and_overloaded")->[1]->blogs('yigitlik') eq 'http://author.handalak.com/uz/');
   
         ok($session->param("embedded_simple_and_overloaded")->[2] eq "Embedded");
+        
+        ok(refaddr($session->param("embedded_simple_and_overloaded")->[2]) == refaddr($session->param("embedded_simple_and_overloaded")->[3]),
+            "Overloaded objects have matching addresses");
     }
 
 
@@ -320,6 +325,9 @@ sub run {
         
         ok($session->param("embedded_simple_and_overloaded")->[2] eq "Embedded");
         ok(overload::Overloaded($session->param("embedded_simple_and_overloaded")->[2]), "Object is really overloaded");
+        
+        ok(refaddr($session->param("embedded_simple_and_overloaded")->[2]) == refaddr($session->param("embedded_simple_and_overloaded")->[3]),
+            "Overloaded objects have matching addresses");        
         $session->delete();
     }
 }
