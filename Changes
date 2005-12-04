@@ -1,6 +1,9 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: File driver now localizes the filehandle to avoid any possibility
+      of extended locking in persistent environments (Matt LeBlanc)
+    * FIX: File driver now locks the file when retrieving the session data (Matt LeBlanc)
     * NEW: DBI Drivers now support a lazy loaded database handle. This is useful with the
       CGI::Application plugin system. If the session is never used, the database handle may not
       not need to be created. The syntax is to use a code ref: 
