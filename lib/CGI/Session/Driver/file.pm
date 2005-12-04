@@ -43,6 +43,7 @@ sub retrieve {
     unless ( sysopen(FH, $path, O_RDONLY) ) {
         return $self->set_error( "retrieve(): couldn't open '$path': $!" );
     }
+    flock(FH, LOCK_EX) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );    
     my $rv = "";
     while ( <FH> ) {
         $rv .= $_;
