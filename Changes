@@ -1,6 +1,9 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: Default serializer now properly handles data structures that appear
+      more than once in the serialized data structure (before it'd result in data 
+      structures that were equivalent but did not have the same address). (Matt LeBlanc)
     * FIX: File driver now localizes the filehandle to avoid any possibility
       of extended locking in persistent environments (Matt LeBlanc)
     * FIX: File driver now locks the file when retrieving the session data (Matt LeBlanc)
