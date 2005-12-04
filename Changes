@@ -12,8 +12,11 @@ CGI::Session Change Log
       not need to be created. The syntax is to use a code ref: 
         Handle => sub {DBI->connect} 
       (Mark Stosberg)
-    * INTERNAL: SQLite driver no longer needs MIME::Base64 for encoding (Matt LeBlanc)
+
+4.03 - Wednesday, October 05, 2005
+    * FIX: automatic flushing did not work if session object was global
     * FIX: Default serializer can now serialize objects (Matt LeBlanc)
+    * INTERNAL: SQLite driver no longer needs MIME::Base64 for encoding (Matt LeBlanc)
 
 4.02 - Friday, September 02, 2005
     * FIX: remote_addr() was missing (RT #14414])
