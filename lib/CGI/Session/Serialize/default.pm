@@ -8,6 +8,8 @@ use Data::Dumper;
 use CGI::Session::ErrorHandler;
 use Scalar::Util qw(blessed reftype refaddr);
 use Carp "croak";
+use vars qw( %overloaded );
+require overload;
 
 @CGI::Session::Serialize::default::ISA = ( "CGI::Session::ErrorHandler" );
 $CGI::Session::Serialize::default::VERSION = '1.5';
@@ -16,14 +18,17 @@ $CGI::Session::Serialize::default::VERSION = '1.5';
 sub freeze {
     my ($class, $data) = @_;
     
-    my $d = new Data::Dumper([$data], ["D"]);
+    my $d =
+    new Data::Dumper([$data], ["D"]);
     $d->Indent( 0 );
-    $d->Purity( 0 );
+    $d->Purity( 1 );
     $d->Useqq( 0 );
-    $d->Deepcopy( 1 );
-    $d->Quotekeys( 0 );
+    $d->Deepcopy( 0 );
+    $d->Quotekeys( 1 );
     $d->Terse( 0 );
-    return $d->Dump();
+    
+    # ;$D added to make certain we get our data structure back when we thaw
+    return $d->Dump() . ';$D';
 }
 
 sub thaw {
@@ -32,7 +37,7 @@ sub thaw {
     # To make -T happy
      my ($safe_string) = $string =~ m/^(.*)$/s;
      my $rv = Safe->new->reval( $safe_string );
-    if ( my $errmsg = $@ ) {
+    if ( $@ ) {
         return $class->set_error("thaw(): couldn't thaw. $@");
     }
     __walk($rv);
@@ -42,12 +47,15 @@ sub thaw {
 sub __walk {
     my %seen;
     my @filter = shift;
+    local %overloaded;
     
     while (defined(my $x = shift @filter)) {
         $seen{refaddr $x || ''}++ and next;
           
         my $r = reftype $x or next;
         if ($r eq "HASH") {
+            # we use this form to make certain we have aliases
+            # to the values in %$x and not copies
             push @filter, __scan(@{$x}{keys %$x});
         } elsif ($r eq "ARRAY") {
             push @filter, __scan(@$x);
@@ -57,19 +65,32 @@ sub __walk {
     }
 }
 
+# we need to do this because the values we get back from the safe compartment 
+# will have packages defined from the safe compartment's *main instead of
+# the one we use
 sub __scan {
+    # $_ gets aliased to each value from @_ which are aliases of the values in 
+    #  the current data structure
     for (@_) {
         if (blessed $_) {
             if (overload::Overloaded($_)) {
-                my $r = reftype $_;
-                if ($r eq "HASH") {
-                    $_ = bless { %$_ }, ref $_;
-                } elsif ($r eq "ARRAY") {
-                    $_ = bless [ @$_ ], ref $_;
-                } elsif ($r eq "SCALAR" || $r eq "REF") {
-                    $_ = bless \do{my $o = $$_},ref $_;
+                my $address = refaddr $_;
+
+                # if we already rebuilt and reblessed this item, use the cached
+                # copy so our ds is consistent with the one we serialized
+                if (exists $overloaded{$address}) {
+                    $_ = $overloaded{$address};
                 } else {
-                    croak "Do not know how to reconstitute blessed object of base type $r";
+                    my $reftype = reftype $_;                
+                    if ($reftype eq "HASH") {
+                        $_ = $overloaded{$address} = bless { %$_ }, ref $_;
+                    } elsif ($reftype eq "ARRAY") {
+                        $_ = $overloaded{$address} =  bless [ @$_ ], ref $_;
+                    } elsif ($reftype eq "SCALAR" || $reftype eq "REF") {
+                        $_ = $overloaded{$address} =  bless \do{my $o = $$_},ref $_;
+                    } else {
+                        croak "Do not know how to reconstitute blessed object of base type $reftype";
+                    }
                 }
             } else {
                 bless $_, ref $_;
