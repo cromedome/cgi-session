@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: File driver now respects $CGI::Session::File::FileName for 3.9x
+      compatibility. (Matt LeBlanc)
     * FIX: Default serializer now properly handles data structures that appear
       more than once in the serialized data structure (before it'd result in data 
       structures that were equivalent but did not have the same address). (Matt LeBlanc)
