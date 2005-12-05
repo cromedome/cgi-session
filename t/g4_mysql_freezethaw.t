@@ -26,7 +26,7 @@ use File::Spec;
 use Test::More;
 use CGI::Session::Test::Default;
 
-for (qw/DBI DBD::mysql/) {
+for (qw/DBI DBD::mysql FreezeThaw/) {
     eval "require $_";
     if ( $@ ) {
         plan(skip_all=>"$_ is NOT available");
