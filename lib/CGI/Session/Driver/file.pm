@@ -8,25 +8,24 @@ use Carp;
 use File::Spec;
 use Fcntl qw( :DEFAULT :flock :mode );
 use CGI::Session::Driver;
-use vars qw( $FileName);
+use vars qw( $FileName $NoFlock );
 
-# keep historical behavior
-{
+BEGIN {
+    # keep historical behavior
+
     no strict 'refs';
+    
     *FileName = \$CGI::Session::File::FileName;
 }
 
 @CGI::Session::Driver::file::ISA        = ( "CGI::Session::Driver" );
 $CGI::Session::Driver::file::VERSION    = "3.4";
 $FileName                               = "cgisess_%s";
+$NoFlock                                = 0;
 
 sub init {
     my $self = shift;
     $self->{Directory} ||= File::Spec->tmpdir();
-
-    if (defined $CGI::Session::File::FileName) {
-        $FileName = $CGI::Session::File::FileName;
-    }
 
     unless ( -d $self->{Directory} ) {
         require File::Path;
@@ -34,6 +33,10 @@ sub init {
             return $self->set_error( "init(): couldn't create directory path: $!" );
         }
     }
+    
+    $self->{NoFlock} = $NoFlock unless exists $self->{NoFlock};
+    
+    return 1;
 }
 
 sub retrieve {
@@ -52,7 +55,9 @@ sub retrieve {
     unless ( sysopen(FH, $path, O_RDONLY) ) {
         return $self->set_error( "retrieve(): couldn't open '$path': $!" );
     }
-    flock(FH, LOCK_SH) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );    
+    unless ( $self->{NoFlock} ) {
+        flock(FH, LOCK_SH) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );
+    }
     my $rv = "";
     while ( <FH> ) {
         $rv .= $_;
@@ -75,7 +80,9 @@ sub store {
     local *FH;
     
     sysopen(FH, $path, O_WRONLY|O_CREAT) or return $self->set_error( "store(): couldn't open '$path': $!" );
-    flock(FH, LOCK_EX)      or return $self->set_error( "store(): couldn't lock '$path': $!" );
+    unless ( $self->{NoFlock} ) {
+        flock(FH, LOCK_EX)  or return $self->set_error( "store(): couldn't lock '$path': $!" );
+    }
     truncate(FH, 0)         or return $self->set_error( "store(): couldn't truncate '$path': $!" );
     print FH $datastr;
     close(FH)               or return $self->set_error( "store(): couldn't close '$path': $!" );
@@ -123,6 +130,7 @@ sub traverse {
     return 1;
 }
 
+
 sub DESTROY {
     my $self = shift;
 }
@@ -158,7 +166,7 @@ you wish to set your own FileName template, do so before requesting for session 
     $s = new CGI::Session();
 
 For backwards compatibility with 3.x, you can also use the variable name
-C<$CGI::Session::File::FileName>, which will override one above. 
+C<$CGI::Session::File::FileName>, which will override the one above. 
 
 =head2 DRIVER ARGUMENTS
 
@@ -167,6 +175,14 @@ to be kept. If B<Directory> is not set, defaults to whatever File::Spec->tmpdir(
 in the SYNOPSIS section of this manual produce the same result on a UNIX machine.
 
 If specified B<Directory> does not exist, all necessary directory hierarchy will be created.
+
+=head1 NOTES
+
+If your OS doesn't support flock, you should understand the risks of going without locking the session files. Since
+sessions tend to be used in environments where race conditions may occur due to concurrent access of files by 
+different processes, locking tends to be seen as a good and very necessary thing. If you still want to use this 
+driver but don't want flock, set C<$CGI::Session::Driver::file::NoFlock> to 1 or pass C<< NoFlock => 1 >> and this 
+driver will operate without locks.
 
 =head1 LICENSING
 
