@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+    * NEW: File driver now has option to disable flock (for those running
+      Win 9x, VMS, MacPerl, VOS and RISC OS). (Matt LeBlanc)
     * FIX: File driver now respects $CGI::Session::File::FileName for 3.9x
       compatibility. (Matt LeBlanc)
     * FIX: Default serializer now properly handles data structures that appear
