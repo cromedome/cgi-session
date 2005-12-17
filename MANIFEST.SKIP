@@ -10,4 +10,4 @@ CVS
 \.orig$
 \.rej$
 .*sessiondata.*
-
+.*cgisess.*
