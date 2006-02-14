@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.02';
+$CGI::Session::VERSION  = '4.04';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -87,7 +87,9 @@ sub _driver {
     my $self = shift;
     defined($self->{_OBJECTS}->{driver}) and return $self->{_OBJECTS}->{driver};
     my $pm = "CGI::Session::Driver::" . $self->{_DSN}->{driver};
-    return $self->{_OBJECTS}->{driver} = $pm->new( $self->{_DRIVER_ARGS} );
+    defined($self->{_OBJECTS}->{driver} = $pm->new( $self->{_DRIVER_ARGS} ))
+        or die $pm->errstr();
+    return $self->{_OBJECTS}->{driver};
 }
 
 sub _serializer     { 

@@ -3,7 +3,7 @@ package CGI::Session::ErrorHandler;
 # $Id$
 
 use strict;
-$CGI::Session::ErrorHandler::VERSION = "4.01";
+$CGI::Session::ErrorHandler::VERSION = "4.02";
 
 =pod
 
@@ -38,10 +38,11 @@ Implicitly defines $pkg_name::errstr and sets its value to $message. Return valu
 =cut
 
 sub set_error {
-    my $class = shift;
+    my $class   = shift;
+    my $message = shift;
     $class = ref($class) || $class;
     no strict 'refs';
-    ${ "$class\::errstr" } = $_[0] || "";
+    ${ "$class\::errstr" } = sprintf($message || "", @_);
     return;
 }
 

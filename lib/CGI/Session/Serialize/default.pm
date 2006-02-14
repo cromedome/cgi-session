@@ -12,7 +12,7 @@ use vars qw( %overloaded );
 require overload;
 
 @CGI::Session::Serialize::default::ISA = ( "CGI::Session::ErrorHandler" );
-$CGI::Session::Serialize::default::VERSION = '1.5';
+$CGI::Session::Serialize::default::VERSION = '1.6';
 
 
 sub freeze {
@@ -130,10 +130,6 @@ Receives two arguments. First is the class name, the second is the data to be se
 Received two arguments. First is the class name, second is the I<frozen> data string. Should return thawed data structure on success, undef on failure. Error message should be set using C<set_error()|CGI::Session::ErrorHandler/"set_error()">
 
 =back
-
-=head1 WARNING
-
-May not be able to freeze/thaw complex objects. For that consider L<storable|CGI::Session::Serialize::storable> or L<freezethaw|CGI::Session::Serialize::freezethaw>
 
 =head1 LICENSING
 

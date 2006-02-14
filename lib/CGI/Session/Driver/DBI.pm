@@ -9,7 +9,7 @@ use Carp;
 use CGI::Session::Driver;
 
 @CGI::Session::Driver::DBI::ISA = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::DBI::VERSION = "1.1";
+$CGI::Session::Driver::DBI::VERSION = "1.2";
 
 
 sub init {
@@ -22,13 +22,14 @@ sub init {
     else {
         $self->{Handle} = DBI->connect( 
             $self->{DataSource}, $self->{User}, $self->{Password}, 
-            { RaiseError=>0, PrintError=>0, AutoCommit=>1 }
+            { RaiseError=>1, PrintError=>1, AutoCommit=>1 }
         );
         unless ( $self->{Handle} ) {
             return $self->set_error( "init(): couldn't connect to database: " . DBI->errstr );
         }
         $self->{_disconnect} = 1;
     }
+    return 1;
 }
 
 # A setter/accessor method for the table name, defaulting to 'sessions'

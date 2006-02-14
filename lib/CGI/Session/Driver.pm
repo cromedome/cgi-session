@@ -8,7 +8,7 @@ use strict;
 use Carp;
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::Driver::VERSION = "4.0";
+$CGI::Session::Driver::VERSION = "4.01";
 @CGI::Session::Driver::ISA     = qw(CGI::Session::ErrorHandler);
 
 sub new {
@@ -24,7 +24,8 @@ sub new {
     }
 
     my $self = bless ($args, $class);
-    return $self->init ? $self : undef;
+    return $self if $self->init();
+    return $self->set_error( "%s->init() returned false", $class);
 }
 
 sub init { 1 }
