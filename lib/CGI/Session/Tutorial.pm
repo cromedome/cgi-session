@@ -2,7 +2,7 @@ package CGI::Session::Tutorial;
 
 # $Id$
 
-$CGI::Session::Tutorial::VERSION = '3.41';
+$CGI::Session::Tutorial::VERSION = '3.42';
 
 =pod
 

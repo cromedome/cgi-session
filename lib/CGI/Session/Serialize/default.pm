@@ -12,7 +12,7 @@ use vars qw( %overloaded );
 require overload;
 
 @CGI::Session::Serialize::default::ISA = ( "CGI::Session::ErrorHandler" );
-$CGI::Session::Serialize::default::VERSION = '1.6';
+$CGI::Session::Serialize::default::VERSION = '1.7';
 
 
 sub freeze {

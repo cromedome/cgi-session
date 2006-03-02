@@ -1,8 +1,16 @@
 CGI::Session Change Log
 =====================================================================
 
+4.04 - Wedsnesday, March 01, 2006
     * NEW: File driver now has option to disable flock (for those running
       Win 9x, VMS, MacPerl, VOS and RISC OS). (Matt LeBlanc)
+    * FIX: If DBI driver wass initialized using 'Handle', Driver::DBI::init()
+      returned false, and Driver::new() thought init faild and kept returning
+      undef. The problem was fixed by making sure Driver::DBI::init() returned
+      true. (Sherzod)
+    * Added .*cgisess.* to disclude cgisess.db, cgisess.id, and any session
+      files created in the t directory. (Matt LeBlanc)
+
     * FIX: File driver now respects $CGI::Session::File::FileName for 3.9x
       compatibility. (Matt LeBlanc)
     * FIX: Default serializer now properly handles data structures that appear
@@ -14,8 +22,17 @@ CGI::Session Change Log
     * NEW: DBI Drivers now support a lazy loaded database handle. This is useful with the
       CGI::Application plugin system. If the session is never used, the database handle may not
       not need to be created. The syntax is to use a code ref: 
-        Handle => sub {DBI->connect} 
-      (Mark Stosberg)
+        Handle => sub {DBI->connect} (Mark Stosberg)
+
+    Finally, be aware that since 4.0 some people have reported problems with
+    the auto-flushing code. There may be an unresolved. You always  call
+    flush() to be safe. Input or code contributions for the issue are
+    appreciated. Some related tickets include:
+
+    http://rt.cpan.org/Public/Bug/Display.html?id=14604
+    http://rt.cpan.org/Public/Bug/Display.html?id=16861
+    http://rt.cpan.org/Public/Bug/Display.html?id=17541
+    http://rt.cpan.org/Public/Bug/Display.html?id=17299
 
 4.03 - Wednesday, October 05, 2005
     * FIX: automatic flushing did not work if session object was global

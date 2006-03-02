@@ -6,7 +6,7 @@ use strict;
 use FreezeThaw;
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::Serialize::freezethaw::VERSION = '1.6';
+$CGI::Session::Serialize::freezethaw::VERSION = '1.7';
 @CGI::Session::Serialize::freezethaw::ISA     = ( "CGI::Session::ErrorHandler" );
 
 sub freeze {

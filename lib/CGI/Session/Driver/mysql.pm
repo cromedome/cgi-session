@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::Driver::DBI;
 
 @CGI::Session::Driver::mysql::ISA       = qw( CGI::Session::Driver::DBI );
-$CGI::Session::Driver::mysql::VERSION   = "2.01";
+$CGI::Session::Driver::mysql::VERSION   = "2.02";
 
 sub _mk_dsnstr {
     my ($class, $dsn) = @_;

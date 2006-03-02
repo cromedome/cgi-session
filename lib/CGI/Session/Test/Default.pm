@@ -6,7 +6,7 @@ use Test::More;
 use Data::Dumper;
 use Scalar::Util "refaddr";
 
-$CGI::Session::Test::Default::VERSION = '1.52';
+$CGI::Session::Test::Default::VERSION = '1.53';
 
 =head1 CGI::Session::Test::Default
 
