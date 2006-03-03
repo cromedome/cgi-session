@@ -2,11 +2,14 @@ package CGI::Session::Test::Default;
 
 use strict;
 use Carp;
-use Test::More;
+use Test::More ();
 use Data::Dumper;
 use Scalar::Util "refaddr";
 
-$CGI::Session::Test::Default::VERSION = '1.53';
+our $AUTOLOAD;
+our $CURRENT;
+
+$CGI::Session::Test::Default::VERSION = '1.54';
 
 =head1 CGI::Session::Test::Default
 
@@ -31,8 +34,15 @@ sub new {
             dsn     => "driver:file",
             args    => undef,
             tests   => 101,
+            test_number =>  0,
             @_
     }, $class;
+    
+    if($self->{skip}) {
+        $self->{_skip} = { map { $_ => $_ } @{$self->{skip}} };
+    } else {
+        $self->{_skip} = {};
+    }
 
     return $self;
 }
@@ -68,6 +78,7 @@ sub run {
     my $self = shift;
 
     use_ok("CGI::Session", "CGI::Session loaded successfully!");
+    $CURRENT = $self;
 
     my $sid = undef;
     FIRST: {
@@ -127,7 +138,7 @@ sub run {
             eval { $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) };
 
             if ($@ || CGI::Session->errstr) {
-                skip "couldn't load session, bailing out: SQLite/Storable support is TODO", 56;
+                skip("couldn't load session, bailing out: SQLite/Storable support is TODO", 56);
             }
 
             is($@.CGI::Session->errstr,'','survived eval without error.');
@@ -258,7 +269,7 @@ sub run {
         ok($session->param('simple_object')->name eq "Sherzod Ruzmetov");
         ok($session->param('simple_object')->emails(1) eq 'sherzodr@cpan.org');
         ok($session->param('simple_object')->blogs('yigitlik') eq 'http://author.handalak.com/uz/');
-
+        
         #
         # creating an overloaded object to be stored into session
         my $overloaded_class = OverloadedObjectClass->new("ABCDEFG");
@@ -330,7 +341,31 @@ sub run {
             "Overloaded objects have matching addresses");        
         $session->delete();
     }
+    
+    $CURRENT = undef;
+    $self->{test_number} = 0;
 }
+
+
+sub AUTOLOAD {
+    no strict 'refs';
+    (my $name = $AUTOLOAD) =~ s{^.*::}{};
+    $CURRENT->{test_number} ++;
+    
+    if(my $code = Test::More->can($name)) {
+        SKIP: {
+            if($CURRENT->{_skip}->{$CURRENT->{test_number}}) {
+                Test::More::skip("Test does not apply to this setup.", 1);
+            }
+            $code->(@_);
+        }
+    } else {
+        Carp::croak("$AUTOLOAD not found");
+    }
+    use strict 'refs';
+}
+
+sub DESTROY { 1; }
 
 
 package SimpleObjectClass;
@@ -370,6 +405,5 @@ sub equals {
 
     return ($self->as_string eq $arg);
 }
-
 
 1;
