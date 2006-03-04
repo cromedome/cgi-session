@@ -19,7 +19,7 @@ BEGIN {
 }
 
 @CGI::Session::Driver::file::ISA        = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::file::VERSION    = "3.5";
+$CGI::Session::Driver::file::VERSION    = "3.6";
 $FileName                               = "cgisess_%s";
 $NoFlock                                = 0;
 
@@ -52,12 +52,9 @@ sub retrieve {
     # make certain our filehandle goes away when we fall out of scope
     local *FH;
 
-    unless ( sysopen(FH, $path, O_RDONLY) ) {
-        return $self->set_error( "retrieve(): couldn't open '$path': $!" );
-    }
-    unless ( $self->{NoFlock} ) {
-        flock(FH, LOCK_SH) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );
-    }
+    sysopen(FH, $path, O_RDONLY) || return $self->set_error( "retrieve(): couldn't open '$path': $!" );
+    $self->{NoFlock} || flock(FH, LOCK_SH) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );
+
     my $rv = "";
     while ( <FH> ) {
         $rv .= $_;
@@ -80,10 +77,10 @@ sub store {
     local *FH;
     
     sysopen(FH, $path, O_WRONLY|O_CREAT) or return $self->set_error( "store(): couldn't open '$path': $!" );
-    unless ( $self->{NoFlock} ) {
-        flock(FH, LOCK_EX)  or return $self->set_error( "store(): couldn't lock '$path': $!" );
-    }
-    truncate(FH, 0)         or return $self->set_error( "store(): couldn't truncate '$path': $!" );
+    # prevent race condition (RT#17949)
+    truncate(FH, 0)  or return $self->set_error( "store(): couldn't truncate '$path': $!" );
+    $self->{NoFlock} || flock(FH, LOCK_EX)  or return $self->set_error( "store(): couldn't lock '$path': $!" );
+
     print FH $datastr;
     close(FH)               or return $self->set_error( "store(): couldn't close '$path': $!" );
     return 1;

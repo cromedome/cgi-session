@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.04';
+$CGI::Session::VERSION  = '4.05';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -182,7 +182,7 @@ sub flush {
     my $self = shift;
 
     return unless $self->id;            # <-- empty session
-    return if $self->{_STATUS} == 0;    # <-- neither new, nor deleted nor modified
+    return if !defined($self->{_STATUS}) or $self->{_STATUS} == 0;    # <-- neither new, nor deleted nor modified
 
     if ( $self->_test_status(STATUS_NEW) && $self->_test_status(STATUS_DELETED) ) {
         $self->{_DATA} = {};

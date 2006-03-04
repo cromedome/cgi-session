@@ -1,6 +1,11 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: some stray warnings when flushing:  "Use of uninitialized value in numeric eq (==)" (RT#14603)
+
+4.05 - Friday, March 3rd, 2006
+    * FIX: Race condition fixed when writing to session files (RT#17949)
+
 4.04 - Wedsnesday, March 01, 2006
     * NEW: File driver now has option to disable flock (for those running
       Win 9x, VMS, MacPerl, VOS and RISC OS). (Matt LeBlanc)
