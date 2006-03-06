@@ -77,8 +77,8 @@ Run the test suite. See C<new()> for setting related options.
 sub run {
     my $self = shift;
 
-    use_ok("CGI::Session", "CGI::Session loaded successfully!");
     $CURRENT = $self;
+    use_ok("CGI::Session", "CGI::Session loaded successfully!");
 
     my $sid = undef;
     FIRST: {
