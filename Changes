@@ -2,6 +2,9 @@ CGI::Session Change Log
 =====================================================================
 
     * FIX: some stray warnings when flushing:  "Use of uninitialized value in numeric eq (==)" (RT#14603)
+    * JSON and YAML serializers (Tyler MacDonald)
+    * CGI::Session::Test::Default accepts a "skip" argument,
+      listing tests that should be skipped. (Tyler)
 
 4.05 - Friday, March 3rd, 2006
     * FIX: Race condition fixed when writing to session files (RT#17949)
