@@ -8,6 +8,8 @@ use Scalar::Util "refaddr";
 
 our $AUTOLOAD;
 our $CURRENT;
+sub ok_later (&;$);
+    
 
 $CGI::Session::Test::Default::VERSION = '1.54';
 
@@ -299,7 +301,7 @@ sub run {
   
         ok($session->param("embedded_simple_and_overloaded")->[2] eq "Embedded");
         
-        ok(refaddr($session->param("embedded_simple_and_overloaded")->[2]) == refaddr($session->param("embedded_simple_and_overloaded")->[3]),
+        ok(refaddr($session->param("embedded_simple_and_overloaded")->[2]) == refaddr($session->param("embedded_simple_and_overloaded")->[3] ),
             "Overloaded objects have matching addresses");
     }
 
@@ -315,10 +317,10 @@ sub run {
         ok(ref $simple_object eq "SimpleObjectClass", "SimpleObjectClass loaded successfully");
 
         my $dsn = CGI::Session->parse_dsn($self->{dsn});
-        ok($simple_object->name eq "Sherzod Ruzmetov");
-        ok($simple_object->emails(1) eq 'sherzodr@cpan.org');
-        ok($simple_object->emails(0) eq 'sherzodr@handalak.com');
-        ok($simple_object->blogs('lost+found') eq 'http://author.handalak.com/');
+        ok_later { $simple_object->name eq "Sherzod Ruzmetov" };
+        ok_later { $simple_object->emails(1) eq 'sherzodr@cpan.org' };
+        ok_later { $simple_object->emails(0) eq 'sherzodr@handalak.com' };
+        ok_later { $simple_object->blogs('lost+found') eq 'http://author.handalak.com/' };
         ok(ref $session->param("overloaded_object") );
         ok($session->param("overloaded_object") eq "ABCDEFG", "Object is still overloaded");
         ok(overload::Overloaded($session->param("overloaded_object")), "Object is really overloaded");
@@ -328,10 +330,10 @@ sub run {
         my $simple_object2 = $session->param("embedded_simple_and_overloaded")->[1];
         ok(ref $simple_object2 eq "SimpleObjectClass", "SimpleObjectClass loaded successfully");
 
-        ok($simple_object2->name eq "Sherzod Ruzmetov");
-        ok($simple_object2->emails(1) eq 'sherzodr@cpan.org');
-        ok($simple_object2->emails(0) eq 'sherzodr@handalak.com');
-        ok($simple_object2->blogs('lost+found') eq 'http://author.handalak.com/');
+        ok_later { $simple_object2->name eq "Sherzod Ruzmetov" };
+        ok_later { $simple_object2->emails(1) eq 'sherzodr@cpan.org' };
+        ok_later { $simple_object2->emails(0) eq 'sherzodr@handalak.com' };
+        ok_later { $simple_object2->blogs('lost+found') eq 'http://author.handalak.com/' };
 
         
         ok($session->param("embedded_simple_and_overloaded")->[2] eq "Embedded");
@@ -346,23 +348,39 @@ sub run {
     $self->{test_number} = 0;
 }
 
-
-sub AUTOLOAD {
-    no strict 'refs';
-    (my $name = $AUTOLOAD) =~ s{^.*::}{};
-    $CURRENT->{test_number} ++;
+sub skip_or_run {
+    my $test = shift;
     
-    if(my $code = Test::More->can($name)) {
-        SKIP: {
-            if($CURRENT->{_skip}->{$CURRENT->{test_number}}) {
-                Test::More::skip("Test does not apply to this setup.", 1);
-            }
-            $code->(@_);
+    $CURRENT->{test_number} ++;
+
+    SKIP: {
+        if($CURRENT->{_skip}->{$CURRENT->{test_number}}) {
+            Test::More::skip("Test does not apply to this setup.", 1);
         }
-    } else {
-        Carp::croak("$AUTOLOAD not found");
+        
+        no strict 'refs';
+        &{"Test::More::$test"}(@_);
     }
-    use strict 'refs';
+}
+
+sub ok { skip_or_run("ok", @_); }
+sub use_ok { skip_or_run("use_ok", @_); }
+sub is { skip_or_run("is", @_); }
+
+sub ok_later (&;$) {
+    my($code, $name) = @_;
+    
+    $CURRENT->{test_number} ++;
+    $name = '' unless $name;
+
+    SKIP: {
+        if($CURRENT->{_skip}->{$CURRENT->{test_number}}) {
+            Test::More::skip("Test does not apply to this setup.", 1);
+            fail($name);
+        } else {
+            Test::More::ok($code->(), $name);
+        }
+    }
 }
 
 sub DESTROY { 1; }
@@ -387,7 +405,6 @@ use overload (
     '""'    => \&as_string,
     'eq'    => \&equals
 );
-
 
 sub new {
     return bless {
