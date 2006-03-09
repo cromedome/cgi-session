@@ -51,7 +51,8 @@ WriteMakefile(
         'Scalar::Util'  => undef,
     },
     ABSTRACT        => 'Persistent session data in CGI applications',
-    AUTHOR          => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
+    AUTHOR          => 'Sherzod Ruzmetov <sherzodr@cpan.org>', 
+    clean           => { FILES => [ 't/cgisess.*', 't/sessiondata' ] },
 );
 
 #
