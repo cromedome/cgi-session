@@ -140,7 +140,7 @@ sub run {
             eval { $session = CGI::Session->load($self->{dsn}, $sid, $self->{args}) };
 
             if ($@ || CGI::Session->errstr) {
-                skip("couldn't load session, bailing out: SQLite/Storable support is TODO", 56);
+                Test::More::skip("couldn't load session, bailing out: SQLite/Storable support is TODO", 56);
             }
 
             is($@.CGI::Session->errstr,'','survived eval without error.');

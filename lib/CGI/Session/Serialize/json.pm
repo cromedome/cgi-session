@@ -13,8 +13,6 @@ unless($Flavour) {
     $Flavour = $package;
 }
 
-return 1;
-
 sub freeze {
     my ($self, $data) = @_;
     return $Flavour->can('Dump')->($data);

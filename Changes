@@ -1,15 +1,17 @@
 CGI::Session Change Log
 =====================================================================
 
+4.06 - Wednesday, March 3rd, 2006
+
     * FIX: some stray warnings when flushing:  "Use of uninitialized value in numeric eq (==)" (RT#14603)
-    * JSON and YAML serializers (Tyler MacDonald)
-    * CGI::Session::Test::Default accepts a "skip" argument,
+    * NEW: JSON and YAML serializers (Tyler MacDonald)
+    * INTERAL: CGI::Session::Test::Default accepts a "skip" argument,
       listing tests that should be skipped. (Tyler)
 
 4.05 - Friday, March 3rd, 2006
     * FIX: Race condition fixed when writing to session files (RT#17949)
 
-4.04 - Wedsnesday, March 01, 2006
+4.04 - Wednesday, March 01, 2006
     * NEW: File driver now has option to disable flock (for those running
       Win 9x, VMS, MacPerl, VOS and RISC OS). (Matt LeBlanc)
     * FIX: If DBI driver wass initialized using 'Handle', Driver::DBI::init()

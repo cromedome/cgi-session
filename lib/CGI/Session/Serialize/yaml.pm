@@ -13,8 +13,6 @@ unless($Flavour) {
     $Flavour = $package;
 }
 
-return 1;
-
 sub freeze {
     my ($self, $data) = @_;
     return $Flavour->can('Dump')->($data);
@@ -38,11 +36,15 @@ CGI::Session::Serialize::yaml - serializer for CGI::Session
 
 =head1 DESCRIPTION
 
-This library can be used by CGI::Session to serialize session data. Uses
+This library can be used by CGI::Session to serialize session data. It uses
 L<YAML|YAML>, or the faster C implementation, L<YAML::Syck|YAML::Syck>
 if it is available. YAML serializers exist not just for Perl but also other
 dynamic languages, such as PHP, Python, and Ruby, so storing session data
 in this format makes it easy to share session data across different languages.
+
+YAML is made to be friendly for humans to parse as well as other computer
+languages. It creates a format that is easier to read than the default
+serializer.
 
 =head1 METHODS
 

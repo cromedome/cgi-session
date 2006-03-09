@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.05';
+$CGI::Session::VERSION  = '4.06';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -1079,6 +1079,16 @@ Full name: B<CGI::Session::Serialize::storable>.
 L<freezethaw|CGI::Session::Serialize::freezethaw> - serializes data using L<FreezeThaw>. Requires L<FreezeThaw>.
 Full name: B<CGI::Session::Serialize::freezethaw>
 
+=item *
+
+L<yaml|CGI::Session::Serialize::yaml> - serializes data using YAML. Requires L<YAML> or L<YAML::Syck>.
+Full name: B<CGI::Session::Serialize::yaml>
+
+=item *
+
+L<json|CGI::Session::Serialize::json> - serializes data using JSON. Requires L<JSON::Syck>.
+Full name: B<CGI::Session::Serialize::json>
+
 =back
 
 =head2 ID GENERATORS
@@ -1109,7 +1119,7 @@ CGI::Session evolved to what it is today with the help of following developers. 
 
 =over 4
 
-=item Andy Lester E<lt>alester@flr.follett.comE<gt>
+=item Andy Lester 
 
 =item Brian King E<lt>mrbbking@mac.comE<gt>
 
