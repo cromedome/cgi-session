@@ -45,11 +45,11 @@ $s->flush();
 my $s2 = new CGI::Session("driver:DB_File", $sid, {Directory=>'t'});
 ok($s2);
 
-ok($s2->id() eq $sid);
+ok($s2->id() eq $sid, "session ID in new session matches original ID" );
 
-ok($s2->param('email'));
-ok($s2->param('author'));
-ok($s2->expire());
+ok($s2->param('email'), "found email via param");
+ok($s2->param('author'), "found author via param");
+ok($s2->expire(), "expire() returns true value");
 
 
 $s2->delete();
