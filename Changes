@@ -3,7 +3,9 @@ CGI::Session Change Log
 
     * FIX: DESTROY was sometimes wiping out exception handling. RT#18183, Matt LeBlanc.
     * SECURITY: Resolve some issues in: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555
-        (TODO: spell out specific updates or just "addressed everything..." )
+      - db_file and file now check for symlinks either explicitly or by using O_EXCL on sysopen
+      - file creation umask defaults to 660
+    * NEW: db_file and file drivers now accepts a UMask option. (Matt LeBlanc)
     * INTERNAL: test suite clean up (Tyler MacDonald) 
 
 4.07 - Thursday, March 9th, 2006
