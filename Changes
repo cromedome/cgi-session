@@ -1,6 +1,15 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: DESTROY was sometimes wiping out exception handling. RT#18183, Matt LeBlanc.
+    * SECURITY: Resolve some issues in: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555
+        (TODO: spell out specific updates or just "addressed everything..." )
+    * INTERNAL: test suite clean up (Tyler MacDonald) 
+
+4.07 - Thursday, March 9th, 2006
+
+    * INTERNAL: MANIFEST update to fix release. 
+
 4.06 - Wednesday, March 3rd, 2006
 
     * FIX: some stray warnings when flushing:  "Use of uninitialized value in numeric eq (==)" (RT#14603)
