@@ -8,7 +8,7 @@ use Carp;
 use File::Spec;
 use Fcntl qw( :DEFAULT :flock :mode );
 use CGI::Session::Driver;
-use vars qw( $FileName $NoFlock );
+use vars qw( $FileName $NoFlock $UMask );
 
 BEGIN {
     # keep historical behavior
@@ -22,6 +22,7 @@ BEGIN {
 $CGI::Session::Driver::file::VERSION    = "3.6";
 $FileName                               = "cgisess_%s";
 $NoFlock                                = 0;
+$UMask                                  = 0660;
 
 sub init {
     my $self = shift;
@@ -35,6 +36,7 @@ sub init {
     }
     
     $self->{NoFlock} = $NoFlock unless exists $self->{NoFlock};
+    $self->{UMask} = $UMask unless exists $self->{UMask};
     
     return 1;
 }
@@ -52,7 +54,7 @@ sub retrieve {
     # make certain our filehandle goes away when we fall out of scope
     local *FH;
 
-    sysopen(FH, $path, O_RDONLY) || return $self->set_error( "retrieve(): couldn't open '$path': $!" );
+    sysopen(FH, $path, O_RDONLY | O_EXCL ) || return $self->set_error( "retrieve(): couldn't open '$path': $!" );
     $self->{NoFlock} || flock(FH, LOCK_SH) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );
 
     my $rv = "";
@@ -76,7 +78,14 @@ sub store {
     # make certain our filehandle goes away when we fall out of scope
     local *FH;
     
-    sysopen(FH, $path, O_WRONLY|O_CREAT) or return $self->set_error( "store(): couldn't open '$path': $!" );
+    # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555 suggests we use O_EXCL, to avoid
+    #  symlink attacks but we may already have a true file and we can just overwrite the file if it exists
+    #  so let's do the awkward thing
+    if (-l $path) {
+        unlink($path) or 
+          return $self->set_error("store(): '$path' appears to be a symlink and I couldn't remove it: $!");
+    }
+    sysopen(FH, $path, O_WRONLY|O_CREAT, $self->{UMask}) or return $self->set_error( "store(): couldn't open '$path': $!" );
     # prevent race condition (RT#17949)
     truncate(FH, 0)  or return $self->set_error( "store(): couldn't truncate '$path': $!" );
     $self->{NoFlock} || flock(FH, LOCK_EX)  or return $self->set_error( "store(): couldn't lock '$path': $!" );
@@ -167,11 +176,15 @@ C<$CGI::Session::File::FileName>, which will override the one above.
 
 =head2 DRIVER ARGUMENTS
 
-The only optional argument for I<file> is B<Directory>, which denotes location of the directory where session ids are
-to be kept. If B<Directory> is not set, defaults to whatever File::Spec->tmpdir() returns. So all the three lines
-in the SYNOPSIS section of this manual produce the same result on a UNIX machine.
+If you wish to specify a session directory, use the B<Directory> option, which denotes location of the directory 
+where session ids are to be kept. If B<Directory> is not set, defaults to whatever File::Spec->tmpdir() returns. 
+So all the three lines in the SYNOPSIS section of this manual produce the same result on a UNIX machine.
 
 If specified B<Directory> does not exist, all necessary directory hierarchy will be created.
+
+By default, sessions are created with a umask of 0660. If you wish to change the umask for a session, pass
+a B<UMask> option with an octal representation of the umask you would like for said session. To change
+the default umask for all sessions, alter C<$CGI::Session::Driver::file::UMask>.
 
 =head1 NOTES
 
