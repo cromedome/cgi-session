@@ -9,7 +9,7 @@ use base 'CGI::Session::Driver::DBI';
 use DBI qw(SQL_BLOB);
 
 # @CGI::Session::Driver::sqlite::ISA        = qw( CGI::Session::Driver::DBI );
-$CGI::Session::Driver::sqlite::VERSION    = "1.2";
+$CGI::Session::Driver::sqlite::VERSION    = "1.3";
 
 sub init {
     my $self = shift;
@@ -56,14 +56,15 @@ sub store {
 
 sub __ex_and_ret {
     my ($dbh,$sql,$datastr,$sid) = @_;
+    # fix rt #18183
+    local $@;
     eval {
         my $sth = $dbh->prepare($sql) or return 0;
         $sth->bind_param(1,$datastr,SQL_BLOB) or return 0;
         $sth->bind_param(2,$sid) or return 0;
         $sth->execute() or return 0;
     };
-    return 0 if $@;
-    return 1;
+    return ! $@;
 }
 
 1;
