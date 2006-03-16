@@ -12,7 +12,7 @@ use CGI::Session::Driver;
 use Fcntl qw( :DEFAULT :flock );
 
 @CGI::Session::Driver::db_file::ISA         = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::db_file::VERSION     = "1.4";
+$CGI::Session::Driver::db_file::VERSION     = "1.5";
 $CGI::Session::Driver::db_file::FILE_NAME   = "cgisess.db";
 $CGI::Session::Driver::db_file::UMask       = 0660;
 
@@ -41,7 +41,7 @@ sub retrieve {
     my ($sid) = @_;
     croak "retrieve(): usage error" unless $sid;
 
-    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDONLY) or return;
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDONLY|O_EXCL) or return;
     my $datastr =  $dbhash->{$sid};
     untie(%$dbhash);
     $unlock->();
@@ -54,7 +54,7 @@ sub store {
     my ($sid, $datastr) = @_;
     croak "store(): usage error" unless $sid && $datastr;
 
-    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR|O_CREAT, LOCK_EX) or return;
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR|O_CREAT|O_EXCL, LOCK_EX) or return;
     $dbhash->{$sid} = $datastr;
     untie(%$dbhash);
     $unlock->();
@@ -68,7 +68,7 @@ sub remove {
     my ($sid) = @_;
     croak "remove(): usage error" unless $sid;
 
-    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR, LOCK_EX) or return;
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR|O_EXCL, LOCK_EX) or return;
     delete $dbhash->{$sid};
     untie(%$dbhash);
     $unlock->();
@@ -131,7 +131,7 @@ sub traverse {
         croak "traverse(): usage error";
     }
 
-    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR, LOCK_SH);
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR|O_EXCL, LOCK_SH);
     unless ( $dbhash ) {
         return $self->set_error( "traverse(): couldn't get db handle, " . $self->errstr );
     }

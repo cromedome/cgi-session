@@ -1,6 +1,12 @@
 CGI::Session Change Log
 =====================================================================
 
+4.09 - Friday, March 16th, 2006
+
+    * SECURITY: Applying security patch from: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555 (Julien Danjou)
+
+4.08 - Thursday, March 15th, 2006
+
     * FIX: DESTROY was sometimes wiping out exception handling. RT#18183, Matt LeBlanc.
     * SECURITY: Resolve some issues in: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555
       - db_file and file now check for symlinks either explicitly or by using O_EXCL on sysopen
@@ -14,9 +20,13 @@ CGI::Session Change Log
 
 4.06 - Wednesday, March 3rd, 2006
 
+    * INTERNAL: MANIFEST update to fix release. 
+
+4.06 - Wednesday, March 8th, 2006
+
     * FIX: some stray warnings when flushing:  "Use of uninitialized value in numeric eq (==)" (RT#14603)
     * NEW: JSON and YAML serializers (Tyler MacDonald)
-    * INTERAL: CGI::Session::Test::Default accepts a "skip" argument,
+    * INTERNAL: CGI::Session::Test::Default accepts a "skip" argument,
       listing tests that should be skipped. (Tyler)
 
 4.05 - Friday, March 3rd, 2006
