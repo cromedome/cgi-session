@@ -14,7 +14,7 @@ use Fcntl qw( :DEFAULT :flock );
 @CGI::Session::Driver::db_file::ISA         = ( "CGI::Session::Driver" );
 $CGI::Session::Driver::db_file::VERSION     = "1.3";
 $CGI::Session::Driver::db_file::FILE_NAME   = "cgisess.db";
-
+$CGI::Session::Driver::db_file::UMask       = 0660;
 
 sub init {
     my $self = shift;
@@ -22,12 +22,16 @@ sub init {
     $self->{FileName}  ||= $CGI::Session::Driver::db_file::FILE_NAME;
     unless ( $self->{Directory} ) {
         $self->{Directory} = dirname( $self->{FileName} );
+        $self->{Directory} = File::Spec->tmpdir() if $self->{Directory} eq '.' && substr($self->FileName,0,1) ne '.';
         $self->{FileName}  = basename( $self->{FileName} );
     }
     unless ( -d $self->{Directory} ) {
         require File::Path;
         File::Path::mkpath($self->{Directory}) or return $self->set_error("init(): couldn't mkpath: $!");
     }
+    
+    $self->{UMask} = $CGI::Session::Driver::db_file::UMask unless exists $self->{UMask};
+    
     return 1;
 }
 
@@ -83,6 +87,10 @@ sub _lock {
     $lock_type ||= LOCK_SH;
 
     my $lock_file = $db_file . '.lck';
+    if ( -l $lock_file ) {
+        unlink($lock_file) or 
+          return $self->set_error("_lock(): '$lock_file' appears to be a symlink and I can't remove it: $!");
+    }
     sysopen(LOCKFH, $lock_file, O_RDWR|O_CREAT) or die "couldn't create lock file '$lock_file': $!";
     flock(LOCKFH, $lock_type)                   or die "couldn't lock '$lock_file': $!";
     return sub {
@@ -101,7 +109,12 @@ sub _tie_db_file {
     my $db_file     = File::Spec->catfile( $self->{Directory}, $self->{FileName} );
     my $unlock = $self->_lock($db_file, $lock_type);
     my %db;
-    unless( tie %db, "DB_File", $db_file, $o_mode, 0666 ){
+    
+    if ( -l $db_file ) {
+        unlink($db_file) or 
+          return $self->set_error("_tie_db_file(): '$db_file' appears to be a symlink and I can't remove it: $!");
+    }    
+    unless( tie %db, "DB_File", $db_file, $o_mode, $self->{UMask} ){
         $unlock->();
         return $self->set_error("_tie_db_file(): couldn't tie '$db_file': $!");
     }
@@ -152,9 +165,14 @@ CGI::Session::Driver::db_file - CGI::Session driver for BerkeleyDB using DB_File
 
 =head1 DESCRIPTION
 
-B<db_file> stores session data in BerkelyDB file using L<DB_File|DB_File> - Perl module. All sessions will be stored in a single file, specified in I<FileName> driver argument as in the above example. If I<FileName> isn't given, defaults to F</tmp/cgisess.db>, or its equivalent on a non-UNIX system.
+B<db_file> stores session data in BerkelyDB file using L<DB_File|DB_File> - Perl module. All sessions will be stored 
+in a single file, specified in I<FileName> driver argument as in the above example. If I<FileName> isn't given, 
+defaults to F</tmp/cgisess.db>, or its equivalent on a non-UNIX system.
 
-If directory hierarchy leading to the file does not exist, will be created for you.
+If the directory hierarchy leading to the file does not exist, will be created for you.
+
+This module takes a B<UMask> option which will be used if DB_File has to create the database file for you. By default
+the umask is 0660.
 
 =head1 LICENSING
 
