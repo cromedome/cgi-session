@@ -131,9 +131,8 @@ sub query {
     if ( $self->{_QUERY} ) {
         return $self->{_QUERY};
     }
-    require CGI;
-    $self->{_QUERY} = CGI->new();
-    return $self->{_QUERY};
+    require CGI::Session::Query;
+    return $self->{_QUERY} = CGI::Session::Query->new();
 }
 
 
@@ -285,7 +284,7 @@ sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 my $avoid_single_use_warning_again = *header;
 sub http_header {
     my $self = shift;
-    return $self->query->header(-cookie=>$self->cookie, type=>'text/html', @_);
+    return $self->query->header(-cookie=>$self->cookie, -type=>'text/html', @_);
 }
 
 sub cookie {
@@ -296,12 +295,13 @@ sub cookie {
 
     if ( $self->is_expired ) {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '-1d', @_ );
-    } elsif ( my $t = $self->expire ) {
+    } 
+    elsif ( my $t = $self->expire ) {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> $t . 's', @_ );
-    } else {
+    } 
+    else {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, @_ );
     }
-
     return $cookie;
 }
 
