@@ -1,5 +1,5 @@
 #/usr/bin/perl -T
-#$ $
+# $Id$
 
 use strict;
 use diagnostics;
