@@ -12,7 +12,7 @@ use CGI::Session::Driver;
 use Fcntl qw( :DEFAULT :flock );
 
 @CGI::Session::Driver::db_file::ISA         = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::db_file::VERSION     = "1.6";
+$CGI::Session::Driver::db_file::VERSION     = "1.7";
 $CGI::Session::Driver::db_file::FILE_NAME   = "cgisess.db";
 $CGI::Session::Driver::db_file::UMask       = 0660;
 
@@ -41,7 +41,8 @@ sub retrieve {
     my ($sid) = @_;
     croak "retrieve(): usage error" unless $sid;
 
-    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDONLY) or return;
+    return 0 unless -f $self->_db_file; 
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDONLY|O_EXCL) or return;
     my $datastr =  $dbhash->{$sid};
     untie(%$dbhash);
     $unlock->();
@@ -95,7 +96,7 @@ sub _lock {
     sysopen(LOCKFH, $lock_file, O_RDWR|O_CREAT) or die "couldn't create lock file '$lock_file': $!";
     flock(LOCKFH, $lock_type)                   or die "couldn't lock '$lock_file': $!";
     return sub {
-        close(LOCKFH) && unlink($lock_file);
+        close(LOCKFH); # && unlink($lock_file); # keep the lock file around
         1;
     };
 }
@@ -107,7 +108,7 @@ sub _tie_db_file {
     my ($o_mode, $lock_type) = @_;
     $o_mode     ||= O_RDWR|O_CREAT;
 
-    my $db_file     = File::Spec->catfile( $self->{Directory}, $self->{FileName} );
+    my $db_file     = $self->_db_file;
     my $unlock = $self->_lock($db_file, $lock_type);
     my %db;
     
@@ -122,7 +123,10 @@ sub _tie_db_file {
     return (\%db, $unlock);
 }
 
-
+sub _db_file {
+    my $self = shift;
+    return File::Spec->catfile( $self->{Directory}, $self->{FileName} );
+}
 
 sub traverse {
     my $self = shift;
