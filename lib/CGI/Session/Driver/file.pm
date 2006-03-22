@@ -41,20 +41,34 @@ sub init {
     return 1;
 }
 
+sub _file {
+    my ($self,$sid) = @_;
+    return File::Spec->catfile($self->{Directory}, sprintf( $FileName, $sid ));
+}
+
 sub retrieve {
     my $self = shift;
     my ($sid) = @_;
 
-    my $directory   = $self->{Directory};
-    my $file        = sprintf( $FileName, $sid );
-    my $path        = File::Spec->catfile($directory, $file);
-
+    my $path = $self->_file($sid);
+    
     return 0 unless -e $path;
 
     # make certain our filehandle goes away when we fall out of scope
     local *FH;
 
-    sysopen(FH, $path, O_RDONLY | O_EXCL ) || return $self->set_error( "retrieve(): couldn't open '$path': $!" );
+    if (-l $path) {
+        unlink($path) or 
+          return $self->set_error("retrieve(): '$path' appears to be a symlink and I couldn't remove it: $!");
+        return 0; # we deleted this so we have no hope of getting back anything
+    }
+    sysopen(FH, $path, O_RDONLY ) || return $self->set_error( "retrieve(): couldn't open '$path': $!" );
+    
+    # sanity check
+    if (-l $path) {
+        return $self->set_error("retrieve(): '$path' is a symlink, check for malicious processes");
+    }
+    
     $self->{NoFlock} || flock(FH, LOCK_SH) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );
 
     my $rv = "";
@@ -71,9 +85,7 @@ sub store {
     my $self = shift;
     my ($sid, $datastr) = @_;
     
-    my $directory = $self->{Directory};
-    my $file      = sprintf( $FileName, $sid );
-    my $path      = File::Spec->catfile($directory, $file);
+    my $path = $self->_file($sid);
     
     # make certain our filehandle goes away when we fall out of scope
     local *FH;
@@ -86,6 +98,11 @@ sub store {
           return $self->set_error("store(): '$path' appears to be a symlink and I couldn't remove it: $!");
     }
     sysopen(FH, $path, O_WRONLY|O_CREAT, $self->{UMask}) or return $self->set_error( "store(): couldn't open '$path': $!" );
+    
+    # sanity check to make certain we're still ok
+    if (-l $path) {
+        return $self->set_error("store(): '$path' is a symlink, check for malicious processes");
+    }
     # prevent race condition (RT#17949)
     truncate(FH, 0)  or return $self->set_error( "store(): couldn't truncate '$path': $!" );
     $self->{NoFlock} || flock(FH, LOCK_EX)  or return $self->set_error( "store(): couldn't lock '$path': $!" );

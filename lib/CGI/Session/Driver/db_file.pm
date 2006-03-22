@@ -42,7 +42,7 @@ sub retrieve {
     croak "retrieve(): usage error" unless $sid;
 
     return 0 unless -f $self->_db_file; 
-    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDONLY|O_EXCL) or return;
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDONLY) or return;
     my $datastr =  $dbhash->{$sid};
     untie(%$dbhash);
     $unlock->();
@@ -55,7 +55,7 @@ sub store {
     my ($sid, $datastr) = @_;
     croak "store(): usage error" unless $sid && $datastr;
 
-    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR|O_CREAT, LOCK_EX) or return;
+    my ($dbhash, $unlock) = $self->_tie_db_file(O_RDWR, LOCK_EX) or return;
     $dbhash->{$sid} = $datastr;
     untie(%$dbhash);
     $unlock->();
@@ -91,9 +91,15 @@ sub _lock {
     my $lock_file = $db_file . '.lck';
     if ( -l $lock_file ) {
         unlink($lock_file) or 
-          return $self->set_error("_lock(): '$lock_file' appears to be a symlink and I can't remove it: $!");
+          die $self->set_error("_lock(): '$lock_file' appears to be a symlink and I can't remove it: $!");
     }
     sysopen(LOCKFH, $lock_file, O_RDWR|O_CREAT) or die "couldn't create lock file '$lock_file': $!";
+    
+    # sanity checks
+    if ( -l $lock_file ) {
+        die "_lock(): '$lock_file' is a symlink, check for malicious processes";
+    }
+        
     flock(LOCKFH, $lock_type)                   or die "couldn't lock '$lock_file': $!";
     return sub {
         close(LOCKFH); # && unlink($lock_file); # keep the lock file around
@@ -111,14 +117,25 @@ sub _tie_db_file {
     my $db_file     = $self->_db_file;
     my $unlock = $self->_lock($db_file, $lock_type);
     my %db;
+        
+    my $create = ! -e $db_file;
     
     if ( -l $db_file ) {
+        $create = 1;
         unlink($db_file) or 
           return $self->set_error("_tie_db_file(): '$db_file' appears to be a symlink and I can't remove it: $!");
-    }    
+    }
+    
+    $o_mode |= O_CREAT|O_EXCL if $create;
+    
     unless( tie %db, "DB_File", $db_file, $o_mode, $self->{UMask} ){
         $unlock->();
         return $self->set_error("_tie_db_file(): couldn't tie '$db_file': $!");
+    }
+    
+    if ( -l $db_file ) {
+        $unlock->();
+        return $self->set_error("_tie_db_file(): '$db_file' is a symlink, check for malicious processes'");
     }
     return (\%db, $unlock);
 }
