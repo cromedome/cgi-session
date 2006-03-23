@@ -1,10 +1,14 @@
 CGI::Session Change Log
 =====================================================================
 
+    * SECURITY: Hopefully this settles all of the problems with symlinks. Both the file 
+      and db_file drivers now use O_NOFOLLOW with open when the file should exist and 
+      O_EXCL|O_CREAT when creating the file. Tests added for symlinks. (Matt LeBlanc)
+
 4.09 - Friday, March 16th, 2006
 
     * SECURITY: Applying security patch from: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555 (Julien Danjou)
-
+    
 4.08 - Thursday, March 15th, 2006
 
     * FIX: DESTROY was sometimes wiping out exception handling. RT#18183, Matt LeBlanc.
