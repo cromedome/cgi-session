@@ -36,7 +36,7 @@ $s->flush();
 # test retrieve
 ok(symlink($path,$new_path), 'Created symlink');
 ok(-l $new_path, 'Check to make certain symlink was created');
-ok(my $ns = CGI::Session->new('driver:db_file;id:static','symlink_session_link',{Directory=>'t',FileName=>'cgisess_symlink_link.db'}), 'Get our symlinked session');
+ok(my $ns = CGI::Session->new('driver:db_file;id:static','symlink_session',{Directory=>'t',FileName=>'cgisess_symlink_link.db'}), 'Get our symlinked session');
 ok(! -e $new_path || ! -l $new_path,'we should have wiped out the symlink');
 isnt($ns->param('passthru'),1,'this session should be unique');
 
@@ -50,4 +50,5 @@ ok($s->flush(),'flush should wipe out the symlink');
 ok(! -l $path,'original session file has been restored');
 
 # tidy it up
+undef($_) for $s,$ns;
 unlink($path,$new_path,map "$_.lck",$path,$new_path);

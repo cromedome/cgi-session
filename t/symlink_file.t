@@ -54,4 +54,5 @@ ok($s->flush(),'flush should wipe out the symlink');
 ok(! -l $path,'original session file has been restored');
 
 # tidy up
+undef($_) for $s,$ns;
 unlink('t/cgisess_symlink_session','t/cgisess_symlink_session_link');
