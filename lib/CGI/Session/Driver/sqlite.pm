@@ -8,24 +8,37 @@ use File::Spec;
 use base 'CGI::Session::Driver::DBI';
 use DBI qw(SQL_BLOB);
 
-# @CGI::Session::Driver::sqlite::ISA        = qw( CGI::Session::Driver::DBI );
-$CGI::Session::Driver::sqlite::VERSION    = "1.4";
+$CGI::Session::Driver::sqlite::VERSION    = "1.5";
+$CGI::Session::Driver::sqlite::UMask       = 0660;
 
 sub init {
     my $self = shift;
 
-    $self->{DataSource} ||= File::Spec->catfile( File::Spec->tmpdir, 'sessions.sqlt' );
-    unless ( $self->{DataSource} =~ /^dbi:sqlite/i ) {
-        $self->{DataSource} = "dbi:SQLite:dbname=" . $self->{DataSource};
-    }
+    if (not $self->{Handle}) {
+        if ( $self->{DataSource} =~ /^dbi:sqlite/i ) {
+            # We trust it to be complete, so nothing to do
+        }
+        # Assume we need to prepend it, or even create it
+        else {
+            $self->{DataSource} ||= File::Spec->catfile( File::Spec->tmpdir, 'sessions.sqlt' );
+            $self->{DataSource} = "dbi:SQLite:dbname=" . $self->{DataSource};
+        }
 
-    $self->{Handle} ||= DBI->connect( $self->{DataSource}, '', '', {RaiseError=>1, PrintError=>1, AutoCommit=>1});
-    unless ( $self->{Handle} ) {
-        return $self->set_error( "init(): couldn't create \$dbh: " . $DBI::errstr );
+        # These lines are for security, to insure the SQLite file is opened safely
+        $self->{UMask} = $CGI::Session::sqlite::UMask unless exists $self->{UMask};
+        sysopen(DATASOURCE, $self->{DataSource}, O_RDWR|O_CREAT|O_EXCL, $self->{UMask});
+
+        $self->{Handle} = DBI->connect( $self->{DataSource}, '', '', {RaiseError=>1, PrintError=>1, AutoCommit=>1});
     }
-    if (ref $self->{Handle} eq 'CODE') {
+    elsif (ref $self->{Handle} eq 'CODE') {
         $self->{Handle} = $self->{Handle}->();
     }
+
+    # Now if we /still/ don't have a handle, it's a real problem
+    if ( not $self->{Handle} ) {
+        return $self->set_error( "init(): couldn't create \$dbh: " . $DBI::errstr );
+    }
+
     $self->{_disconnect} = 1;
     $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
     return 1;
@@ -94,6 +107,10 @@ Supported driver arguments are I<DataSource> and I<Handle>. B<At most> only one 
 I<DataSource> should be in the form of C<dbi:SQLite:dbname=/path/to/db.sqlt>. If C<dbi:SQLite:> is missing it will be prepended for you. If I<Handle> is present it should be database handle (C<$dbh>) returned by L<DBI::connect()|DBI/connect()>.
 
 It's OK to drop the third argument to L<new()|CGI::Session::Driver/new()> altogether, in which case a database named F<sessions.sqlt> will be created in your machine's TEMPDIR folder, which is F</tmp> in UNIX.
+
+By default, The session file is accessed with a umask of 0660. If you wish to
+change the umask for a session, pass a B<UMask> option with an octal
+representation of the umask you would like for the session. 
 
 =head1 BUGS AND LIMITATIONS
 
