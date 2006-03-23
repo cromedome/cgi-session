@@ -86,12 +86,17 @@ sub store {
     # make certain our filehandle goes away when we fall out of scope
     local *FH;
     
+    my $mode = O_WRONLY|$NO_FOLLOW;
+    
     # kill symlinks when we spot them
     if (-l $path) {
         unlink($path) or 
           return $self->set_error("store(): '$path' appears to be a symlink and I couldn't remove it: $!");
     }
-    sysopen(FH, $path, O_WRONLY|O_CREAT|$NO_FOLLOW, $self->{UMask}) or return $self->set_error( "store(): couldn't open '$path': $!" );
+    
+    $mode = O_RDWR|O_CREAT|O_EXCL unless -e $path;
+    
+    sysopen(FH, $path, $mode, $self->{UMask}) or return $self->set_error( "store(): couldn't open '$path': $!" );
     
     # sanity check to make certain we're still ok
     if (-l $path) {
