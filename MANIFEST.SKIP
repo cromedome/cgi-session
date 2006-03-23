@@ -14,5 +14,6 @@ docs
 \.rej$
 \.mine$
 \.gz$
+\.r\d+$
 .*sessiondata.*
 .*cgisess.*
