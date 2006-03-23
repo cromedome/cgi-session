@@ -131,8 +131,10 @@ sub query {
     if ( $self->{_QUERY} ) {
         return $self->{_QUERY};
     }
-    require CGI::Session::Query;
-    return $self->{_QUERY} = CGI::Session::Query->new();
+#   require CGI::Session::Query;
+#   return $self->{_QUERY} = CGI::Session::Query->new();
+    require CGI;
+    return $self->{_QUERY} = CGI->new();
 }
 
 

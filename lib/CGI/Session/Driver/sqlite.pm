@@ -7,6 +7,7 @@ use strict;
 use File::Spec;
 use base 'CGI::Session::Driver::DBI';
 use DBI qw(SQL_BLOB);
+use Fcntl;
 
 $CGI::Session::Driver::sqlite::VERSION    = "1.5";
 $CGI::Session::Driver::sqlite::UMask       = 0660;
