@@ -8,7 +8,7 @@ use Carp;
 use File::Spec;
 use Fcntl qw( :DEFAULT :flock :mode );
 use CGI::Session::Driver;
-use vars qw( $FileName $NoFlock $UMask );
+use vars qw( $FileName $NoFlock $UMask $NO_FOLLOW );
 
 BEGIN {
     # keep historical behavior
@@ -19,10 +19,11 @@ BEGIN {
 }
 
 @CGI::Session::Driver::file::ISA        = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::file::VERSION    = "3.7";
+$CGI::Session::Driver::file::VERSION    = "3.8";
 $FileName                               = "cgisess_%s";
 $NoFlock                                = 0;
 $UMask                                  = 0660;
+$NO_FOLLOW                              = eval { O_NOFOLLOW } || 0;
 
 sub init {
     my $self = shift;
@@ -62,12 +63,7 @@ sub retrieve {
           return $self->set_error("retrieve(): '$path' appears to be a symlink and I couldn't remove it: $!");
         return 0; # we deleted this so we have no hope of getting back anything
     }
-    sysopen(FH, $path, O_RDONLY ) || return $self->set_error( "retrieve(): couldn't open '$path': $!" );
-    
-    # sanity check
-    if (-l $path) {
-        return $self->set_error("retrieve(): '$path' is a symlink, check for malicious processes");
-    }
+    sysopen(FH, $path, O_RDONLY | $NO_FOLLOW ) || return $self->set_error( "retrieve(): couldn't open '$path': $!" );
     
     $self->{NoFlock} || flock(FH, LOCK_SH) or return $self->set_error( "retrieve(): couldn't lock '$path': $!" );
 
@@ -90,14 +86,12 @@ sub store {
     # make certain our filehandle goes away when we fall out of scope
     local *FH;
     
-    # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555 suggests we use O_EXCL, to avoid
-    #  symlink attacks but we may already have a true file and we can just overwrite the file if it exists
-    #  so let's do the awkward thing
+    # kill symlinks when we spot them
     if (-l $path) {
         unlink($path) or 
           return $self->set_error("store(): '$path' appears to be a symlink and I couldn't remove it: $!");
     }
-    sysopen(FH, $path, O_WRONLY|O_CREAT, $self->{UMask}) or return $self->set_error( "store(): couldn't open '$path': $!" );
+    sysopen(FH, $path, O_WRONLY|O_CREAT|$NO_FOLLOW, $self->{UMask}) or return $self->set_error( "store(): couldn't open '$path': $!" );
     
     # sanity check to make certain we're still ok
     if (-l $path) {

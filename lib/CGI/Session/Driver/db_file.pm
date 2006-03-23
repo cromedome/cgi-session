@@ -10,11 +10,13 @@ use File::Spec;
 use File::Basename;
 use CGI::Session::Driver;
 use Fcntl qw( :DEFAULT :flock );
+use vars qw( @ISA $VERSION $FILE_NAME $UMask $NO_FOLLOW );
 
-@CGI::Session::Driver::db_file::ISA         = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::db_file::VERSION     = "1.7";
-$CGI::Session::Driver::db_file::FILE_NAME   = "cgisess.db";
-$CGI::Session::Driver::db_file::UMask       = 0660;
+@ISA         = ( "CGI::Session::Driver" );
+$VERSION     = "1.8";
+$FILE_NAME   = "cgisess.db";
+$UMask       = 0660;
+$NO_FOLLOW   = eval { O_NOFOLLOW } || 0;
 
 sub init {
     my $self = shift;
@@ -93,12 +95,8 @@ sub _lock {
         unlink($lock_file) or 
           die $self->set_error("_lock(): '$lock_file' appears to be a symlink and I can't remove it: $!");
     }
-    sysopen(LOCKFH, $lock_file, O_RDWR|O_CREAT) or die "couldn't create lock file '$lock_file': $!";
+    sysopen(LOCKFH, $lock_file, O_RDWR|O_CREAT|$NO_FOLLOW) or die "couldn't create lock file '$lock_file': $!";
     
-    # sanity checks
-    if ( -l $lock_file ) {
-        die "_lock(): '$lock_file' is a symlink, check for malicious processes";
-    }
         
     flock(LOCKFH, $lock_type)                   or die "couldn't lock '$lock_file': $!";
     return sub {
@@ -113,6 +111,9 @@ sub _tie_db_file {
     my $self                 = shift;
     my ($o_mode, $lock_type) = @_;
     $o_mode     ||= O_RDWR|O_CREAT;
+    
+    # protect against symlinks
+    $o_mode     |= $NO_FOLLOW;
 
     my $db_file     = $self->_db_file;
     my $unlock = $self->_lock($db_file, $lock_type);
@@ -126,17 +127,13 @@ sub _tie_db_file {
           return $self->set_error("_tie_db_file(): '$db_file' appears to be a symlink and I can't remove it: $!");
     }
     
-    $o_mode |= O_CREAT|O_EXCL if $create;
+    $o_mode = O_RDWR|O_CREAT|O_EXCL if $create;
     
     unless( tie %db, "DB_File", $db_file, $o_mode, $self->{UMask} ){
         $unlock->();
         return $self->set_error("_tie_db_file(): couldn't tie '$db_file': $!");
     }
-    
-    if ( -l $db_file ) {
-        $unlock->();
-        return $self->set_error("_tie_db_file(): '$db_file' is a symlink, check for malicious processes'");
-    }
+
     return (\%db, $unlock);
 }
 
@@ -164,10 +161,6 @@ sub traverse {
     $unlock->();
     return 1;
 }
-
-
-
-
 
 
 1;
