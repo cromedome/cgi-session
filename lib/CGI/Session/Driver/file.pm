@@ -199,8 +199,7 @@ So all the three lines in the SYNOPSIS section of this manual produce the same r
 If specified B<Directory> does not exist, all necessary directory hierarchy will be created.
 
 By default, sessions are created with a umask of 0660. If you wish to change the umask for a session, pass
-a B<UMask> option with an octal representation of the umask you would like for said session. To change
-the default umask for all sessions, alter C<$CGI::Session::Driver::file::UMask>.
+a B<UMask> option with an octal representation of the umask you would like for said session. 
 
 =head1 NOTES
 
