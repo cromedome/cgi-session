@@ -5,7 +5,7 @@ CGI::Session Change Log
       and db_file drivers now use O_NOFOLLOW with open when the file should exist and 
       O_EXCL|O_CREAT when creating the file. Tests added for symlinks. (Matt LeBlanc)
     * SECURITY: sqlite driver no longer attempts to use /tmp/sessions.sqlt when no
-      Handle or DataSource are specified. This was a mistake from a security standpoint
+      Handle or DataSource is specified. This was a mistake from a security standpoint
       as anyone on the machine would then be able to create and therefore insert data
       into your sessions. (Matt LeBlanc)
     * NEW: name is now an instance method (RT#17979) (Matt LeBlanc)
