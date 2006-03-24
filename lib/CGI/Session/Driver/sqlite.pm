@@ -9,7 +9,7 @@ use base 'CGI::Session::Driver::DBI';
 use DBI qw(SQL_BLOB);
 use Fcntl;
 
-$CGI::Session::Driver::sqlite::VERSION    = "1.5";
+$CGI::Session::Driver::sqlite::VERSION    = "1.6";
 $CGI::Session::Driver::sqlite::UMask       = 0660;
 
 sub init {
@@ -25,11 +25,36 @@ sub init {
             $self->{DataSource} = "dbi:SQLite:dbname=" . $self->{DataSource};
         }
 
+        # this is the method DBD::SQLite employs...sorta
+        my $file = do {
+            my %x = map { split/=/,$_,2 } 
+                            # key=value pairs are separated by ;
+                            split/;/, 
+                            # form is dbi:sqlite:stuff_we_want so split on :, specify 3 slots, and grab the last
+                            (split/:/,$self->{DataSource},3)[2];
+            $x{dbname} || '';
+        };
+        
         # These lines are for security, to insure the SQLite file is opened safely
+        if (-l $file) {
+            unlink($file) or 
+                return $self->set_error("init(): '$file' appears to be a symlink and I couldn't remove it: $!");
+        }
+        
         $self->{UMask} = $CGI::Session::sqlite::UMask unless exists $self->{UMask};
-        sysopen(DATASOURCE, $self->{DataSource}, O_RDWR|O_CREAT|O_EXCL, $self->{UMask});
+
+        my $created = 0;
+        # create the file if it doesn't exist
+        unless (-e $file) {
+            # make certain to localize for persistent environments
+            local *DATASOURCE;
+            sysopen(DATASOURCE, $file, O_RDWR|O_CREAT|O_EXCL, $self->{UMask}) or return $self->set_error("init(): couldn't create '$file': $!");
+            close DATASOURCE;
+            $created = 1;
+        }
 
         $self->{Handle} = DBI->connect( $self->{DataSource}, '', '', {RaiseError=>1, PrintError=>1, AutoCommit=>1});
+        $self->{Handle}->do("create table " . $self->table_name . "(id not null primary key,a_session text not null)") if $created;
     }
     elsif (ref $self->{Handle} eq 'CODE') {
         $self->{Handle} = $self->{Handle}->();
