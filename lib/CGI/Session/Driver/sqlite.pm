@@ -9,62 +9,17 @@ use base 'CGI::Session::Driver::DBI';
 use DBI qw(SQL_BLOB);
 use Fcntl;
 
-$CGI::Session::Driver::sqlite::VERSION    = "1.6";
-$CGI::Session::Driver::sqlite::UMask       = 0660;
+$CGI::Session::Driver::sqlite::VERSION    = "1.7";
 
 sub init {
     my $self = shift;
 
-    if (not $self->{Handle}) {
-        if ( $self->{DataSource} =~ /^dbi:sqlite/i ) {
-            # We trust it to be complete, so nothing to do
-        }
-        # Assume we need to prepend it, or even create it
-        else {
-            $self->{DataSource} ||= File::Spec->catfile( File::Spec->tmpdir, 'sessions.sqlt' );
-            $self->{DataSource} = "dbi:SQLite:dbname=" . $self->{DataSource};
-        }
-
-        # this is the method DBD::SQLite employs...sorta
-        my $file = do {
-            my %x = map { split/=/,$_,2 } 
-                            # key=value pairs are separated by ;
-                            split/;/, 
-                            # form is dbi:sqlite:stuff_we_want so split on :, specify 3 slots, and grab the last
-                            (split/:/,$self->{DataSource},3)[2];
-            $x{dbname} || '';
-        };
-        
-        # These lines are for security, to insure the SQLite file is opened safely
-        if (-l $file) {
-            unlink($file) or 
-                return $self->set_error("init(): '$file' appears to be a symlink and I couldn't remove it: $!");
-        }
-        
-        $self->{UMask} = $CGI::Session::sqlite::UMask unless exists $self->{UMask};
-
-        my $created = 0;
-        # create the file if it doesn't exist
-        unless (-e $file) {
-            # make certain to localize for persistent environments
-            local *DATASOURCE;
-            sysopen(DATASOURCE, $file, O_RDWR|O_CREAT|O_EXCL, $self->{UMask}) or return $self->set_error("init(): couldn't create '$file': $!");
-            close DATASOURCE;
-            $created = 1;
-        }
-
-        $self->{Handle} = DBI->connect( $self->{DataSource}, '', '', {RaiseError=>1, PrintError=>1, AutoCommit=>1});
-        $self->{Handle}->do("create table " . $self->table_name . "(id not null primary key,a_session text not null)") if $created;
-    }
-    elsif (ref $self->{Handle} eq 'CODE') {
-        $self->{Handle} = $self->{Handle}->();
+    unless ( $self->{Handle}) {
+       $self->{DataSource} = "dbi:SQLite:dbname=" . $self->{DataSource} unless ( $self->{DataSource} =~ /^dbi:sqlite/i );
     }
 
-    # Now if we /still/ don't have a handle, it's a real problem
-    if ( not $self->{Handle} ) {
-        return $self->set_error( "init(): couldn't create \$dbh: " . $DBI::errstr );
-    }
-
+    $self->SUPER::init() or return;
+    
     $self->{_disconnect} = 1;
     $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
     return 1;
@@ -118,8 +73,7 @@ CGI::Session::Driver::sqlite - CGI::Session driver for SQLite
 
 =head1 SYNOPSIS
 
-    $s = new CGI::Session("driver:sqlite", $sid);
-    $s = new CGI::Session("driver:sqlite", $sid, {DataSource=>'/tmp/sessions.sqlt'});
+    $s = new CGI::Session("driver:sqlite", $sid, {DataSource=>'/my/folder/sessions.sqlt'});
     $s = new CGI::Session("driver:sqlite", $sid, {Handle=>$dbh});
 
 =head1 DESCRIPTION
@@ -132,11 +86,7 @@ Supported driver arguments are I<DataSource> and I<Handle>. B<At most> only one 
 
 I<DataSource> should be in the form of C<dbi:SQLite:dbname=/path/to/db.sqlt>. If C<dbi:SQLite:> is missing it will be prepended for you. If I<Handle> is present it should be database handle (C<$dbh>) returned by L<DBI::connect()|DBI/connect()>.
 
-It's OK to drop the third argument to L<new()|CGI::Session::Driver/new()> altogether, in which case a database named F<sessions.sqlt> will be created in your machine's TEMPDIR folder, which is F</tmp> in UNIX.
-
-By default, The session file is accessed with a umask of 0660. If you wish to
-change the umask for a session, pass a B<UMask> option with an octal
-representation of the umask you would like for the session. 
+As of version 1.7 of this driver, the third argument is B<NOT> optional. Using a default database in the temporary directory is a security risk since anyone on the machine can create and/or read your session data. If you understand these risks and still want the old behavior, you can set the C<DataSource> option to I<'/tmp/sessions.sqlt'>.
 
 =head1 BUGS AND LIMITATIONS
 
