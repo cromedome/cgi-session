@@ -4,7 +4,10 @@ CGI::Session Change Log
     * SECURITY: Hopefully this settles all of the problems with symlinks. Both the file 
       and db_file drivers now use O_NOFOLLOW with open when the file should exist and 
       O_EXCL|O_CREAT when creating the file. Tests added for symlinks. (Matt LeBlanc)
-    * SECURITY: Applied patch that disallows symlinks for sqlite databases. (Julien Danjou)
+    * SECURITY: sqlite driver no longer attempts to use /tmp/sessions.sqlt when no
+      Handle or DataSource are specified. This was a mistake from a security standpoint
+      as anyone on the machine would then be able to create and therefore insert data
+      into your sessions. (Matt LeBlanc)
     * NEW: name is now an instance method (RT#17979) (Matt LeBlanc)
 
 4.09 - Friday, March 16th, 2006
