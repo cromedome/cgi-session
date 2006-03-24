@@ -140,9 +140,9 @@ sub query {
 
 sub name {
     unless ( defined $_[1] ) {
-        return $CGI::Session::NAME;
+        return $_[0]->{_NAME} || $CGI::Session::NAME;
     }
-    $CGI::Session::NAME = $_[1];
+    $_[0]->{_NAME} = $_[1];
 }
 
 
@@ -505,7 +505,7 @@ Can accept up to three arguments, $dsn - Data Source Name, $query||$sid - query 
 
 If called without any arguments, $dsn defaults to I<driver:file;serializer:default;id:md5>, $query||$sid defaults to C<< CGI->new() >>, and C<\%dsn_args> defaults to I<undef>.
 
-If called with a single argument, it will be treated either as C<$query> object, or C<$sid>, depending on its type. If argument is a string , C<new()> will treat it as session id and will attempt to retrieve the session from data store. If it fails, will create a new session id, which will be accessible through L<id() method|/"id">. If argument is an object, L<cookie()|CGI/cookie> and L<param()|CGI/param> methods will be called on that object to recover a potential C<$sid> and retrieve it from data store. If it fails, C<new()> will create a new session id, which will be accessible through L<id() method|/"id">. C<$CGI::Session::NAME> will define the name of the query parameter and/or cookie name to be requested, defaults to I<CGISESSID>.
+If called with a single argument, it will be treated either as C<$query> object, or C<$sid>, depending on its type. If argument is a string , C<new()> will treat it as session id and will attempt to retrieve the session from data store. If it fails, will create a new session id, which will be accessible through L<id() method|/"id">. If argument is an object, L<cookie()|CGI/cookie> and L<param()|CGI/param> methods will be called on that object to recover a potential C<$sid> and retrieve it from data store. If it fails, C<new()> will create a new session id, which will be accessible through L<id() method|/"id">. C<name()> will define the name of the query parameter and/or cookie name to be requested, defaults to I<CGISESSID>.
 
 If called with two arguments first will be treated as $dsn, and second will be treated as $query or $sid or undef, depending on its type. Some examples of this syntax are:
 
@@ -1005,7 +1005,7 @@ You can minimize the above into:
 
     print $session->header();
 
-It will retrieve the name of the session cookie from $CGI::Session::NAME variable, which can also be accessed via CGI::Session->name() method. If you want to use a different name for your session cookie, do something like following before creating session object:
+It will retrieve the name of the session cookie from C<$session->name()> which defaults to C<$CGI::Session::NAME>. If you want to use a different name for your session cookie, do something like following before creating session object:
 
     CGI::Session->name("MY_SID");
     $session = new CGI::Session(undef, $cgi, \%attrs);
