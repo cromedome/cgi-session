@@ -1,8 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
-    * SECURITY: Hopefully this settles all of the problems with symlinks. Both the file 
-      and db_file drivers now use O_NOFOLLOW with open when the file should exist and 
+4.10 - Tuesday, March 28, 2006
+
+    * SECURITY: Hopefully this settles all of the problems with symlinks. Both the file
+      and db_file drivers now use O_NOFOLLOW with open when the file should exist and
       O_EXCL|O_CREAT when creating the file. Tests added for symlinks. (Matt LeBlanc)
     * SECURITY: sqlite driver no longer attempts to use /tmp/sessions.sqlt when no
       Handle or DataSource is specified. This was a mistake from a security standpoint
@@ -13,7 +15,7 @@ CGI::Session Change Log
 4.09 - Friday, March 16th, 2006
 
     * SECURITY: Applying security patch from: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=356555 (Julien Danjou)
-    
+
 4.08 - Thursday, March 15th, 2006
 
     * FIX: DESTROY was sometimes wiping out exception handling. RT#18183, Matt LeBlanc.
@@ -21,15 +23,15 @@ CGI::Session Change Log
       - db_file and file now check for symlinks either explicitly or by using O_EXCL on sysopen
       - file creation umask defaults to 660
     * NEW: db_file and file drivers now accepts a UMask option. (Matt LeBlanc)
-    * INTERNAL: test suite clean up (Tyler MacDonald) 
+    * INTERNAL: test suite clean up (Tyler MacDonald)
 
 4.07 - Thursday, March 9th, 2006
 
-    * INTERNAL: MANIFEST update to fix release. 
+    * INTERNAL: MANIFEST update to fix release.
 
 4.06 - Wednesday, March 3rd, 2006
 
-    * INTERNAL: MANIFEST update to fix release. 
+    * INTERNAL: MANIFEST update to fix release.
 
 4.06 - Wednesday, March 8th, 2006
 
@@ -54,14 +56,14 @@ CGI::Session Change Log
     * FIX: File driver now respects $CGI::Session::File::FileName for 3.9x
       compatibility. (Matt LeBlanc)
     * FIX: Default serializer now properly handles data structures that appear
-      more than once in the serialized data structure (before it'd result in data 
+      more than once in the serialized data structure (before it'd result in data
       structures that were equivalent but did not have the same address). (Matt LeBlanc)
     * FIX: File driver now localizes the filehandle to avoid any possibility
       of extended locking in persistent environments (Matt LeBlanc)
     * FIX: File driver now locks the file when retrieving the session data (Matt LeBlanc)
     * NEW: DBI Drivers now support a lazy loaded database handle. This is useful with the
       CGI::Application plugin system. If the session is never used, the database handle may not
-      not need to be created. The syntax is to use a code ref: 
+      not need to be created. The syntax is to use a code ref:
         Handle => sub {DBI->connect} (Mark Stosberg)
 
     Finally, be aware that since 4.0 some people have reported problems with
