@@ -102,10 +102,11 @@ sub store {
     if (-l $path) {
         return $self->set_error("store(): '$path' is a symlink, check for malicious processes");
     }
+    
     # prevent race condition (RT#17949)
-    truncate(FH, 0)  or return $self->set_error( "store(): couldn't truncate '$path': $!" );
     $self->{NoFlock} || flock(FH, LOCK_EX)  or return $self->set_error( "store(): couldn't lock '$path': $!" );
-
+    truncate(FH, 0)  or return $self->set_error( "store(): couldn't truncate '$path': $!" );
+    
     print FH $datastr;
     close(FH)               or return $self->set_error( "store(): couldn't close '$path': $!" );
     return 1;
