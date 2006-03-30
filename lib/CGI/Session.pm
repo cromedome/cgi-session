@@ -139,10 +139,17 @@ sub query {
 
 
 sub name {
-    unless ( defined $_[1] ) {
-        return $_[0]->{_NAME} || $CGI::Session::NAME;
+    my $self = shift;
+    
+    if (ref $self) {
+        unless ( @_ ) {
+            return $self->{_NAME} || $CGI::Session::NAME;
+        }
+        return $self->{_NAME} = $_[0];
     }
-    $_[0]->{_NAME} = $_[1];
+    
+    $CGI::Session::NAME = $_[0] if @_;
+    return $CGI::Session::NAME;
 }
 
 
