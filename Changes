@@ -1,8 +1,10 @@
 CGI::Session Change Log
 =====================================================================
+
+4.11 - Friday, March 31, 2006
     
-    * FIX: While name is now an instance method, it didn't retain its behavior
-      when used as a class method. Tests also added to ensure behavior. (Matt LeBlanc)
+    * FIX: Since 4.10, using name() as a class method was broken. This has
+      been fixed, and regression tests for both uses have been added. (Matt LeBlanc)
 
 4.10 - Tuesday, March 28, 2006
 
