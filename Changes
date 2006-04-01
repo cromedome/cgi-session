@@ -2,7 +2,7 @@ CGI::Session Change Log
 =====================================================================
     
     * FIX: While name is now an instance method, it didn't retain its behavior
-      when used as a class method. (Matt LeBlanc)
+      when used as a class method. Tests also added to ensure behavior. (Matt LeBlanc)
 
 4.10 - Tuesday, March 28, 2006
 
