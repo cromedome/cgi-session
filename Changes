@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.12 - Friday, April 7, 2006
+
+    * SECURITY: Fix possible SQL injection attack. (RT#18578, DMUEY)
+
 4.11 - Friday, March 31, 2006
     
     * FIX: Since 4.10, using name() as a class method was broken. This has
