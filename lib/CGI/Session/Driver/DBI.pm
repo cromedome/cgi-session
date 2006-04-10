@@ -111,13 +111,8 @@ sub remove {
     my ($sid) = @_;
     croak "remove(): usage error" unless $sid;
 
-    my $dbh = $self->{Handle};
-    my $sql = sprintf("DELETE FROM %s WHERE id='%s'", $self->table_name, $sid);
-    my $rc = $self->{Handle}->do(
-            'DELETE FROM'. $self->{Handle}->quote($self->table_name)
-                 .' WHERE id= ?',{},$sid );
-
-    unless ( $dbh->do($sql) ) {
+    my $rc = $self->{Handle}->do( 'DELETE FROM'. $self->table_name .' WHERE id= ?',{},$sid );
+    unless ( $rc ) {
         croak "remove(): \$dbh->do failed!";
     }
     
