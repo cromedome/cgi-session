@@ -13,6 +13,8 @@ our %options = (
     'JSON::Syck'      =>  { skip    =>  [85 .. 89, 91 .. 101] },
 );
 
+plan skip_all => 'DB_File is NOT available' unless eval { require DB_File };
+
 foreach my $i (keys(%options)) {
     $serializers{$i}++ if eval "use $i (); 1";
 }
