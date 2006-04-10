@@ -111,7 +111,7 @@ sub remove {
     my ($sid) = @_;
     croak "remove(): usage error" unless $sid;
 
-    my $rc = $self->{Handle}->do( 'DELETE FROM'. $self->table_name .' WHERE id= ?',{},$sid );
+    my $rc = $self->{Handle}->do( 'DELETE FROM '. $self->table_name .' WHERE id= ?',{},$sid );
     unless ( $rc ) {
         croak "remove(): \$dbh->do failed!";
     }
