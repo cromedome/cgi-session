@@ -112,8 +112,12 @@ sub _tie_db_file {
     my ($o_mode, $lock_type) = @_;
     $o_mode     ||= O_RDWR|O_CREAT;
     
-    # protect against symlinks
-    $o_mode     |= $NO_FOLLOW;
+    # DB_File will not touch a file unless it recognizes the format
+    # we can't detect the version of the underlying database without some very heavy checks so the easiest thing is
+    # to disable this for opening of the database
+    
+    # # protect against symlinks
+    # $o_mode     |= $NO_FOLLOW;
 
     my $db_file     = $self->_db_file;
     my $unlock = $self->_lock($db_file, $lock_type);
