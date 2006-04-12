@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+4.13 - Wednesday, April 12, 2006
+
     * FIX: Applied patch to fix cookie method (RT#18493,Nobuaki ITO)
     * FIX: Berkeley DB 1.x exhibits a bug when used in conjunction with O_NOFOLLOW. Because of this,
       we've removed it from the db_file driver. It will still attempt to stop symlinks but the
