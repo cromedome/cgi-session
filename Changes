@@ -1,6 +1,12 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: Applied patch to fix cookie method (RT#18493,Nobuaki ITO)
+    * FIX: Berkeley DB 1.x exhibits a bug when used in conjunction with O_NOFOLLOW. Because of this,
+      we've removed it from the db_file driver. It will still attempt to stop symlinks but the
+      open itself has dropped the flag. (Matt LeBlanc)
+    * FIX: json and yaml db_file tests now check for the presence of DB_File. (Matt LeBlanc)
+
 4.12 - Friday, April 7, 2006
 
     * SECURITY: Fix possible SQL injection attack. (RT#18578, DMUEY)
