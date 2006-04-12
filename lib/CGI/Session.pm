@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.12';
+$CGI::Session::VERSION  = '4.13';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -306,7 +306,7 @@ sub cookie {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '-1d', @_ );
     } 
     elsif ( my $t = $self->expire ) {
-        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> $t . 's', @_ );
+        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '+' . $t . 's', @_ );
     } 
     else {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, @_ );
