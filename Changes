@@ -1,6 +1,9 @@
 CGI::Session Change Log
 =====================================================================
 
+    * NEW: The find() command can now accept a hashref, which is passed through
+      to the coderef executed for each session. (Ron Savage). 
+
 4.13 - Wednesday, April 12, 2006
 
     * FIX: Applied patch to fix cookie method (RT#18493,Nobuaki ITO)

@@ -371,12 +371,12 @@ sub clear {
 
 sub find {
     my $class       = shift;
-    my ($dsnstr, $coderef, $dsn_args);
+    my ($dsnstr, $coderef, $dsn_args, $coderef_args);
 
     if ( @_ == 1 ) {
         $coderef = $_[0];
     } else {
-        ($dsnstr, $coderef, $dsn_args) = @_;
+        ($dsnstr, $coderef, $dsn_args, $coderef_args) = @_;
     }
 
     unless ( $coderef && ref($coderef) && (ref $coderef eq 'CODE') ) {
@@ -406,7 +406,7 @@ sub find {
         unless ( $session ) {
             return $class->set_error( "find(): couldn't load session '$sid'. " . $class->errstr );
         }
-        $coderef->( $session );
+        $coderef->( $session, $coderef_args );
     };
 
     defined($driver_obj->traverse( $driver_coderef ))
@@ -958,9 +958,16 @@ Deletes a session from the data store and empties session data from memory, comp
 
 =item find( $dsn, \&code )
 
-=item find( $dsn, \&code, \%dsn_args )
+=item find( $dsn, \&code, \%dsn_args, \%coderef_args )
 
-Experimental feature. Executes \&code for every session object stored in disk, passing initialized CGI::Session object as the first argument of \&code. Useful for housekeeping purposes, such as for removing expired sessions. Following line, for instance, will remove sessions already expired, but are still in disk:
+Experimental feature.
+
+Executes \&code for every session object stored on disk, passing an initialized CGI::Session object as the first argument to \&code,
+and passing \%coderef_args (or undef if \%coderef_args is not present) as the second option to \&code. \%coderef_args is discussed further below.
+
+Useful for housekeeping purposes, such as for removing expired sessions.
+
+The following line, for instance, will remove sessions already expired, but which are still on disk:
 
     CGI::Session->find( sub {} );
 
@@ -974,6 +981,82 @@ Notice, above \&code didn't have to do anything, because load(), which is called
             $session->delete() or warn "couldn't remove " . $session->id . ": " . $session->errstr;
         }
     }
+
+Explanation of the 4 parameters to C<find()>:
+
+=over 4
+
+=item $dsn
+
+This is the DSN (Data Source Name) used by CGI::Session to control what type of sessions
+you previously created and what type of sessions you now wish method C<find()> to pass to your callback.
+
+The default value is defined above, in the docs for method C<new()>, and is 'driver:file;serializer:default;id:md5'.
+
+Do not confuse this DSN with the database DSN mentioned just below, under \%dsn_args.
+
+=item \&code
+
+This is the callback provided by you (i.e. the caller of method C<find()>) which is called by CGI::Session
+once for each session found by method C<find()> which matches the given $dsn.
+
+There is no default value for this coderef.
+
+When your callback is actually called, it is called with 2 parameters:
+
+=over 4
+
+=item An initialized CGI::Session object
+
+This is the 'current' session, which your callback can now process any way it wants to.
+
+=item A hashref, \%coderef_args
+
+This is a set of options passed from your code to method C<find()>, and passed from there to
+your callback.
+
+In this way your code, which calls method C<find()>, can communicate with the callback.
+
+See C<expire_sessions> within L<CGI::Session::ExpireSessions> (1.07 or later) for a typical
+usage of this hashref.
+
+The default value of this hashref is undef.
+
+=back
+
+=item \%dsn_args
+
+If your $dsn uses file-based storage, then this hashref might contain keys such as:
+
+	{
+		Directory => Value 1,
+		NoFlock   => Value 2,
+		UMask     => Value 3
+	}
+
+If your $dsn uses db-based storage, then this hashref contains (up to) 3 keys, and looks like:
+
+	{
+		DataSource => Value 1,
+		User       => Value 2,
+		Password   => Value 3
+	}
+
+These 3 form the DSN, username and password used by DBI to control access to your database server,
+and hence are only relevant when using db-based sessions.
+
+The default value of this hashref is undef.
+
+Do not confuse this DSN with the CGI::Session DSN mentioned just above.
+
+=item \%coderef_args
+
+This hashref of options can be provided by you (i.e. the caller of method C<find()>), and is then
+passed in to your coderef as its second parameter.
+
+The default value of this hashref is undef.
+
+=back
 
 B<Note:> find() is meant to be convenient, not necessarily efficient. It's best suited in cron scripts.
 
