@@ -389,7 +389,7 @@ sub find {
         $driver     = $hashref->{driver};
     }
     $driver ||= "file";
-    my $pm = "CGI::Session::Driver::" . $driver;
+    my $pm = "CGI::Session::Driver::" . ($driver =~ /(.*)/)[0];
     eval "require $pm";
     if (my $errmsg = $@ ) {
         return $class->set_error( "find(): couldn't load driver." . $errmsg );
@@ -643,9 +643,9 @@ sub load {
     # Checking and loading driver, serializer and id-generators
     #
     my @pms = ();
-    $pms[0] = "CGI::Session::Driver::"      . $self->{_DSN}->{driver};
-    $pms[1] = "CGI::Session::Serialize::"  . $self->{_DSN}->{serializer};
-    $pms[2] = "CGI::Session::ID::"          . $self->{_DSN}->{id};
+    $pms[0] = "CGI::Session::Driver::"      . ($self->{_DSN}->{driver} =~ /(.*)/)[0];
+    $pms[1] = "CGI::Session::Serialize::"  . ($self->{_DSN}->{serializer} =~ /(.*)/)[0];
+    $pms[2] = "CGI::Session::ID::"          . ($self->{_DSN}->{id} =~ /(.*)/)[0];
     for ( @pms ) {
         eval "require $_";
         if ( my $errmsg = $@ ) {
@@ -1028,19 +1028,19 @@ The default value of this hashref is undef.
 
 If your $dsn uses file-based storage, then this hashref might contain keys such as:
 
-	{
-		Directory => Value 1,
-		NoFlock   => Value 2,
-		UMask     => Value 3
-	}
+    {
+        Directory => Value 1,
+        NoFlock   => Value 2,
+        UMask     => Value 3
+    }
 
 If your $dsn uses db-based storage, then this hashref contains (up to) 3 keys, and looks like:
 
-	{
-		DataSource => Value 1,
-		User       => Value 2,
-		Password   => Value 3
-	}
+    {
+        DataSource => Value 1,
+        User       => Value 2,
+        Password   => Value 3
+    }
 
 These 3 form the DSN, username and password used by DBI to control access to your database server,
 and hence are only relevant when using db-based sessions.
