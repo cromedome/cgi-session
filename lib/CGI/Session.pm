@@ -268,14 +268,17 @@ sub param {
     # USAGE: $s->param($name1 => $value1, $name2 => $value2 [,...]);
     # DESC:  updates one or more **public** records using simple syntax
     unless ( @_ % 2 ) {
+        my $ok;
         for ( my $i=0; $i < @_; $i += 2 ) {
             if ( $_[$i] =~ m/^_SESSION_/) {
                 carp "param(): attempt to write to private parameter";
                 next;
             }
             $self->{_DATA}->{ $_[$i] } = $_[$i+1];
+            $ok++;
         }
         $self->_set_status(STATUS_MODIFIED);
+        return $_[1] if @_ == 2 && $ok;
         return 1;
     }
 
