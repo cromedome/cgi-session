@@ -3,6 +3,9 @@ CGI::Session Change Log
 
     * NEW: The find() command can now accept a hashref, which is passed through
       to the coderef executed for each session. (Ron Savage). 
+    * FIX: param called with two parameters now returns the value set, if any (RT#18912) (Matt LeBlanc)
+    * FIX: driver, serializer, and id generator names are now untained (RT#18873) (Matt LeBlanc)
+    * FIX: find no longer changes the access or modified times (RT#18442) (Matt LeBlanc)
 
 4.13 - Wednesday, April 12, 2006
 
@@ -66,13 +69,12 @@ CGI::Session Change Log
 4.04 - Wednesday, March 01, 2006
     * NEW: File driver now has option to disable flock (for those running
       Win 9x, VMS, MacPerl, VOS and RISC OS). (Matt LeBlanc)
-    * FIX: If DBI driver wass initialized using 'Handle', Driver::DBI::init()
+    * FIX: If DBI driver was initialized using 'Handle', Driver::DBI::init()
       returned false, and Driver::new() thought init faild and kept returning
       undef. The problem was fixed by making sure Driver::DBI::init() returned
       true. (Sherzod)
     * Added .*cgisess.* to disclude cgisess.db, cgisess.id, and any session
       files created in the t directory. (Matt LeBlanc)
-
     * FIX: File driver now respects $CGI::Session::File::FileName for 3.9x
       compatibility. (Matt LeBlanc)
     * FIX: Default serializer now properly handles data structures that appear
