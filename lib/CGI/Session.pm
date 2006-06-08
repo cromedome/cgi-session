@@ -365,7 +365,7 @@ sub clear {
         $params = [ $self->param ];
     }
 
-    for ( @$params ) {
+    for ( grep { ! /^_SESSION_/ } @$params ) {
         delete $self->{_DATA}->{$_};
     }
     $self->_set_status( STATUS_MODIFIED );
