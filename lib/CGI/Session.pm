@@ -405,7 +405,7 @@ sub find {
 
     my $driver_coderef = sub {
         my ($sid) = @_;
-        my $session = $class->load( $dsnstr, $sid, $dsn_args );
+        my $session = $class->_load( $dsnstr, $sid, $dsn_args );
         unless ( $session ) {
             return $class->set_error( "find(): couldn't load session '$sid'. " . $class->errstr );
         }
@@ -584,6 +584,15 @@ Notice, all I<expired> sessions are empty, but not all I<empty> sessions are exp
 
 sub load {
     my $class = shift;
+    my $self = $class->_load(@_);
+    return $self if ! defined($self) || $self->is_expired || $self->errstr;
+    $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
+    $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
+    return $self;
+}
+
+sub _load {
+    my $class = shift;
 
     return $class->set_error( "called as instance method")    if ref $class;
     return $class->set_error( "invalid number of arguments")  if @_ > 3;
@@ -722,8 +731,6 @@ sub load {
         }
     }
     $self->clear(\@expired_params) if @expired_params;
-    $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
-    $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
     return $self;
 }
 
@@ -985,6 +992,8 @@ Notice, above \&code didn't have to do anything, because load(), which is called
         }
     }
 
+Note: find will not change the modification or access times unless you alter the session.
+
 Explanation of the 4 parameters to C<find()>:
 
 =over 4
@@ -1226,7 +1235,7 @@ CGI::Session evolved to what it is today with the help of following developers. 
 
 =item Mark Stosberg E<lt>markstos@cpan.orgE<gt>
 
-=item Matt LeBlanc
+=item Matt LeBlanc E<lt>mleblanc@cpan.orgE<gt>
 
 =item Shawn Sorichetti
 
