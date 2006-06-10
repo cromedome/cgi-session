@@ -591,6 +591,8 @@ sub load {
     return $self;
 }
 
+# The whole point of load vs _load is to allow a variation that doesn't
+# modify the ATIME
 sub _load {
     my $class = shift;
 
