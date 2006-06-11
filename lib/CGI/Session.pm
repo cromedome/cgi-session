@@ -405,7 +405,7 @@ sub find {
 
     my $driver_coderef = sub {
         my ($sid) = @_;
-        my $session = $class->_load( $dsnstr, $sid, $dsn_args );
+        my $session = $class->load( $dsnstr, $sid, $dsn_args, 1 );
         unless ( $session ) {
             return $class->set_error( "find(): couldn't load session '$sid'. " . $class->errstr );
         }
@@ -582,18 +582,8 @@ Notice, all I<expired> sessions are empty, but not all I<empty> sessions are exp
 
 =cut
 
+# pass a true value as the fourth parameter if you want to skip the changing of access time 
 sub load {
-    my $class = shift;
-    my $self = $class->_load(@_);
-    return $self if ! defined($self) || $self->is_expired || $self->errstr;
-    $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
-    $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
-    return $self;
-}
-
-# The whole point of load vs _load is to allow a variation that doesn't
-# modify the ATIME
-sub _load {
     my $class = shift;
 
     return $class->set_error( "called as instance method")    if ref $class;
@@ -642,7 +632,7 @@ sub _load {
     #
     # grabbing the 3rd argument, if any
     if ( @_ == 3 ){ $self->{_DRIVER_ARGS} = $_[2] }
-
+    
     #
     # setting defaults, since above arguments might be 'undef'
     $self->{_DSN}->{driver}     ||= "file";
@@ -733,6 +723,11 @@ sub _load {
         }
     }
     $self->clear(\@expired_params) if @expired_params;
+    
+    unless (@_ >= 4 && $_[3]) {
+        $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
+        $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
+    }
     return $self;
 }
 
