@@ -374,12 +374,15 @@ sub clear {
 
 sub find {
     my $class       = shift;
-    my ($dsnstr, $coderef, $dsn_args, $coderef_args);
+    my ($dsn, $coderef, $dsn_args);
 
+    # find( \%code )
     if ( @_ == 1 ) {
         $coderef = $_[0];
-    } else {
-        ($dsnstr, $coderef, $dsn_args) = @_;
+    } 
+    # find( $dsn, \&code, \%dsn_args )
+    else {
+        ($dsn, $coderef, $dsn_args) = @_;
     }
 
     unless ( $coderef && ref($coderef) && (ref $coderef eq 'CODE') ) {
@@ -387,8 +390,8 @@ sub find {
     }
 
     my $driver;
-    if ( $dsnstr ) {
-        my $hashref = $class->parse_dsn( $dsnstr );
+    if ( $dsn ) {
+        my $hashref = $class->parse_dsn( $dsn );
         $driver     = $hashref->{driver};
     }
     $driver ||= "file";
@@ -403,9 +406,10 @@ sub find {
         return $class->set_error( "find(): couldn't create driver object. " . $pm->errstr );
     }
 
+    my $dont_update_atime = 0;
     my $driver_coderef = sub {
         my ($sid) = @_;
-        my $session = $class->load( $dsnstr, $sid, $dsn_args, 1 );
+        my $session = $class->load( $dsn, $sid, $dsn_args, $dont_update_atime );
         unless ( $session ) {
             return $class->set_error( "find(): couldn't load session '$sid'. " . $class->errstr );
         }
@@ -585,9 +589,8 @@ Notice, all I<expired> sessions are empty, but not all I<empty> sessions are exp
 # pass a true value as the fourth parameter if you want to skip the changing of access time 
 sub load {
     my $class = shift;
-
     return $class->set_error( "called as instance method")    if ref $class;
-    return $class->set_error( "invalid number of arguments")  if @_ > 3;
+    return $class->set_error( "invalid number of arguments")  if @_ > 4;
 
     my $self = bless {
         _DATA       => {
@@ -613,51 +616,45 @@ sub load {
 
     #$self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
 
+    my ($dsn,$query_or_sid,$dsn_args,$update_atime);
+    # load($query||$sid)
     if ( @_ == 1 ) {
-        if ( ref $_[0] ){ $self->{_QUERY}       = $_[0]  }
-        else            { $self->{_CLAIMED_ID}  = $_[0]  }
+        $self->_set_query_or_sid($_[0]);
     }
-
     # Two or more args passed:
-    if ( @_ > 1 ) {
-        if ( defined $_[0] ) {      # <-- to avoid 'Uninitialized value...' warnings
-            $self->{_DSN} = $self->parse_dsn( $_[0] );
+    # load($dsn, $query||$sid)
+    elsif ( @_ > 1 ) {
+        ($dsn, $query_or_sid, $dsn_args,$update_atime) = @_;
+        if ( defined $dsn ) {      # <-- to avoid 'Uninitialized value...' warnings
+            $self->{_DSN} = $self->parse_dsn($dsn);
         }
-        #
-        # second argument can either be $sid, or  $query
-        if ( ref $_[1] ){ $self->{_QUERY}       = $_[1] }
-        else            { $self->{_CLAIMED_ID}  = $_[1] }
+        $self->_set_query_or_sid($query_or_sid);
+
+        # load($dsn, $query, \%dsn_args);
+
+        $self->{_DRIVER_ARGS} = $dsn_args if defined $dsn_args;
+
     }
 
-    #
-    # grabbing the 3rd argument, if any
-    if ( @_ == 3 ){ $self->{_DRIVER_ARGS} = $_[2] }
-    
-    #
     # setting defaults, since above arguments might be 'undef'
     $self->{_DSN}->{driver}     ||= "file";
     $self->{_DSN}->{serializer} ||= "default";
     $self->{_DSN}->{id}         ||= "md5";
 
-    # Beyond this point used to be '_init()' method. But I had to merge them together
-    # since '_init()' did not serve specific purpose
-
-
-    #
     # Checking and loading driver, serializer and id-generators
-    #
-    my @pms = ();
-    $pms[0] = "CGI::Session::Driver::"      . ($self->{_DSN}->{driver} =~ /(.*)/)[0];
-    $pms[1] = "CGI::Session::Serialize::"  . ($self->{_DSN}->{serializer} =~ /(.*)/)[0];
-    $pms[2] = "CGI::Session::ID::"          . ($self->{_DSN}->{id} =~ /(.*)/)[0];
-    for ( @pms ) {
+    # Is this untainting reasonable here? 
+    for ( 
+            "CGI::Session::Driver::"      . ($self->{_DSN}->{driver} =~ /(.*)/)[0],
+            "CGI::Session::Serialize::"   . ($self->{_DSN}->{serializer} =~ /(.*)/)[0],
+            "CGI::Session::ID::"          . ($self->{_DSN}->{id} =~ /(.*)/)[0],
+    ) {
         eval "require $_";
-        if ( my $errmsg = $@ ) {
-            return $self->set_error("couldn't load $_: " . $errmsg);
+        if ($@ ) {
+            return $self->set_error("couldn't load $_: " . $@);
         }
     }
 
-    unless ( $self->{_CLAIMED_ID} ) {
+    if (not $self->{_CLAIMED_ID} ) {
         my $query = $self->query();
         eval {
             $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
@@ -667,18 +664,16 @@ sub load {
         }
     }
 
-    #
     # No session is being requested. Just return an empty session
     return $self unless $self->{_CLAIMED_ID};
 
-    #
     # Attempting to load the session
     my $driver = $self->_driver();
     my $raw_data = $driver->retrieve( $self->{_CLAIMED_ID} );
     unless ( defined $raw_data ) {
         return $self->set_error( "load(): couldn't retrieve data: " . $driver->errstr );
     }
-    #
+    
     # Requested session couldn't be retrieved
     return $self unless $raw_data;
 
@@ -694,7 +689,6 @@ sub load {
         return $self->set_error( "Invalid data structure returned from thaw()" );
     }
 
-    #
     # checking if previous session ip matches current ip
     if($CGI::Session::IP_MATCH) {
       unless($self->_ip_matches) {
@@ -704,7 +698,6 @@ sub load {
       }
     }
 
-    #
     # checking for expiration ticker
     if ( $self->{_DATA}->{_SESSION_ETIME} ) {
         if ( ($self->{_DATA}->{_SESSION_ATIME} + $self->{_DATA}->{_SESSION_ETIME}) <= time() ) {
@@ -723,13 +716,26 @@ sub load {
         }
     }
     $self->clear(\@expired_params) if @expired_params;
-    
-    unless (@_ >= 4 && $_[3]) {
+
+    # We update the atime by default, but if this (otherwise undocoumented)
+    # parameter is explicitly set to false, we'll turn the behavior off
+    if ( (not defined $update_atime) or ($update_atime)) {
         $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
         $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
     }
+    
     return $self;
 }
+
+
+# set the input as a query object or session ID, depending on what it looks like.  
+sub _set_query_or_sid {
+    my $self = shift;
+    my $query_or_sid = shift;
+    if ( ref $query_or_sid){ $self->{_QUERY}       = $query_or_sid  }
+    else                   { $self->{_CLAIMED_ID}  = $query_or_sid  }
+}
+
 
 =pod
 
@@ -992,24 +998,30 @@ Explanation of the 3 parameters to C<find()>:
 
 =item $dsn
 
-This is the DSN (Data Source Name) used by CGI::Session to control what type of sessions
-you previously created and what type of sessions you now wish method C<find()> to pass to your callback.
+This is the DSN (Data Source Name) used by CGI::Session to control what type of
+sessions you previously created and what type of sessions you now wish method
+C<find()> to pass to your callback.
 
-The default value is defined above, in the docs for method C<new()>, and is 'driver:file;serializer:default;id:md5'.
+The default value is defined above, in the docs for method C<new()>, and is
+'driver:file;serializer:default;id:md5'.
 
 Do not confuse this DSN with the DSN arguments mentioned just below, under \%dsn_args.
 
 =item \&code
 
-This is the callback provided by you (i.e. the caller of method C<find()>) which is called by CGI::Session
-once for each session found by method C<find()> which matches the given $dsn.
+This is the callback provided by you (i.e. the caller of method C<find()>)
+which is called by CGI::Session once for each session found by method C<find()>
+which matches the given $dsn.
 
 There is no default value for this coderef.
 
-When your callback is actually called, the only parameter is a session. If you want to call a subroutine you already have with more parameters, you can achieve this by creating an anonymous subroutine that calls your subroutine with the parameters you want. For example:
+When your callback is actually called, the only parameter is a session. If you
+want to call a subroutine you already have with more parameters, you can
+achieve this by creating an anonymous subroutine that calls your subroutine
+with the parameters you want. For example:
 
     CGI::Session->find($dsn, sub { my_subroutine( @_, 'param 1', 'param 2' ) } );
-    CGI::Session->find($dsn, sub { $coderef->( @_, $coderef_args ) } );
+    CGI::Session->find($dsn, sub { $coderef->( @_, $extra_arg ) } );
     
 Or if you wish, you can define a sub generator as such:
 
