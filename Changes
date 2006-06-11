@@ -1,8 +1,7 @@
 CGI::Session Change Log
 =====================================================================
 
-    * NEW: The find() command can now accept a hashref, which is passed through
-      to the coderef executed for each session. (Ron Savage). 
+    * NEW: The find() command now has better documentation. (Ron Savage)
     * FIX: param called with two parameters now returns the value set, if any (RT#18912) (Matt LeBlanc)
     * FIX: driver, serializer, and id generator names are now untainted (RT#18873) (Matt LeBlanc)
     * FIX: find no longer changes the access or modified times (RT#18442) (Matt LeBlanc)
