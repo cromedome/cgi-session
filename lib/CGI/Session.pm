@@ -95,9 +95,7 @@ sub _driver {
 sub _serializer     { 
     my $self = shift;
     defined($self->{_OBJECTS}->{serializer}) and return $self->{_OBJECTS}->{serializer};
-    #return $self->{_OBJECTS}->{serializer} = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
-    my $class = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
-    return $self->{_OBJECTS}->{serializer} = ($class->can('new') || sub { bless {}, $class })->();
+    return $self->{_OBJECTS}->{serializer} = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
 }
 
 
