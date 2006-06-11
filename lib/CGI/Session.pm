@@ -1010,6 +1010,15 @@ When your callback is actually called, the only parameter is a session. If you w
 
     CGI::Session->find($dsn, sub { my_subroutine( @_, 'param 1', 'param 2' ) } );
     CGI::Session->find($dsn, sub { $coderef->( @_, $coderef_args ) } );
+    
+Or if you wish, you can define a sub generator as such:
+
+    sub coderef_with_args {
+        my ( $coderef, @params ) = @_;
+        return sub { $coderef->( @_, @params ) };
+    }
+    
+    CGI::Session->find($dsn, coderef_with_args( $coderef, 'param 1', 'param 2' ) );
 
 =item \%dsn_args
 
