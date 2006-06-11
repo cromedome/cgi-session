@@ -379,7 +379,7 @@ sub find {
     if ( @_ == 1 ) {
         $coderef = $_[0];
     } else {
-        ($dsnstr, $coderef, $dsn_args, $coderef_args) = @_;
+        ($dsnstr, $coderef, $dsn_args) = @_;
     }
 
     unless ( $coderef && ref($coderef) && (ref $coderef eq 'CODE') ) {
@@ -409,7 +409,7 @@ sub find {
         unless ( $session ) {
             return $class->set_error( "find(): couldn't load session '$sid'. " . $class->errstr );
         }
-        $coderef->( $session, $coderef_args );
+        $coderef->( $session );
     };
 
     defined($driver_obj->traverse( $driver_coderef ))
@@ -965,14 +965,9 @@ Deletes a session from the data store and empties session data from memory, comp
 
 =item find( $dsn, \&code )
 
-=item find( $dsn, \&code, \%dsn_args, \%coderef_args )
+=item find( $dsn, \&code, \%dsn_args )
 
-Experimental feature.
-
-Executes \&code for every session object stored on disk, passing an initialized CGI::Session object as the first argument to \&code,
-and passing \%coderef_args (or undef if \%coderef_args is not present) as the second option to \&code. \%coderef_args is discussed further below.
-
-Useful for housekeeping purposes, such as for removing expired sessions.
+Experimental feature. Executes \&code for every session object stored in disk, passing initialized CGI::Session object as the first argument of \&code. Useful for housekeeping purposes, such as for removing expired sessions. Following line, for instance, will remove sessions already expired, but are still in disk:
 
 The following line, for instance, will remove sessions already expired, but which are still on disk:
 
@@ -989,9 +984,9 @@ Notice, above \&code didn't have to do anything, because load(), which is called
         }
     }
 
-Note: find will not change the modification or access times unless you alter the session.
+B<Note>: find will not change the modification or access times on the sessions it returns.
 
-Explanation of the 4 parameters to C<find()>:
+Explanation of the 3 parameters to C<find()>:
 
 =over 4
 
@@ -1002,7 +997,7 @@ you previously created and what type of sessions you now wish method C<find()> t
 
 The default value is defined above, in the docs for method C<new()>, and is 'driver:file;serializer:default;id:md5'.
 
-Do not confuse this DSN with the database DSN mentioned just below, under \%dsn_args.
+Do not confuse this DSN with the DSN arguments mentioned just below, under \%dsn_args.
 
 =item \&code
 
@@ -1011,27 +1006,10 @@ once for each session found by method C<find()> which matches the given $dsn.
 
 There is no default value for this coderef.
 
-When your callback is actually called, it is called with 2 parameters:
+When your callback is actually called, the only parameter is a session. If you want to call a subroutine you already have with more parameters, you can achieve this by creating an anonymous subroutine that calls your subroutine with the parameters you want. For example:
 
-=over 4
-
-=item An initialized CGI::Session object
-
-This is the 'current' session, which your callback can now process any way it wants to.
-
-=item A hashref, \%coderef_args
-
-This is a set of options passed from your code to method C<find()>, and passed from there to
-your callback.
-
-In this way your code, which calls method C<find()>, can communicate with the callback.
-
-See C<expire_sessions> within L<CGI::Session::ExpireSessions> (1.07 or later) for a typical
-usage of this hashref.
-
-The default value of this hashref is undef.
-
-=back
+    CGI::Session->find($dsn, sub { my_subroutine( @_, 'param 1', 'param 2' ) } );
+    CGI::Session->find($dsn, sub { $coderef->( @_, $coderef_args ) } );
 
 =item \%dsn_args
 
@@ -1056,20 +1034,9 @@ and hence are only relevant when using db-based sessions.
 
 The default value of this hashref is undef.
 
-Do not confuse this DSN with the CGI::Session DSN mentioned just above.
-
-=item \%coderef_args
-
-This hashref of options can be provided by you (i.e. the caller of method C<find()>), and is then
-passed in to your coderef as its second parameter.
-
-The default value of this hashref is undef.
-
 =back
 
 B<Note:> find() is meant to be convenient, not necessarily efficient. It's best suited in cron scripts.
-
-=back
 
 =head1 MISCELLANEOUS METHODS
 
