@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.13';
+$CGI::Session::VERSION  = '4.14';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -188,6 +188,11 @@ sub _test_status {
 
 sub flush {
     my $self = shift;
+
+    # Would it be better to die or err if something very basic is wrong here? 
+    # I'm trying to address the DESTORY related warning
+    # from: http://rt.cpan.org/Ticket/Display.html?id=17541
+    # return unless defined $self;
 
     return unless $self->id;            # <-- empty session
     return if !defined($self->{_STATUS}) or $self->{_STATUS} == 0;    # <-- neither new, nor deleted nor modified
@@ -805,7 +810,18 @@ reference to an array, only the named parameters are cleared.
 
 =item flush()
 
-Synchronizes data in the buffer with its copy in disk. Normally it will be called for you just before the program terminates, or session object goes out of scope, so you should never have to flush() on your own.
+Synchronizes data in memory  with the copy serialized by the driver. Call flush() 
+if you need to access the session from outside the current session object. You should
+at least call flush() before your program exits. 
+
+As a last resort, CGI::Session will automatically call flush for you just
+before the program terminates or session object goes out of scope. This automatic
+behavior was the recommended behavior until the 4.x series. Automatic flushing
+has since proven to be unreliable, and in some cases is now required in places
+that worked with 3.x. For further details see:
+
+ http://rt.cpan.org/Ticket/Display.html?id=17541
+ http://rt.cpan.org/Ticket/Display.html?id=17299
 
 =item atime()
 
