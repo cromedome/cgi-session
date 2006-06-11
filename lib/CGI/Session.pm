@@ -95,7 +95,9 @@ sub _driver {
 sub _serializer     { 
     my $self = shift;
     defined($self->{_OBJECTS}->{serializer}) and return $self->{_OBJECTS}->{serializer};
-    return $self->{_OBJECTS}->{serializer} = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
+    #return $self->{_OBJECTS}->{serializer} = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
+    my $class = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
+    return $self->{_OBJECTS}->{serializer} = ($class->can('new') || sub { bless {}, $class })->();
 }
 
 
@@ -630,6 +632,7 @@ sub load {
     # load($dsn, $query||$sid)
     elsif ( @_ > 1 ) {
         ($dsn, $query_or_sid, $dsn_args,$update_atime) = @_;
+        return $class->set_error( "invalid number of arguments") unless ! defined $update_atime || $update_atime =~ /^0$/;
         if ( defined $dsn ) {      # <-- to avoid 'Uninitialized value...' warnings
             $self->{_DSN} = $self->parse_dsn($dsn);
         }
@@ -724,7 +727,7 @@ sub load {
 
     # We update the atime by default, but if this (otherwise undocoumented)
     # parameter is explicitly set to false, we'll turn the behavior off
-    if ( (not defined $update_atime) or ($update_atime)) {
+    if ( ! defined $update_atime ) {
         $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
         $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
     }
