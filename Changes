@@ -4,9 +4,9 @@ CGI::Session Change Log
 4.14 - Sunday, June 11, 2006
 
     * NEW: The find() command now has better documentation. (Ron Savage, Matt LeBlanc)
+    * FIX: find() no longer changes the access or modified times (RT#18442) (Matt LeBlanc)
     * FIX: param() called with two parameters now returns the value set, if any (RT#18912) (Matt LeBlanc)
     * FIX: driver, serializer, and id generator names are now untainted (RT#18873) (Matt LeBlanc)
-    * FIX: find no longer changes the access or modified times (RT#18442) (Matt LeBlanc)
     * INTERNAL: automatic flushing has been documented to be unreliable, although
       it was recommended in the past. Automatic flushing can be affected adversely 
       in persistent environments and in some cases by third party software. There are 
