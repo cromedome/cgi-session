@@ -20,6 +20,8 @@ foreach my $i (keys(%options)) {
     $serializers{$i}++ if eval "use $i (); 1";
 }
 
+delete $serializers{YAML} if exists $serializers{YAML} && YAML->VERSION < 0.58;
+
 unless(%serializers) {
     plan skip_all => "Neither YAML or YAML::Syck are available";
 }
