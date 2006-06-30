@@ -46,7 +46,7 @@ sub thaw {
 
 sub __walk {
     my %seen;
-    my @filter = shift;
+    my @filter = __scan(shift);
     local %overloaded;
     
     while (defined(my $x = shift @filter)) {
