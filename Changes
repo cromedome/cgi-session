@@ -1,6 +1,9 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: The default serializer now works correctly with certain data structures. (RT#XXX?) (Matt LeBlanc)
+    * FIX: A documentation bug in find() was fixed (Matt LeBlanc)
+    * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
     * INTERNAL: param() code was refactored for clarity (Mark Stosberg)
 
 4.14 - Sunday, June 11, 2006
