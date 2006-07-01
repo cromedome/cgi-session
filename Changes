@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+    * INTERNAL: param() code was refactored for clarity (Mark Stosberg)
+
 4.14 - Sunday, June 11, 2006
 
     * NEW: The find() command now has better documentation. (Ron Savage, Matt LeBlanc)

@@ -272,19 +272,31 @@ sub param {
     # USAGE: $s->param($name, $value);
     # USAGE: $s->param($name1 => $value1, $name2 => $value2 [,...]);
     # DESC:  updates one or more **public** records using simple syntax
-    unless ( @_ % 2 ) {
+    my $have_pairs = (@_ % 2 == 0);
+    if ($have_pairs) {
         my $ok;
-        for ( my $i=0; $i < @_; $i += 2 ) {
-            if ( $_[$i] =~ m/^_SESSION_/) {
+        my $pair_count = scalar @_;
+        my %pairs = @_;
+        my ($name,$val);
+        while (($name,$val) = each %pairs) {
+            if ( $name =~ m/^_SESSION_/) {
                 carp "param(): attempt to write to private parameter";
                 next;
             }
-            $self->{_DATA}->{ $_[$i] } = $_[$i+1];
+            $self->{_DATA}->{ $name } = $val;
             $ok++;
         }
         $self->_set_status(STATUS_MODIFIED);
-        return $_[1] if @_ == 2 && $ok;
-        return 1;
+
+        # If it's a single pair, return the value
+        if (($pair_count == 2) && $ok) {
+            return $val;
+        }
+        # otherwise return the value
+        else {
+            return 1;
+        }
+
     }
 
     #
