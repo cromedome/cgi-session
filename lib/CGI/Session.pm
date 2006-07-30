@@ -518,17 +518,15 @@ L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session.
 
 Following is the overview of all the available methods accessible via CGI::Session object.
 
-=over 4
+=head2 new()
 
-=item new()
+=head2 new( $sid )
 
-=item new( $sid )
+=head2 new( $query )
 
-=item new( $query )
+=head2 new( $dsn, $query||$sid )
 
-=item new( $dsn, $query||$sid )
-
-=item new( $dsn, $query||$sid, \%dsn_args )
+=head2 new( $dsn, $query||$sid, \%dsn_args )
 
 Constructor. Returns new session object, or undef on failure. Error message is accessible through L<errstr() - class method|CGI::Session::ErrorHandler/errstr>. If called on an already initialized session will re-initialize the session based on already configured object. This is only useful after a call to L<load()|/"load">.
 
@@ -574,13 +572,13 @@ If called with three arguments, first two will be treated as in the previous exa
 
 undef is acceptable as a valid placeholder to any of the above arguments, which will force default behavior.
 
-=item load()
+=head2 load()
 
-=item load($query||$sid)
+=head2 load($query||$sid)
 
-=item load($dsn, $query||$sid)
+=head2 load($dsn, $query||$sid)
 
-=item load($dsn, $query, \%dsn_args);
+=head2 load($dsn, $query, \%dsn_args);
 
 Constructor. Usage is identical to L<new()|/"new">, so is the return value. Major difference is, L<new()|/"new"> can create new session if it detects expired and non-existing sessions, but C<load()> does not.
 
@@ -757,20 +755,20 @@ sub _set_query_or_sid {
 
 =pod
 
-=item id()
+=head2 id()
 
 Returns effective ID for a session. Since effective ID and claimed ID can differ, valid session id should always
 be retrieved using this method.
 
-=item param($name)
+=head2 param($name)
 
-=item param(-name=E<gt>$name)
+=head2 param(-name=E<gt>$name)
 
 Used in either of the above syntax returns a session parameter set to $name or undef if it doesn't exist. If it's called on a deleted method param() will issue a warning but return value is not defined.
 
-=item param($name, $value)
+=head2 param($name, $value)
 
-=item param(-name=E<gt>$name, -value=E<gt>$value)
+=head2 param(-name=E<gt>$name, -value=E<gt>$value)
 
 Used in either of the above syntax assigns a new value to $name parameter,
 which can later be retrieved with previously introduced param() syntax. C<$value>
@@ -779,11 +777,11 @@ may be a scalar, arrayref or hashref.
 Attempts to set parameter names that start with I<_SESSION_> will trigger
 a warning and undef will be returned.
 
-=item param_hashref()
+=head2 param_hashref()
 
 B<Deprecated>. Use L<dataref()|/"dataref"> instead.
 
-=item dataref()
+=head2 dataref()
 
 Returns reference to session's data table:
 
@@ -794,34 +792,34 @@ Returns reference to session's data table:
 
 Useful for having all session data in a hashref, but too risky to update.
 
-=item save_param()
+=head2 save_param()
 
-=item save_param($query)
+=head2 save_param($query)
 
-=item save_param($query, \@list)
+=head2 save_param($query, \@list)
 
 Saves query parameters to session object. In other words, it's the same as calling L<param($name, $value)|/"param"> for every single query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query()|/"query">, which returns C<< CGI->new >>. If second argument is present and is a reference to an array, only those query parameters found in the array will be stored in the session. undef is a valid placeholder for any argument to force default behavior.
 
-=item load_param()
+=head2 load_param()
 
-=item load_param($query)
+=head2 load_param($query)
 
-=item load_param($query, \@list)
+=head2 load_param($query, \@list)
 
 Loads session parameters into a query object. The first argument, if present, should be query object, or any other object which can provide param() method. If second argument is present and is a reference to an array, only parameters found in that array will be loaded to the query object.
 
-=item clear()
+=head2 clear()
 
-=item clear('field')
+=head2 clear('field')
 
-=item clear(\@list)
+=head2 clear(\@list)
 
 Clears parameters from the session object.
 
 With no parameters, all fields are cleared. If passed a single parameter or a
 reference to an array, only the named parameters are cleared.
 
-=item flush()
+=head2 flush()
 
 Synchronizes data in memory  with the copy serialized by the driver. Call flush() 
 if you need to access the session from outside the current session object. You should
@@ -836,20 +834,20 @@ that worked with 3.x. For further details see:
  http://rt.cpan.org/Ticket/Display.html?id=17541
  http://rt.cpan.org/Ticket/Display.html?id=17299
 
-=item atime()
+=head2 atime()
 
 Read-only method. Returns the last access time of the session in seconds from epoch. This time is used internally while
 auto-expiring sessions and/or session parameters.
 
-=item ctime()
+=head2 ctime()
 
 Read-only method. Returns the time when the session was first created in seconds from epoch.
 
-=item expire()
+=head2 expire()
 
-=item expire($time)
+=head2 expire($time)
 
-=item expire($param, $time)
+=head2 expire($param, $time)
 
 Sets expiration interval relative to L<atime()|/"atime">.
 
@@ -960,11 +958,11 @@ sub _str2seconds {
 
 =pod
 
-=item is_new()
+=head2 is_new()
 
 Returns true only for a brand new session.
 
-=item is_expired()
+=head2 is_expired()
 
 Tests whether session initialized using L<load()|/"load"> is to be expired. This method works only on sessions initialized with load():
 
@@ -977,7 +975,7 @@ Tests whether session initialized using L<load()|/"load"> is to be expired. This
     }
 
 
-=item is_empty()
+=head2 is_empty()
 
 Returns true for sessions that are empty. It's preferred way of testing whether requested session was loaded successfully or not:
 
@@ -992,15 +990,15 @@ Actually, the above code is nothing but waste. The same effect could've been ach
 
 L<is_empty()|/"is_empty"> is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<is_expired()|/"is_expired"> for an example.
 
-=item delete()
+=head2 delete()
 
 Deletes a session from the data store and empties session data from memory, completely, so subsequent read/write requests on the same object will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush">, and flush() will do the actual removal.
 
-=item find( \&code )
+=head2 find( \&code )
 
-=item find( $dsn, \&code )
+=head2 find( $dsn, \&code )
 
-=item find( $dsn, \&code, \%dsn_args )
+=head2 find( $dsn, \&code, \%dsn_args )
 
 Experimental feature. Executes \&code for every session object stored in disk, passing initialized CGI::Session object as the first argument of \&code. Useful for housekeeping purposes, such as for removing expired sessions. Following line, for instance, will remove sessions already expired, but are still in disk:
 
@@ -1090,9 +1088,7 @@ B<Note:> find() is meant to be convenient, not necessarily efficient. It's best 
 
 =head1 MISCELLANEOUS METHODS
 
-=over 4
-
-=item remote_addr()
+=head2 remote_addr()
 
 Returns the remote address of the user who created the session for the first time. Returns undef if variable REMOTE_ADDR wasn't present in the environment when the session was created.
 
@@ -1102,15 +1098,15 @@ sub remote_addr {   return $_[0]->{_DATA}->{_SESSION_REMOTE_ADDR}   }
 
 =pod
 
-=item errstr()
+=head2 errstr()
 
 Class method. Returns last error message from the library.
 
-=item dump()
+=head2 dump()
 
 Returns a dump of the session object. Useful for debugging purposes only.
 
-=item header()
+=head2 header()
 
 Replacement for L<CGI.pm|CGI>'s header() method. Without this method, you usually need to create a CGI::Cookie object and send it as part of the HTTP header:
 
@@ -1128,24 +1124,18 @@ It will retrieve the name of the session cookie from C<$session->name()> which d
 
 Now, $session->header() uses "MY_SID" as a name for the session cookie.
 
-=item query()
+=head2 query()
 
 Returns query object associated with current session object. Default query object class is L<CGI.pm|CGI>.
-
-=back
 
 =head2 DEPRECATED METHODS
 
 These methods exist solely for for compatibility with CGI::Session 3.x.
 
-=over 4
-
-=item close()
+=head3 close()
 
 Closes the session. Using flush() is recommended instead, since that's exactly what a call
 to close() does now.
-
-=back 
 
 =head1 DISTRIBUTION
 
@@ -1247,7 +1237,7 @@ CGI::Session evolved to what it is today with the help of following developers. 
 
 =item Igor Plisco E<lt>igor@plisco.ruE<gt>
 
-=item Mark Stosberg E<lt>markstos@cpan.orgE<gt>
+=item Mark Stosberg 
 
 =item Matt LeBlanc E<lt>mleblanc@cpan.orgE<gt>
 
