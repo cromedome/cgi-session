@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::Driver::DBI;
 
 @CGI::Session::Driver::mysql::ISA       = qw( CGI::Session::Driver::DBI );
-$CGI::Session::Driver::mysql::VERSION   = "2.03";
+$CGI::Session::Driver::mysql::VERSION   = "2.04";
 
 sub _mk_dsnstr {
     my ($class, $dsn) = @_;
@@ -83,6 +83,14 @@ CGI::Session::Driver::mysql - CGI::Session driver for MySQL database
 =head1 DESCRIPTION
 
 B<mysql> stores session records in a MySQL table. For details see L<CGI::Session::Driver::DBI|CGI::Session::Driver::DBI>, its parent class.
+
+It's especially important for the MySQL driver that the session ID column be
+defined as a primary key, or at least "unique", like this:
+
+ CREATE TABLE sessions (
+     id CHAR(32) NOT NULL PRIMARY KEY,
+     a_session TEXT NOT NULL
+  );
 
 =head2 DRIVER ARGUMENTS
 

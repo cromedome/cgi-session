@@ -1,6 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
+    * FIX: Added important clarification and example to MySQL driver docs that the session column
+           needs to be defined as a primary key to avoid duplicate sessions. (Justin Simoni, Mark Stosberg)
     * FIX: The default serializer now works correctly with certain data structures. (RT#XXX?) (Matt LeBlanc)
     * FIX: A documentation bug in find() was fixed (Matt LeBlanc)
     * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
