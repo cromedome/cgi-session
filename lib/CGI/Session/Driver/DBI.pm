@@ -201,16 +201,21 @@ First argument to be passed to L<DBI|DBI>->L<connect()|DBI/connect()>.
 
 =item User
 
-User privileged to connect to the database defined in I<DataSource>.
+User privileged to connect to the database defined in C<DataSource>.
 
 =item Password
 
-Password of the I<User> privileged to connect to the database defined in I<DataSource>
+Password of the I<User> privileged to connect to the database defined in C<DataSource>
 
 =item Handle
 
-To set existing database handle object ($dbh) returned by DBI->connect(). I<Handle> will override all the
-above arguments, if any present.
+An existing L<DBI> database handle object. The handle can be created on demand
+by providing a code reference as a argument, such as C<<sub{DBI->connect}>>.
+This way, the database connection is only created if it actually needed. This can be useful
+when combined with a framework plugin like L<CGI::Application::Plugin::Session>, which creates
+a CGI::Session object on demand as well. 
+
+C<Handle> will override all the above arguments, if any present.
 
 =item TableName
 

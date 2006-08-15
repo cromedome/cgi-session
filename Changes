@@ -5,6 +5,8 @@ CGI::Session Change Log
            needs to be defined as a primary key to avoid duplicate sessions. (Justin Simoni, Mark Stosberg)
     * FIX: The default serializer now works correctly with certain data structures. (RT#XXX?) (Matt LeBlanc)
     * FIX: A documentation bug in find() was fixed (Matt LeBlanc)
+    * FIX: Documented how to declare a database handle to be used on demand, which was introduced
+           in 4.04. (Mark Stosberg)
     * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
     * INTERNAL: param() code was refactored for clarity (Mark Stosberg)
 
