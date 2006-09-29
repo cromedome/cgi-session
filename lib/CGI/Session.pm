@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.14';
+$CGI::Session::VERSION  = '4.15';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -17,11 +17,16 @@ sub STATUS_DELETED  () { 4 }        # denotes session that needs deletion
 sub STATUS_EXPIRED  () { 8 }        # denotes session that was expired.
 
 sub import {
-    my $class = shift;
-    @_ or return;
+    my ($class, @args) = @_;
 
-    for(@_) {
-        $CGI::Session::IP_MATCH = ( $_ eq '-ip_match' );
+    return unless @args;
+
+  ARG:
+    foreach my $arg (@args) {
+        if ($arg eq '-ip_match') {
+            $CGI::Session::IP_MATCH = 1;
+            last ARG;
+        }
     }
 }
 
@@ -580,7 +585,9 @@ undef is acceptable as a valid placeholder to any of the above arguments, which 
 
 =head2 load($dsn, $query, \%dsn_args);
 
-Constructor. Usage is identical to L<new()|/"new">, so is the return value. Major difference is, L<new()|/"new"> can create new session if it detects expired and non-existing sessions, but C<load()> does not.
+Accepts the same arguments as new(), and also returns a new session object, or
+undef on failure.  The difference is, L<new()|/"new"> can create new session if
+it detects expired and non-existing sessions, but C<load()> does not.
 
 C<load()> is useful to detect expired or non-existing sessions without forcing the library to create new sessions. So now you can do something like this:
 
