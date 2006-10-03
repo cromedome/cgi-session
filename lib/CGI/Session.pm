@@ -31,40 +31,56 @@ sub import {
 }
 
 sub new {
-    my $class   = shift;
+    my ($class, @args) = @_;
 
-    # If called as object method as in $session->new()...
     my $self;
-    if ( ref $class ) {
-        $self   = bless { %$class }, ref($class);
-        $class  = ref($class);
+    if (ref $class) {
+        #
+        # Called as an object method as in $session->new()...
+        #
+        $self  = bless { %$class }, ref( $class );
+        $class = ref $class;
         $self->_reset_status();
-
-        # Object may still have public data associated with it, but we don't care about that,
-        # since we want to leave that to the client's disposal. However, if new() was requested on
-        # an expired session, we already know that '_DATA' table is empty, since it was the
-        # job of flush() to empty '_DATA' after deleting. How do we know flush() was already
-        # called on an expired session? Because load() - constructor always calls flush()
-        # on all to-be expired sessions
-    } else {
-        defined($self = $class->load( @_ ))
-            or return $class->set_error( "new(): failed: " . $class->errstr );
+        #
+        # Object may still have public data associated with it, but we
+        # don't care about that, since we want to leave that to the
+        # client's disposal. However, if new() was requested on an
+        # expired session, we already know that '_DATA' table is
+        # empty, since it was the job of flush() to empty '_DATA'
+        # after deleting. How do we know flush() was already called on
+        # an expired session? Because load() - constructor always
+        # calls flush() on all to-be expired sessions
+        #
     }
-
-    # Absence of '_SESSION_ID' can only signal:
-    #   * expired session
-    #       Because load() - constructor is required to empty contents of _DATA - table
-    #   * unavailable session
-    #       Such sessions are the ones that don't exist on datastore, but requested by client
-    #   * new sessions
-    #       When no specific session is requested to be loaded
-    unless ( $self->{_DATA}->{_SESSION_ID} ) {
-        $self->{_DATA}->{_SESSION_ID} = $self->_id_generator()->generate_id($self->{_DRIVER_ARGS}, $self->{_CLAIMED_ID});
-        unless ( defined $self->{_DATA}->{_SESSION_ID} ) {
-            return $self->set_error( "Couldn't generate new SID" );
+    else {
+        #
+        # Called as a class method as in CGI::Session->new()
+        #
+        $self = $class->load( @args );
+        if (not defined $self) {
+            return $class->set_error( "new(): failed: " . $class->errstr );
         }
-        $self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
-        $self->_set_status(STATUS_NEW);
+    }
+    my $dataref = $self->{_DATA};
+    unless ($dataref->{_SESSION_ID}) {
+        #
+        # Absence of '_SESSION_ID' can only signal:
+        # * Expired session: Because load() - constructor is required to
+        #                    empty contents of _DATA - table
+        # * Unavailable session: Such sessions are the ones that don't
+        #                    exist on datastore, but are requested by client
+        # * New session: When no specific session is requested to be loaded
+        #
+        my $id = $self->_id_generator()->generate_id(
+                                                     $self->{_DRIVER_ARGS},
+                                                     $self->{_CLAIMED_ID}
+                                                     );
+        unless (defined $id) {
+            return $self->set_error( "Couldn't generate new SESSION-ID" );
+        }
+        $dataref->{_SESSION_ID} = $id;
+        $dataref->{_SESSION_CTIME} = $dataref->{_SESSION_ATIME} = time();
+        $self->_set_status( STATUS_NEW );
     }
     return $self;
 }
