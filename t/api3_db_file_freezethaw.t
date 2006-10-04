@@ -10,7 +10,7 @@ BEGIN {
     plan skip_all => "DB_File not available" if $@;
 
     eval 'require FreezeThaw';
-    plan skip_all => "FreezeThaw not available" if $@;
+    plan (skip_all => "FreezeThaw not available") if $@;
 
     plan(tests => 14); 
 

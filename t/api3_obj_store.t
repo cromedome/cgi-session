@@ -2,6 +2,7 @@
 
 use strict;
 use diagnostics;
+use Data::Dumper;
 
 use CGI;
 use CGI::Session qw/-api3/;
@@ -22,6 +23,9 @@ unless ( $ser ) {
     exit(0);
 }
 
+
+warn "#Using $ser as object serializer\n";
+
 my $args = "serializer:$ser";
 my $dr_args = {Directory=>'t'};
 
@@ -37,7 +41,8 @@ print $s->id() ? "ok\n" : "not ok\n";
 $cgi->param(name => 'Sherzod');
 
 print $cgi->param('name') ? "ok\n" : "not ok\n";
-print $s->param(_CGI => $cgi) ? "ok\n" : "not ok\n";
+
+print $s->param(_CGI => $cgi) ? "ok\n" : "not ok - _CGI=>$cgi\n";
 
 my $sid = $s->id();
 

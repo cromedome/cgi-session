@@ -12,6 +12,8 @@ CGI::Session Change Log
     * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
     * INTERNAL: param() code was refactored for clarity (Mark Stosberg)
     * INTERNAL: new() was refactored (Ali Isik)
+    * INTERNAL: Multi key-value syntax of param() now always returns number of keys
+      successfully processed, 0 if no key/values were processed. Needs to be reviewed.
 
 4.14 - Sunday, June 11, 2006
 

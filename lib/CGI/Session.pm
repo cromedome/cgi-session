@@ -293,13 +293,10 @@ sub param {
     # USAGE: $s->param($name, $value);
     # USAGE: $s->param($name1 => $value1, $name2 => $value2 [,...]);
     # DESC:  updates one or more **public** records using simple syntax
-    my $have_pairs = (@_ % 2 == 0);
-    if ($have_pairs) {
-        my $ok;
-        my $pair_count = scalar @_;
+    if ((@_ % 2) == 0) {
+        my $ok = 0;
         my %pairs = @_;
-        my ($name,$val);
-        while (($name,$val) = each %pairs) {
+        while (my ($name, $val) = each %pairs) {
             if ( $name =~ m/^_SESSION_/) {
                 carp "param(): attempt to write to private parameter";
                 next;
@@ -308,21 +305,11 @@ sub param {
             $ok++;
         }
         $self->_set_status(STATUS_MODIFIED);
-
-        # If it's a single pair, return the value
-        if (($pair_count == 2) && $ok) {
-            return $val;
-        }
-        # otherwise return the value
-        else {
-            return 1;
-        }
-
+        return $ok;
     }
-
     #
     # If we reached this far none of the expected syntax were detected. Syntax error
-    croak "param(): usage error. Invalid number";
+    croak "param(): usage error. Invalid syntax";
 }
 
 
