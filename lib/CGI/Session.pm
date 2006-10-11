@@ -613,7 +613,9 @@ Notice, all I<expired> sessions are empty, but not all I<empty> sessions are exp
 
 =cut
 
-# pass a true value as the fourth parameter if you want to skip the changing of access time 
+# pass a true value as the fourth parameter if you want to skip the changing of
+# access time This isn't documented more formally, because it only called by
+# find().
 sub load {
     my $class = shift;
     return $class->set_error( "called as instance method")    if ref $class;
