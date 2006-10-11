@@ -100,8 +100,10 @@ sub is_new          { $_[0]->_test_status( STATUS_NEW ) }
 
 sub id              { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ID}    : undef }
 
+# Last Access Time
 sub atime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ATIME} : undef }
 
+# Creation Time
 sub ctime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_CTIME} : undef }
 
 sub _driver {
