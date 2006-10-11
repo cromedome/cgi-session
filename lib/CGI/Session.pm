@@ -619,7 +619,7 @@ Notice, all I<expired> sessions are empty, but not all I<empty> sessions are exp
 sub load {
     my $class = shift;
     return $class->set_error( "called as instance method")    if ref $class;
-    return $class->set_error( "invalid number of arguments")  if @_ > 4;
+    return $class->set_error( "Too many arguments")  if @_ > 4;
 
     my $self = bless {
         _DATA       => {
@@ -643,8 +643,6 @@ sub load {
         _QUERY      => undef        # query object
     }, $class;
 
-    #$self->{_DATA}->{_SESSION_CTIME} = $self->{_DATA}->{_SESSION_ATIME} = time();
-
     my ($dsn,$query_or_sid,$dsn_args,$update_atime);
     # load($query||$sid)
     if ( @_ == 1 ) {
@@ -654,7 +652,13 @@ sub load {
     # load($dsn, $query||$sid)
     elsif ( @_ > 1 ) {
         ($dsn, $query_or_sid, $dsn_args,$update_atime) = @_;
-        return $class->set_error( "invalid number of arguments") unless ! defined $update_atime || $update_atime =~ /^0$/;
+
+        # Since $update_atime is not part of the public API
+        # we ignore any value but the one we use internally: 0.
+        if (defined $update_atime and $update_atime ne '0') {
+            return $class->set_error( "Too many arguments");
+         }
+
         if ( defined $dsn ) {      # <-- to avoid 'Uninitialized value...' warnings
             $self->{_DSN} = $self->parse_dsn($dsn);
         }
