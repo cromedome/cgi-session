@@ -684,7 +684,7 @@ sub load {
         }
     }
 
-    if (not $self->{_CLAIMED_ID} ) {
+    if (not defined $self->{_CLAIMED_ID}) {
         my $query = $self->query();
         eval {
             $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
