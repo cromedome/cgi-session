@@ -472,6 +472,10 @@ CGI::Session - persistent session data in CGI applications
     # or
     $session->param(-name=>'l_name', -value=>'Ruzmetov');
 
+    # flush the data from memory to the storage driver at least before your
+    # program finishes since auto-flushing can be unreliable
+    $session->flush();
+
     # retrieving data
     my $f_name = $session->param('f_name');
     # or
