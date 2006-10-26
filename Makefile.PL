@@ -20,21 +20,21 @@ Current driver specs are documented in CGI/Session/Driver.pm
 
 You are encouraged to run tests for the backend you will be using. The database backends that need a customized connection string won't run by default. To run them, some environment variables must be set.
 
-The simplest method is to use the standard "DBI_DSN" environment variable to define a DBI connection string.
+The simplest method is to use the standard "DBI_DSN/DBI_USER/DBI_PASS" environment variables.
 
-Otherwise, you can set these variables as well:
+Otherwise, you can set these variables:
 MESSAGE
 
 print "
 For PostgreSQL:
-    CGISESS_PGSQL_DSN
-    CGISESS_PGSQL_USER
-    CGISESS_PGSQL_PASSWORD
+    CGISESS_PG_DSN
+    CGISESS_PG_USER
+    CGISESS_PG_PASS
 
 For MySQL:
     CGISESS_MYSQL_DSN
     CGISESS_MYSQL_USER
-    CGISESS_MYSQL_PASSWORD
+    CGISESS_MYSQL_PASS
     CGISESS_MYSQL_SOCKET
 ";
 
@@ -51,7 +51,7 @@ WriteMakefile(
         'Scalar::Util'  => undef,
     },
     ABSTRACT        => 'Persistent session data in CGI applications',
-    AUTHOR          => 'Sherzod Ruzmetov <sherzodr@cpan.org>', 
+    AUTHOR          => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
     clean           => { FILES => [ 't/cgisess.*', 't/sessiondata' ] },
 );
 

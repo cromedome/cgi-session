@@ -7,15 +7,15 @@ my %dsn;
 if ($ENV{DBI_DSN} && $ENV{DBI_DSN} =~ m/^dbi:Pg:/) {
     %dsn = (
         DataSource  => $ENV{DBI_DSN},
-        Password    => $ENV{CGISESS_PGSQL_PASSWORD} || undef,
+        Password    => $ENV{CGISESS_PG_PASS} || undef,
         TableName   => 'sessions'
     );
 }
 else {
     %dsn = (
-        DataSource  => $ENV{CGISESS_PGSQL_DSN},
-        User        => $ENV{CGISESS_PGSQL_USER}     || $ENV{USER},
-        Password    => $ENV{CGISESS_PGSQL_PASSWORD} || undef,
+        DataSource  => $ENV{CGISESS_PG_DSN},
+        User        => $ENV{CGISESS_PG_USER} || $ENV{USER},
+        Password    => $ENV{CGISESS_PG_PASS} || undef,
         TableName   => 'sessions'
     );
 }

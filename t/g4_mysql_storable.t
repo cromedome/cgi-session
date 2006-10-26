@@ -7,7 +7,7 @@ my %dsn;
 if (defined $ENV{DBI_DSN} && ($ENV{DBI_DSN} =~ m/^dbi:mysql:/)) {
     %dsn = (
         DataSource  => $ENV{DBI_DSN},
-        Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
+        Password    => $ENV{CGISESS_MYSQL_PASS} || undef,
         TableName   => 'sessions'
     );
 }
@@ -15,7 +15,7 @@ else {
     %dsn = (
         DataSource  => $ENV{CGISESS_MYSQL_DSN},
         User        => $ENV{CGISESS_MYSQL_USER}     || $ENV{USER},
-        Password    => $ENV{CGISESS_MYSQL_PASSWORD} || undef,
+        Password    => $ENV{CGISESS_MYSQL_PASS}     || undef,
         Socket      => $ENV{CGISESS_MYSQL_SOCKET}   || undef,
         TableName   => 'sessions'
     );
