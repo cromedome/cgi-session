@@ -13,14 +13,10 @@ $CGI::Session::Driver::VERSION = "4.04";
 
 sub new {
     my $class = shift;
-    my ($args) = @_;
+    my $args  = shift || {};
 
-    if ( $args ) {
-        unless ( ref $args ) {
-            croak "Invalid argument type passed to driver: " . Dumper($args);
-        }
-    } else {
-        $args = {};
+    unless ( ref $args ) {
+        croak "$class->new(): Invalid argument type passed to driver";
     }
 
     my $self = bless ($args, $class);
