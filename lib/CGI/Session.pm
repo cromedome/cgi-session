@@ -252,42 +252,39 @@ sub trace {}
 sub tracemsg {}
 
 sub param {
-    my $self = shift;
+    my ($self, @args) = @_;
 
-    carp "param(): attempt to read/write deleted session" if $self->_test_status(STATUS_DELETED);
-
-    #
-    # USAGE: $s->param();
-    # DESC: returns all the **public** parameters
-    unless ( @_ ) {
-        return grep { !/^_SESSION_/ } keys %{ $self->{_DATA} };
+    if ($self->_test_status( STATUS_DELETED )) {
+        carp "param(): attempt to read/write deleted session";
     }
 
-    #
-    # USAGE: $s->param($p);
+    # USAGE: $s->param();
+    # DESC:  Returns all the /public/ parameters
+    if (@args == 0) {
+        return grep { !/^_SESSION_/ } keys %{ $self->{_DATA} };
+    }
+    # USAGE: $s->param( $p );
     # DESC: returns a specific session parameter
-    return $self->{_DATA}->{$_[0]} if @_ == 1;
+    elsif (@args == 1) {
+        return $self->{_DATA}->{ $args[0] }
+    }
 
-    my %args = (
-        -name   => undef,
-        -value  => undef,
-        @_
-    );
 
-    #
-    # USAGE: $s->param(-name=>$n, -value=>$v);
-    # DESC:  updates session data using CGI.pm's 'named parameter' syntax. Only
-    # public records can be set!
-    if ( defined( $args{'-name'} ) && defined( $args{'-value'} ) ) {
-        if ( $args{'-name'} =~ m/^_SESSION_/ ) {
+    # USAGE: $s->param( -name => $n, -value => $v );
+    # DESC:  Updates session data using CGI.pm's 'named param' syntax.
+    #        Only public records can be set!
+    my %args = @args;
+    my ($name, $value) = @args{ qw(-name -value) };
+    if (defined $name && defined $value) {
+        if ($name =~ m/^_SESSION_/) {
+
             carp "param(): attempt to write to private parameter";
             return undef;
         }
-        $self->_set_status(STATUS_MODIFIED);
-        return $self->{_DATA}->{ $args{'-name'} } = $args{'-value'};
+        $self->_set_status( STATUS_MODIFIED );
+        return $self->{_DATA}->{ $name } = $value;
     }
 
-    #
     # USAGE: $s->param(-name=>$n);
     # DESC:  access to session data (public & private) using CGI.pm's 'named parameter' syntax.
     return $self->{_DATA}->{ $args{'-name'} } if defined $args{'-name'};
@@ -295,22 +292,23 @@ sub param {
     # USAGE: $s->param($name, $value);
     # USAGE: $s->param($name1 => $value1, $name2 => $value2 [,...]);
     # DESC:  updates one or more **public** records using simple syntax
-    if ((@_ % 2) == 0) {
-        my $ok = 0;
-        my %pairs = @_;
-        while (my ($name, $val) = each %pairs) {
+    if ((@args % 2) == 0) {
+        my $modified_cnt = 0;
+	ARG_PAIR:
+        while (my ($name, $val) = each %args) {
             if ( $name =~ m/^_SESSION_/) {
                 carp "param(): attempt to write to private parameter";
-                next;
+                next ARG_PAIR;
             }
             $self->{_DATA}->{ $name } = $val;
-            $ok++;
+            ++$modified_cnt;
         }
         $self->_set_status(STATUS_MODIFIED);
-        return $ok;
+        return $modified_cnt;
     }
-    #
-    # If we reached this far none of the expected syntax were detected. Syntax error
+
+    # If we reached this far none of the expected syntax were
+    # detected. Syntax error
     croak "param(): usage error. Invalid syntax";
 }
 

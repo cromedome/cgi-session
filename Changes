@@ -11,7 +11,7 @@ CGI::Session Change Log
            in 4.04. (Mark Stosberg)
     * NEW: Added recommended use of flush() to the Synopsis (Michael Renner, RT#22333)
     * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
-    * INTERNAL: param() code was refactored for clarity (Mark Stosberg)
+    * INTERNAL: param() code was refactored for clarity (Mark Stosberg, Ali ISIK, RT#21782)
     * INTERNAL: new() was refactored (Ali Isik)
     * INTERNAL: renamed some environment variables used for testing (Ron Savage)
     * INTERNAL: Multi key-value syntax of param() now always returns number of keys
