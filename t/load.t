@@ -12,7 +12,7 @@ use CGI::Session;
 {
     my $s = CGI::Session->load('Driver:file;serial:FreezeThaw',undef, Directory=> 'wrong' );
     is($s,undef, "undefined session is created with wrong number of args to load");
-    like(CGI::Session->errstr, qr/invalid number/, "expected error is returned for wrong number of args");
+    like(CGI::Session->errstr, qr/Too many/, "expected error is returned for too many args");
     unlike(CGI::Session->errstr, qr/new/, "don't mention new() in error when load() fails directly.");
 }
 {

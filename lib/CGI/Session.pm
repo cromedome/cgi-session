@@ -672,23 +672,7 @@ sub load {
 
     }
 
-    # setting defaults, since above arguments might be 'undef'
-    $self->{_DSN}->{driver}     ||= "file";
-    $self->{_DSN}->{serializer} ||= "default";
-    $self->{_DSN}->{id}         ||= "md5";
-
-    # Checking and loading driver, serializer and id-generators
-    # Is this untainting reasonable here? 
-    for ( 
-            "CGI::Session::Driver::"      . ($self->{_DSN}->{driver} =~ /(.*)/)[0],
-            "CGI::Session::Serialize::"   . ($self->{_DSN}->{serializer} =~ /(.*)/)[0],
-            "CGI::Session::ID::"          . ($self->{_DSN}->{id} =~ /(.*)/)[0],
-    ) {
-        eval "require $_";
-        if ($@ ) {
-            return $self->set_error("couldn't load $_: " . $@);
-        }
-    }
+    $self->_load_pluggables();
 
     if (not defined $self->{_CLAIMED_ID}) {
         my $query = $self->query();
@@ -772,6 +756,48 @@ sub _set_query_or_sid {
     else                   { $self->{_CLAIMED_ID}  = $query_or_sid  }
 }
 
+
+sub _load_pluggables {
+    my ($self) = @_;
+
+    my %DEFAULT_FOR = (
+                       driver     => "file",
+                       serializer => "default",
+                       id         => "md5",
+                       );
+    my %SUBDIR_FOR  = (
+                       driver     => "Driver",
+                       serializer => "Serialize",
+                       id         => "ID",
+                       );
+    my $dsn = $self->{_DSN};
+    foreach my $plug qw(driver serializer id) {
+        my $mod_name = $dsn->{ $plug };
+        if (not defined $mod_name) {
+            $mod_name = $DEFAULT_FOR{ $plug };
+        }
+        if ($mod_name =~ /^(\w+)$/) {
+
+            # Looks good.  Put it into the dsn hash
+            $dsn->{ $plug } = $mod_name = $1;
+
+            # Put together the actual module name to load
+            my $prefix = join '::', (__PACKAGE__, $SUBDIR_FOR{ $plug }, q{});
+            $mod_name = $prefix . $mod_name;
+
+            ## See if we can load load it
+            eval "require $mod_name";
+            if ($@) {
+                my $msg = $@;
+                return $self->set_error("couldn't load $mod_name: " . $msg);
+            }
+        }
+        else {
+            # do something here about bad name for a pluggable
+        }
+    }
+    return;
+}
 
 =pod
 
