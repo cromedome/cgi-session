@@ -12,13 +12,16 @@ CGI::Session Change Log
     * FIX: Connections made with SQLite now disconnect only when appropriate, instead of always. 
            This addresses a symptom seen as "attempt to prepare on inactive database handle"
            (Jaldhar Vyas, Sherzod, Mark Stosberg)
+    * FIX: Args to the constructor for CGI::Session and the drivers are now always shallow
+           copied rather than used directly, to prevent modification. 
+           (RT#21952, Franck Porcher, Sherzod, Mark Stosberg)
     * NEW: Added recommended use of flush() to the Synopsis (Michael Renner, RT#22333)
     * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
     * INTERNAL: param() code was refactored for clarity (Mark Stosberg, Ali ISIK, RT#21782)
     * INTERNAL: new() and load() were refactored (Ali Isik)
     * INTERNAL: renamed some environment variables used for testing (Ron Savage)
     * INTERNAL: Multi key-value syntax of param() now always returns number of keys
-      successfully processed, 0 if no key/values were processed. Needs to be reviewed.
+      successfully processed, 0 if no key/values were processed. 
 
 4.14 - Sunday, June 11, 2006
 

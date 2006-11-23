@@ -19,7 +19,8 @@ sub new {
         croak "$class->new(): Invalid argument type passed to driver";
     }
 
-    my $self = bless ($args, $class);
+    # perform a shallow copy of $args, to prevent modification
+    my $self = bless ({%$args}, $class);
     return $self if $self->init();
     return $self->set_error( "%s->init() returned false", $class);
 }
