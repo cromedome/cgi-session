@@ -18,6 +18,8 @@ CGI::Session Change Log
     * FIX: The documentation for expire($param, $time) was made more explicit
            (pjf, Mark Stosberg) 
     * NEW: Added recommended use of flush() to the Synopsis (Michael Renner, RT#22333)
+    * NEW: Added links to Japanese translations of the documentation (Makio Tsukamoto)
+           http://digit.que.ne.jp/work/index.cgi?Perldoc/ja
     * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
     * INTERNAL: param() code was refactored for clarity (Mark Stosberg, Ali ISIK, RT#21782)
     * INTERNAL: new() and load() were refactored (Ali Isik)

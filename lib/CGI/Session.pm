@@ -497,6 +497,22 @@ CGI-Session is a Perl5 library that provides an easy, reliable and modular sessi
 Persistency is a key feature for such applications as shopping carts, login/authentication routines, and application that
 need to carry data across HTTP requests. CGI::Session does that and many more.
 
+=head1 TRANSLATIONS
+
+This document is also available in Japanese.
+
+=over 4
+
+=item o 
+
+Translation based on 4.14: http://digit.que.ne.jp/work/index.cgi?Perldoc/ja
+
+=item o
+
+Translation based on 3.11, including Cookbook and Tutorial: http://perldoc.jp/docs/modules/CGI-Session-3.11/
+
+=back
+
 =head1 TO LEARN MORE
 
 Current manual is optimized to be used as a quick reference. To learn more both about the philosophy and CGI::Session
