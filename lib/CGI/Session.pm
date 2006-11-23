@@ -901,7 +901,10 @@ If used with no arguments, returns the expiration interval if it was ever set. I
 
 Second form sets an expiration time. This value is checked when previously stored session is asked to be retrieved, and if its expiration interval has passed, it will be expunged from the disk immediately. Passing 0 cancels expiration.
 
-By using the third syntax you can set the expiration interval for a particular session parameter, say I<~logged-in>. This would cause the library call clear() on the parameter when its time is up. Passing 0 cancels expiration.
+By using the third syntax you can set the expiration interval for a particular
+session parameter, say I<~logged-in>. This would cause the library call clear()
+on the parameter when its time is up. Note it only makes sense to set this value to 
+something I<earlier> than when the whole session expires.  Passing 0 cancels expiration.
 
 All the time values should be given in the form of seconds. Following keywords are also supported for your convenience:
 
