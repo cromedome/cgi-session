@@ -15,6 +15,8 @@ CGI::Session Change Log
     * FIX: Args to the constructor for CGI::Session and the drivers are now always shallow
            copied rather than used directly, to prevent modification. 
            (RT#21952, Franck Porcher, Sherzod, Mark Stosberg)
+    * FIX: The documentation for expire($param, $time) was made more explicit
+           (pjf, Mark Stosberg) 
     * NEW: Added recommended use of flush() to the Synopsis (Michael Renner, RT#22333)
     * INTERNAL: Update test to workaround YAML versions less than 0.58. (Matt LeBlanc)
     * INTERNAL: param() code was refactored for clarity (Mark Stosberg, Ali ISIK, RT#21782)
