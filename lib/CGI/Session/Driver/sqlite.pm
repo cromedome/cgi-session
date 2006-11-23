@@ -20,7 +20,6 @@ sub init {
 
     $self->SUPER::init() or return;
     
-    $self->{_disconnect} = 1;
     $self->{Handle}->{sqlite_handle_binary_nulls} = 1;
     return 1;
 }
