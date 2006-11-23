@@ -18,6 +18,9 @@ sub init {
         if (ref $self->{Handle} eq 'CODE') {
             $self->{Handle} = $self->{Handle}->();
         }
+        else {
+            # We assume the handle is working, and there is nothing to do. 
+        }
     }
     else {
         $self->{Handle} = DBI->connect( 
