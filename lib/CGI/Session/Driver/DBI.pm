@@ -9,7 +9,7 @@ use Carp;
 use CGI::Session::Driver;
 
 @CGI::Session::Driver::DBI::ISA = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::DBI::VERSION = "1.6";
+$CGI::Session::Driver::DBI::VERSION = "4.15";
 
 
 sub init {
@@ -124,10 +124,10 @@ sub DESTROY {
     my $self = shift;
 
     unless ( $self->{Handle}->{AutoCommit} ) {
-        $self->{Handle}->commit();
+        $self->{Handle}->commit;
     }
     if ( $self->{_disconnect} ) {
-        $self->{Handle}->disconnect();
+        $self->{Handle}->disconnect;
     }
 }
 
@@ -197,7 +197,9 @@ Following driver arguments are supported:
 
 =item DataSource
 
-First argument to be passed to L<DBI|DBI>->L<connect()|DBI/connect()>.
+First argument to be passed to L<DBI|DBI>->L<connect()|DBI/connect()>. If the driver makes
+the database connection itself, it will also explicitly disconnect from the database when 
+the driver object is DESTROYed.
 
 =item User
 
