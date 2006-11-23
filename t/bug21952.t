@@ -155,5 +155,5 @@ ok(!defined($s), "Session object is no longer available");
 
 ok($opt_dsn, "\$opt_dsn still exists");
 
-ok(ref($opt_dsn) eq 'HASH', '$opt_dsn is of type ' . ref($opt_dsn));
+is(ref($opt_dsn),'HASH', '$opt_dsn is still a hashref');
 
