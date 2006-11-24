@@ -1,11 +1,13 @@
 CGI::Session Change Log
 =====================================================================
 
+4.20_1 - Friday, November 24, 2006
+
     * FIX: -ip_match now works even when it's not the last import item. (RT#21779)
     * FIX: In the PostgreSQL driver, a race condition is when storing is now worked around. (Mark Stosberg)
     * FIX: Added important clarification and example to MySQL driver docs that the session column
            needs to be defined as a primary key to avoid duplicate sessions. (Justin Simoni, Mark Stosberg)
-    * FIX: The default serializer now works correctly with certain data structures. (RT#XXX?) (Matt LeBlanc)
+    * FIX: The default serializer now works correctly with certain data structures. (RT#?) (Matt LeBlanc)
     * FIX: A documentation bug in find() was fixed (Matt LeBlanc)
     * FIX: Documented how to declare a database handle to be used on demand, which was introduced
            in 4.04. (Mark Stosberg)

@@ -3,7 +3,7 @@ package CGI::Session::Serialize::json;
 use strict;
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::Serialize::json::VERSION = '1.02';
+$CGI::Session::Serialize::json::VERSION = '4.20';
 @CGI::Session::Serialize::json::ISA     = ( "CGI::Session::ErrorHandler" );
 our $Flavour;
 
