@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.20 - Monday, December 4, 2006
+
+    * INTERNAL: No Changes since 4.20_1. Declaring stable. 
+
 4.20_1 - Friday, November 24, 2006
 
     * FIX: -ip_match now works even when it's not the last import item. (RT#21779)
