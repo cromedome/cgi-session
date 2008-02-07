@@ -1320,11 +1320,11 @@ This library is free software. You can modify and or distribute it under the sam
 You can see what the developers have been up to since the last release by
 checking out the code repository. You can browse the Subversion repository from here:
 
- http://svn.cromedome.net/
+ http://svn.cromedome.net/repos/CGI-Session
 
 Or check it directly with C<svn> from here:
 
- svn://svn.cromedome.net/CGI-Session
+ https://svn.cromedome.net/repos/CGI-Session
 
 =head1 SUPPORT
 
