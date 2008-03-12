@@ -74,6 +74,9 @@ sub retrieve {
     $sth->execute( $sid ) or return $self->set_error( "retrieve(): \$sth->execute failed with error message " . $sth->errstr);
 
     my ($row) = $sth->fetchrow_array();
+
+    $sth->finish;
+
     return 0 unless $row;
     return $row;
 }
@@ -93,8 +96,11 @@ sub store {
     }
 
     $sth->execute( $sid ) or return $self->set_error( "store(): \$sth->execute failed with message " . $sth->errstr );
+    my $rc = $sth->fetchrow_array;
+    $sth->finish;
+
     my $action_sth;
-    if ( $sth->fetchrow_array ) {
+    if ( $rc ) {
         $action_sth = $dbh->prepare_cached("UPDATE " . $self->table_name . " SET a_session=? WHERE id=?", undef, 3);
     } else {
         $action_sth = $dbh->prepare_cached("INSERT INTO " . $self->table_name . " (a_session, id) VALUES(?, ?)", undef, 3);
@@ -105,6 +111,9 @@ sub store {
     }
     $action_sth->execute($datastr, $sid)
         or return $self->set_error( "store(): \$action_sth->execute failed " . $action_sth->errstr );
+
+    $action_sth->finish;
+
     return 1;
 }
 
@@ -151,6 +160,9 @@ sub traverse {
     while ( my ($sid) = $sth->fetchrow_array ) {
         $coderef->($sid);
     }
+
+    $sth->finish;
+
     return 1;
 }
 
