@@ -80,6 +80,7 @@ sub new {
         }
         $dataref->{_SESSION_ID} = $id;
         $dataref->{_SESSION_CTIME} = $dataref->{_SESSION_ATIME} = time();
+        $dataref->{_SESSION_REMOTE_ADDR} = $ENV{REMOTE_ADDR} || "";
         $self->_set_status( STATUS_NEW );
     }
     return $self;
