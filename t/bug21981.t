@@ -11,7 +11,6 @@ BEGIN {
 }
 
 my $id;
-my $file_name;
 my $s;
 
 {
