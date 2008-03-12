@@ -46,15 +46,18 @@ unless ( $dbh ) {
 }
 
 my ($count) = $dbh->selectrow_array("SELECT COUNT(*) FROM $dsn{TableName}");
-unless ( defined $count ) {
-    unless( $dbh->do(qq|
-        CREATE TABLE $dsn{TableName} (
-            id CHAR(32) NOT NULL PRIMARY KEY,
-            a_session TEXT NULL
-        )|) ) {
-        plan(skip_all=>$dbh->errstr);
-        exit(0);
-    }
+
+if ( defined $count ) {
+    $dbh->do("drop table $dsn{TableName}");
+}
+
+unless( $dbh->do(qq|
+    CREATE TABLE $dsn{TableName} (
+        id CHAR(32) NOT NULL PRIMARY KEY,
+        a_session TEXT NULL
+    )|) ) {
+    plan(skip_all=>$dbh->errstr);
+    exit(0);
 }
 
 my $t = CGI::Session::Test::Default->new(
