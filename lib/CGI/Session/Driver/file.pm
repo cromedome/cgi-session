@@ -185,6 +185,8 @@ Naming conventions of session files are defined by C<$CGI::Session::Driver::file
 Default value of this variable is I<cgisess_%s>, where %s will be replaced with respective session ID. Should
 you wish to set your own FileName template, do so before requesting for session object:
 
+    use CGI::Session::Driver::file; # This line is mandatory.
+    # Time passes...
     $CGI::Session::Driver::file::FileName = "%s.dat";
     $s = new CGI::Session();
 
