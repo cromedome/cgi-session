@@ -27,6 +27,9 @@ CGI::Session Change Log
            can be made to work reliably. Both JSON::Syck and JSON::XS have been tried, and in both
            cases t/g4_dbfile_json.t dies horribly (but differently). Patch POD for CGI::Session to
            remove references to JSON. RT#25325 (Reported by bkw, patch by Ron Savage)
+    * NEW: Patch CGI::Session's POD and load() to allow the session/cookie name default of CGISESSID
+           to be overridden. (Patch by Lee Carmichael RT#33437, reformatted by Ron Savage). Lee has
+           also patched t/name.t to test the new functionality
 
 4.20 - Monday, December 4, 2006
 
