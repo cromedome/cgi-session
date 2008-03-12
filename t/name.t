@@ -3,7 +3,9 @@
 use strict;
 use diagnostics;
 
-use Test::More tests => 10;
+use Test::More tests => 15;
+use CGI;
+
 use_ok('CGI::Session');
 
 my $session = CGI::Session->new('id:static','testname',{Directory=>'t'});
@@ -24,3 +26,37 @@ ok($session->name('spot'),'instance method w/ param');
 ok($session->name eq 'spot','instance method w/ param effective?');
 
 ok(CGI::Session->name eq 'fluffy','instance method did not affect class method');
+
+## test interface for setting session/cookie key name CGISESSID.
+my $s2 = CGI::Session->new( 
+	'id:static', 
+	'testname', 
+	{ Directory => 't' }, 
+	{ name => 'itchy' } 
+);
+
+is $s2->name, 'itchy', 'constructor new with name for session/cookie key';
+is CGI::Session->name, 'fluffy', 'constructor name not affecting class';
+is $session->name, 'spot', 'constructor on new session not affecting old';
+
+## test from query
+$s2 = CGI::Session->new( 
+	'id:static', 
+	CGI->new( 'itchy=2001' ),
+	{ Directory => 't' }, 
+	{ name => 'itchy' } 
+);
+
+is $s2->id, 2001, 'session from query with new name'; 
+
+## should die since it won't find value from query
+eval { 
+	$s2 = CGI::Session->new(
+		'id:static', 
+		CGI->new( 'CGISESSID=2001' ),
+		{ Directory => 't' }, 
+		{ name => 'itchy' } 
+	);
+};
+
+ok $@, "session in query with default name";
