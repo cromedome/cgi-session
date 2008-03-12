@@ -23,6 +23,10 @@ CGI::Session Change Log
            patch by Ron Savage)
     * FIX: Patch CGI::Session::Driver::sqlite to add sub DESTROY to fix RT#32932
            (Patch by Alexander Batyrshin, corrected by Ron Savage)
+    * FIX: Remove CGI::Session::Seralize::json and t/g4_dbfile_json.t until such time as this code
+           can be made to work reliably. Both JSON::Syck and JSON::XS have been tried, and in both
+           cases t/g4_dbfile_json.t dies horribly (but differently). Patch POD for CGI::Session to
+           remove references to JSON. RT#25325 (Reported by bkw, patch by Ron Savage)
 
 4.20 - Monday, December 4, 2006
 
