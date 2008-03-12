@@ -47,6 +47,23 @@ sub store {
     return 1;
 }
 
+sub DESTROY {
+    my $self = shift;
+
+    unless ( $self->{Handle} -> ping ) {
+        $self->set_error(__PACKAGE__ . '::DESTROY(). Database handle has gone away');
+        return;
+	}
+
+    unless ( $self->{Handle}->{AutoCommit} ) {
+        $self->{Handle}->commit;
+    }
+
+    if ( $self->{_disconnect} ) {
+        undef $self->{Handle};
+    }
+}
+
 sub __ex_and_ret {
     my ($dbh,$sql,$datastr,$sid) = @_;
     # fix rt #18183
