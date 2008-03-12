@@ -3,12 +3,17 @@
 use strict;
 use diagnostics;
 
+use File::Spec;
 use Test::More qw/no_plan/;
 use Env;
 
 require CGI::Session;
 CGI::Session->import;
 
+my $save_id_1;
+my $save_id_2;
+
+{
 my $session;
 my $sessionid;
 
@@ -17,6 +22,7 @@ $ENV{REMOTE_ADDR}='127.0.0.1';
 is($CGI::Session::IP_MATCH,0,'ip_match off by default');
 
 ok($session=CGI::Session->new,'create new session');
+$save_id_1 = $session->id;
 $session->param('TEST','VALUE');
 is($session->param('TEST'),'VALUE','check param TEST set');
 
@@ -51,4 +57,13 @@ is($session->param('TEST'),'VALUE','check param TEST set');
 $session->flush;
 $ENV{REMOTE_ADDR}='127.0.0.1';
 ok($session=CGI::Session->new($sessionid),'new session - different ip');
+$save_id_2 = $session->id;
 isnt($session->id,$sessionid,'new session id');
+}
+
+# Emulate CGI::Session::Driver::file.pm.
+
+my $dir_name = File::Spec->tmpdir();
+
+unlink File::Spec->catfile($dir_name, cgisess_$save_id_1);
+unlink File::Spec->catfile($dir_name, cgisess_$save_id_2);
