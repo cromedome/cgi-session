@@ -498,6 +498,17 @@ CGI-Session is a Perl5 library that provides an easy, reliable and modular sessi
 Persistency is a key feature for such applications as shopping carts, login/authentication routines, and application that
 need to carry data across HTTP requests. CGI::Session does that and many more.
 
+=head1 A Warning about UTF8
+
+Trying to use UTF8 in a program which uses CGI::Session has lead to problems. See RT#21981 and RT#28516.
+
+In the first case the user tried "use encoding 'utf8';" in the program, and in the second case the user tried
+"$dbh->do(qq|set names 'utf8'|);".
+
+Until this problem is understood and corrected, users are advised to avoid UTF8 in conjunction with CGI::Session.
+
+For details, see: http://rt.cpan.org/Public/Bug/Display.html?id=28516 (and ...id=21981).
+
 =head1 TRANSLATIONS
 
 This document is also available in Japanese.
