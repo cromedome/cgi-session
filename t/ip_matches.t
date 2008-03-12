@@ -65,5 +65,5 @@ isnt($session->id,$sessionid,'new session id');
 
 my $dir_name = File::Spec->tmpdir();
 
-unlink File::Spec->catfile($dir_name, cgisess_$save_id_1);
-unlink File::Spec->catfile($dir_name, cgisess_$save_id_2);
+unlink File::Spec->catfile($dir_name, "cgisess_$save_id_1");
+unlink File::Spec->catfile($dir_name, "cgisess_$save_id_2");
