@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.21 - Tuesday, March 11, 2008
+
+    * FIX: Patch CGI::Session to fix RT#29138 (Patch by Barry Friedman)
+
 4.20 - Monday, December 4, 2006
 
     * INTERNAL: No Changes since 4.20_1. Declaring stable. 
