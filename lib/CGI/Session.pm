@@ -1269,11 +1269,6 @@ Full name: B<CGI::Session::Serialize::freezethaw>
 L<yaml|CGI::Session::Serialize::yaml> - serializes data using YAML. Requires L<YAML> or L<YAML::Syck>.
 Full name: B<CGI::Session::Serialize::yaml>
 
-=item *
-
-L<json|CGI::Session::Serialize::json> - serializes data using JSON. Requires L<JSON::Syck>.
-Full name: B<CGI::Session::Serialize::json>
-
 =back
 
 =head2 ID GENERATORS
