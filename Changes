@@ -21,6 +21,8 @@ CGI::Session Change Log
     * FIX: Patch POD for CGI::Session::Driver::file to clarify how to use the option to change the
            file name pattern used to created session files (Report by appleaday RT#33635,
            patch by Ron Savage)
+    * FIX: Patch CGI::Session::Driver::sqlite to add sub DESTROY to fix RT#32932
+           (Patch by Alexander Batyrshin, corrected by Ron Savage)
 
 4.20 - Monday, December 4, 2006
 
