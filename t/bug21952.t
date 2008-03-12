@@ -130,6 +130,8 @@
 
 
 use strict;
+
+use File::Spec;
 use Test::More ('no_plan');
 
 
@@ -140,7 +142,7 @@ BEGIN {
     use_ok("CGI::Session::Driver::file");
 }
 
-my $opt_dsn = {Directory=>'/tmp'};
+my $opt_dsn = {Directory=>File::Spec->tmpdir()};
 ok(ref($opt_dsn) eq 'HASH', '$opt_dsn is HASH');
 
 ok(my $q  = CGI->new());
@@ -148,6 +150,10 @@ ok(my $q  = CGI->new());
 ok(my $s    = CGI::Session->new("driver:file;serializer:default",  $q, $opt_dsn));
 
 ok(ref($opt_dsn) eq 'HASH', '$opt_dsn is HASH');
+
+# Clean up /tmp as per RT#29969.
+
+$s -> delete();
 
 undef($s);
 
