@@ -13,6 +13,7 @@ CGI::Session Change Log
            - Can't locate object method "errstr" via package "CGI::Session::Serialize::storable"
            (Patch by Ron Savage)
     * FIX: Patch CGI::Session::Driver::DBI.pm to fix RT#24601 (Patch by latypoff)
+    * FIX: Patch CGI::Session::Driver::DBI.pm to fix RT#24355 (Reported by fenlisesi, patch by Ron Savage)
 
 4.20 - Monday, December 4, 2006
 
