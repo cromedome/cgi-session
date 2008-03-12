@@ -16,6 +16,8 @@ CGI::Session Change Log
     * FIX: Patch CGI::Session::Driver::DBI.pm to fix RT#24355 (Reported by fenlisesi, patch by Ron Savage)
 	* NEW: Add t/bug24285.t to ensure session data files are created properly when the user specifies a
            directory other than /tmp (Reported by William Pearson RT#24285, patch by Ron Savage)
+    * FIX: Patch t/ip_matches.t and t/bug21592.t to remove test files left in /tmp, to fix RT#29969
+           (Reported by ANDK, patch by Ron Savage)
 
 4.20 - Monday, December 4, 2006
 
