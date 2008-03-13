@@ -32,6 +32,17 @@ CGI::Session Change Log
            also patched t/name.t to test the new functionality
     * NEW: Split CGI::Session::Serialize::yaml out into its own distro. Get it hot from CPAN!
     * NEW: Add Build.PL for Module::Build users
+    * NEW: Support specification of both the id column name and the a_session column name in the
+           sessions table, by extending the options acceptable in CGI::Session->new(..,..,{here}).
+           Allow:   {TableName => 'session',  IdColName => 'my_id', DataColName => 'my_data'}.
+           Default: {TableName => 'sessions', IdColName => 'id',    DataColName => 'a_session'}.
+           Allow any 1, 2 or 3 of these options. Missing keys default as specified.
+           (Patch by Chris RT#2224. Implemented differently by Ron Savage). Supported drivers:
+           o MySQL (native to CGI::Session)
+           o ODBC (separate distro, CGI::Session::Driver::odbc V 1.01)
+           o Oracle (separate distro, CGI::Session::Driver::oracle V 1.01)
+           o Postgres (native)
+           o SQLite (native)
 
 4.20 - Monday, December 4, 2006
 
