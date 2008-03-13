@@ -9,7 +9,6 @@ if ($ENV{DBI_DSN} && ($ENV{DBI_DSN} =~ m/^dbi:Pg:/)) {
         DataSource  => $ENV{DBI_DSN},
         User        => $ENV{DBI_USER},
         Password    => $ENV{DBI_PASS},
-        TableName   => 'sessions'
     );
 }
 else {
@@ -17,10 +16,10 @@ else {
         DataSource  => $ENV{CGISESS_PG_DSN},
         User        => $ENV{CGISESS_PG_USER},
         Password    => $ENV{CGISESS_PG_PASS},
-        TableName   => 'sessions'
     );
 }
 
+%dsn = (%dsn, TableName => 'sessions', IdColName => 'id', DataColName => 'a_session');
 
 use File::Spec;
 use Test::More;
@@ -51,18 +50,20 @@ if ( defined $count ) {
     $dbh->do("drop table $dsn{TableName}");
 }
 
-unless( $dbh->do(qq|
+if( $dbh->do(qq|
     CREATE TABLE $dsn{TableName} (
-        id CHAR(32) NOT NULL PRIMARY KEY,
-        a_session TEXT NULL
+        $dsn{IdColName} CHAR(32) NOT NULL PRIMARY KEY,
+        $dsn{DataColName} TEXT NULL
     )|) ) {
+    #print STDERR "Created table. \n";
+} else {
     plan(skip_all=>$dbh->errstr);
     exit(0);
 }
 
 my $t = CGI::Session::Test::Default->new(
     dsn => "dr:postgresql",
-    args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
+    args=>{Handle=>$dbh, TableName=>$dsn{TableName}, IdColName => $dsn{IdColName}, DataColName => $dsn{DataColName} });
 
 plan tests => $t->number_of_tests;
 $t->run();

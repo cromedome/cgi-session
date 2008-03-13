@@ -87,9 +87,9 @@ sub run {
         ok(1, "=== 1 ===");
         my $session = CGI::Session->load() or die CGI::Session->errstr;
         ok($session, "empty session should be created");
-        ok(!$session->id);
-        ok($session->is_empty);
-        ok(!$session->is_expired);
+        ok(!$session->id, 'Id is empty');
+        ok($session->is_empty, 'Session is empty');
+        ok(!$session->is_expired, 'Session is not expired');
 
         undef $session;
 

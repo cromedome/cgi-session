@@ -19,6 +19,20 @@ sub new {
         croak "$class->new(): Invalid argument type passed to driver";
     }
 
+    # Set defaults.
+
+    if (! $args->{TableName}) {
+        $args->{TableName} = 'sessions';
+    }
+
+    if (! $args->{IdColName}) {
+        $args->{IdColName} = 'id';
+    }
+
+    if (! $args->{DataColName}) {
+        $args->{DataColName} = 'a_session';
+    }
+
     # perform a shallow copy of $args, to prevent modification
     my $self = bless ({%$args}, $class);
     return $self if $self->init();
