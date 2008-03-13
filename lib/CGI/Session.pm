@@ -689,7 +689,7 @@ sub load {
         _QUERY      => undef        # query object
     }, $class;
 
-    my ($dsn,$query_or_sid,$dsn_args,$update_atime);
+    my ($dsn,$query_or_sid,$dsn_args,$update_atime,$params);
     # load($query||$sid)
     if ( @_ == 1 ) {
         $self->_set_query_or_sid($_[0]);
