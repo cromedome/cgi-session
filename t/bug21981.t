@@ -19,6 +19,7 @@ my $s;
     $id = $s -> id();
 }
 
+diag("Warnings expected. Consult docs re 'utf8'");
 ok($id, 'Session created successfully');
 
 # Emulate CGI::Session::Driver::file.pm.
