@@ -332,12 +332,10 @@ sub cookie {
     my $cookie= undef;
 
     if ( $self->is_expired ) {
-        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, @_ );
-        $cookie->max_age(0);
+        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '-1d', @_ );
     } 
     elsif ( my $t = $self->expire ) {
-        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, @_ );
-        $cookie->max_age('+' . $t . 's');
+        $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '+' . $t . 's', @_ );
     } 
     else {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, @_ );

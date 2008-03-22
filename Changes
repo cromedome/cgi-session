@@ -45,10 +45,6 @@ CGI::Session Change Log
            o Oracle (separate distro, CGI::Session::Driver::oracle V 1.01)
            o Postgres (native)
            o SQLite (native)
-    * NEW: Patch to generate RFC 2109 compliant cookies that sets Max-Age instead of Expires
-           (Patch by Michael Hampton). This patch is specifically for the Safari web client.
-           Warning: A side-effect of this is that because CGI::Simple::Cookie V 1.103 does not yet
-           support Max-Age as a cookie attribute, CGI::Simple V 1.103 is not compatible with this patch
 
 4.20 - Monday, December 4, 2006
 
