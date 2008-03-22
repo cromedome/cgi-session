@@ -1,7 +1,9 @@
 CGI::Session Change Log
 =====================================================================
 
-4.21 - Tuesday, March 11, 2008
+4.29_1 - Saturday, March 15, 2008
+
+    Special Thanks to Ron Savage who did the bulk of the work to put this release together. 
 
     * FIX: Patch CGI::Session to fix RT#29138 (Patch by Barry Friedman)
     * NEW: Add a note to CGI::Session's POD referring to utf8 problems, and include references
