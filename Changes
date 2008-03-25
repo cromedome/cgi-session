@@ -8,12 +8,6 @@ CGI::Session Change Log
     * FIX: Patch CGI::Session to fix RT#29138 (Patch by Barry Friedman)
     * NEW: Add a note to CGI::Session's POD referring to utf8 problems, and include references
            to RT#21981 (Reported by erwan) and RT#28516 (Reported by jasoncrowther)
-    * NEW: Add t/bug21981.t to help make uses aware that "use encoding 'utf8';" in a program,
-           or "$dbh->do(qq|set names 'utf8'|);", when also using CGI::Session, can lead to error
-           messages such as (respectively):
-           - Can't locate object method "renewed" via package "Encode::utf8" or
-           - Can't locate object method "errstr" via package "CGI::Session::Serialize::storable"
-           (Patch by Ron Savage)
     * FIX: Patch CGI::Session::Driver::DBI.pm to fix RT#24601 (Patch by latypoff)
     * FIX: Patch CGI::Session::Driver::DBI.pm to fix RT#24355 (Reported by fenlisesi, patch by Ron Savage)
 	* NEW: Add t/bug24285.t to ensure session data files are created properly when the user specifies a
