@@ -27,7 +27,9 @@ CGI::Session Change Log
            to be overridden. (Patch by Lee Carmichael RT#33437, reformatted by Ron Savage). Lee has
            also patched t/name.t to test the new functionality
     * NEW: Split CGI::Session::Serialize::yaml out into its own distro. Get it hot from CPAN!
-    * NEW: Add Build.PL for Module::Build users
+    * NEW: Add Build.PL for Module::Build users. This also requires adding PL_FILES => {}
+           to Makefile.PL to beat ExtUtils::MakeMaker over the head, otherwise it executes
+           'perl Build.PL Build'
     * NEW: Support specification of both the id column name and the a_session column name in the
            sessions table, by extending the options acceptable in CGI::Session->new(..,..,{here}).
            Allow:   {TableName => 'session',  IdColName => 'my_id', DataColName => 'my_data'}.
