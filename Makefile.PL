@@ -42,17 +42,18 @@ print "\n";
 print "-" x 40, "\n";
 
 WriteMakefile(
-    NAME            => 'CGI::Session',
-    VERSION_FROM            => 'lib/CGI/Session.pm',
-    PREREQ_PM       => {
+    NAME         => 'CGI::Session',
+    VERSION_FROM => 'lib/CGI/Session.pm',
+    PL_FILES     => {},
+    PREREQ_PM    => {
         'Digest::MD5'   => undef,
         'Data::Dumper'  => undef,
         'Test::More'    => undef,
         'Scalar::Util'  => undef,
     },
-    ABSTRACT        => 'Persistent session data in CGI applications',
-    AUTHOR          => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
-    clean           => { FILES => [ 't/cgisess.*', 't/sessiondata' ] },
+    ABSTRACT => 'Persistent session data in CGI applications',
+    AUTHOR   => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
+    clean    => { FILES => [ 't/cgisess.*', 't/sessiondata' ] },
 );
 
 #
