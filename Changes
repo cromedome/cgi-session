@@ -1,6 +1,11 @@
 CGI::Session Change Log
 =====================================================================
 
+4.29_2 - Thursday, March 27, 2008
+
+    * FIX: stop ExtUtils::MakeMaker trying to create Build.PL (Ron Savage)
+    * FIX: Disable trying to use utf8 in tests. (Ron Savage) Ref RT#21981, RT#28516
+
 4.29_1 - Saturday, March 15, 2008
 
     Special Thanks to Ron Savage who did the bulk of the work to put this release together. 
