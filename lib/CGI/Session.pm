@@ -498,6 +498,15 @@ CGI-Session is a Perl5 library that provides an easy, reliable and modular sessi
 Persistency is a key feature for such applications as shopping carts, login/authentication routines, and application that
 need to carry data across HTTP requests. CGI::Session does that and many more.
 
+=head1 A Warning about Auto-flushing
+
+As mentioned above in the Synopsis, auto-flushing can be unreliable.
+
+Consequently, you should regard it as mandatory that sessions always need to be explicitly flushed before the
+program exits.
+
+For instance, in a C<CGI::Application>-based program, C<sub teardown()> would be the appropriate place to do this.
+
 =head1 A Warning about UTF8
 
 Trying to use UTF8 in a program which uses CGI::Session has lead to problems. See RT#21981 and RT#28516.
@@ -936,6 +945,9 @@ that worked with 3.x. For further details see:
  http://rt.cpan.org/Ticket/Display.html?id=17541
  http://rt.cpan.org/Ticket/Display.html?id=17299
 
+Consequently, always explicitly calling C<flush()> on the session before the program exits
+should be regarded as mandatory until this problem is rectified.
+
 =head2 atime()
 
 Read-only method. Returns the last access time of the session in seconds from epoch. This time is used internally while
@@ -1098,6 +1110,9 @@ L<is_empty()|/"is_empty"> is useful only if you wanted to catch requests for exp
 =head2 delete()
 
 Deletes a session from the data store and empties session data from memory, completely, so subsequent read/write requests on the same object will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush">, and flush() will do the actual removal.
+
+Warning: Auto-flushing can be unreliable, and always explicitly calling C<flush()> on the session before the program exits
+should be regarded as mandatory until this problem is rectified.
 
 =head2 find( \&code )
 
