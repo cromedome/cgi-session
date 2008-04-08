@@ -595,6 +595,14 @@ If called with two arguments first will be treated as $dsn, and second will be t
     $s = CGI::Session->new("serializer:storable;id:incr", $sid);
     # etc...
 
+Briefly, C<new()> will return an initialized session object with a valid id, whereas C<load()> may return
+an empty session object with an undefined id.
+
+Tests are provided (t/new_with_undef.t and t/load_with_undef.t) to clarify the result of calling C<new()> and C<load()>
+with undef, or with an initialized CGI object with an undefined or fake CGISESSID.
+
+You are strongly advised to run the old-fashioned 'make test TEST_FILES=t/new_with_undef.t TEST_VERBOSE=1'
+or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, and examine the output.
 
 Following data source components are supported:
 
@@ -646,7 +654,7 @@ undef is acceptable as a valid placeholder to any of the above arguments, which 
 =head2 load( $dsn, $query, \%dsn_args, \%session_params )
 
 Accepts the same arguments as new(), and also returns a new session object, or
-undef on failure.  The difference is, L<new()|/"new"> can create new session if
+undef on failure.  The difference is, L<new()|/"new"> can create a new session if
 it detects expired and non-existing sessions, but C<load()> does not.
 
 C<load()> is useful to detect expired or non-existing sessions without forcing the library to create new sessions. So now you can do something like this:
@@ -664,7 +672,16 @@ C<load()> is useful to detect expired or non-existing sessions without forcing t
         $s = $s->new() or die $s->errstr;
     }
 
-Notice, all I<expired> sessions are empty, but not all I<empty> sessions are expired!
+Notice: All I<expired> sessions are empty, but not all I<empty> sessions are expired!
+
+Briefly, C<new()> will return an initialized session object with a valid id, whereas C<load()> may return
+an empty session object with an undefined id.
+
+Tests are provided (t/new_with_undef.t and t/load_with_undef.t) to clarify the result of calling C<new()> and C<load()>
+with undef, or with an initialized CGI object with an undefined or fake CGISESSID.
+
+You are strongly advised to run the old-fashioned 'make test TEST_FILES=t/new_with_undef.t TEST_VERBOSE=1'
+or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, and examine the output.
 
 =cut
 
@@ -1109,9 +1126,11 @@ L<is_empty()|/"is_empty"> is useful only if you wanted to catch requests for exp
 
 =head2 delete()
 
-Deletes a session from the data store and empties session data from memory, completely, so subsequent read/write requests on the same object will fail. Technically speaking, it will only set object's status to I<STATUS_DELETED> and will trigger L<flush()|/"flush">, and flush() will do the actual removal.
+Deletes a session from the data store and empties session data from memory, completely, so subsequent read/write requests on the same object will fail. Technically speaking, though, it will only set the object's status to I<STATUS_DELETED>.
 
-Warning: Auto-flushing can be unreliable, and always explicitly calling C<flush()> on the session before the program exits
+The intention is that in due course (of the program's execution) this will trigger L<flush()|/"flush">, and flush() will do the actual removal.
+
+However: Auto-flushing can be unreliable, and always explicitly calling C<flush()> on the session before the program exits
 should be regarded as mandatory until this problem is rectified.
 
 =head2 find( \&code )
