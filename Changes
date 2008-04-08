@@ -5,7 +5,16 @@ CGI::Session Change Log
 
     * FIX: Patch POD for CGI::Session in various places, to emphasize even more that auto-flushing is
            unreliable, and that flush() should always be called explicitly before the program exits.
-           See RT#17299# and RT#34668
+           The changes are a new section just after SYNOPSIS and DESCRIPTION, and the PODs for flush(),
+           and delete(). See RT#17299 and RT#34668
+    * NEW: Add t/new_with_undef.t and t/load_with_undef.t to explicitly demonstrate the effects of
+           calling new() and load() with various types of undefined or fake parameters. See RT#34668
+    * FIX: Patch POD for new() and load() to clarify the result of calling these with undef, or with
+           an initialized CGI object with an undefined or fake CGISESSID. See RT#34668.
+           Specifically: You are strongly advised to run the old-fashioned
+           'make test TEST_FILES=t/new_with_undef.t TEST_VERBOSE=1' or the new-fangled
+           'prove -v t/new_with_undef.t', for both new*.t and load*.t, and examine the output
+    * FIX: Patch POD in various tiny ways to improve the grammar
 
 4.29_2 - Thursday, March 27, 2008
 
