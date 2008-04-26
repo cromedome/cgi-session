@@ -1409,6 +1409,7 @@ Bug reports can be submitted at http://rt.cpan.org/NoAuth/ReportBug.html?Queue=C
 Sherzod Ruzmetov E<lt>sherzodr@cpan.orgE<gt>, http://author.handalak.com/
 
 Mark Stosberg became a co-maintainer during the development of 4.0. C<markstos@cpan.org>.
+Ron Savage became a co-maintainer during the development of 4.30. C<rsavage@cpan.org>.
 
 =head1 SEE ALSO
 
