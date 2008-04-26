@@ -13,7 +13,7 @@ use Fcntl qw( :DEFAULT :flock );
 use vars qw( @ISA $VERSION $FILE_NAME $UMask $NO_FOLLOW );
 
 @ISA         = ( "CGI::Session::Driver" );
-$VERSION     = '4.29_1';
+$VERSION     = '4.30';
 $FILE_NAME   = "cgisess.db";
 $UMask       = 0660;
 $NO_FOLLOW   = eval { O_NOFOLLOW } || 0;

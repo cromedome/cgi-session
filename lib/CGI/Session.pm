@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.29_2';
+$CGI::Session::VERSION  = '4.30';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 

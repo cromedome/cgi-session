@@ -6,7 +6,7 @@ use strict;
 use Carp ("croak");
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::ID::static::VERSION = '4.29_1';
+$CGI::Session::ID::static::VERSION = '4.30';
 @::CGI::Session::ID::static::ISA   = qw( CGI::Session::ErrorHandler );
 
 sub generate_id {

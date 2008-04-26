@@ -1,7 +1,7 @@
 CGI::Session Change Log
 =====================================================================
 
-4.29_3 - Monday, April 7, 2008
+4.30 - Friday, April 25, 2008
 
     * FIX: Patch POD for CGI::Session in various places, to emphasize even more that auto-flushing is
            unreliable, and that flush() should always be called explicitly before the program exits.
