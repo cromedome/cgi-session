@@ -135,7 +135,7 @@ sub remove {
 sub DESTROY {
     my $self = shift;
 
-    unless ( $self->{Handle} -> ping ) {
+    unless ( defined $self->{Handle} && $self->{Handle} -> ping ) {
         $self->set_error(__PACKAGE__ . '::DESTROY(). Database handle has gone away');
         return;
 	}
