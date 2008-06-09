@@ -1,6 +1,17 @@
 CGI::Session Change Log
 =====================================================================
 
+4.31 - Tuesday, June 10, 2008
+    * FIX: Patch CGI::Session::Driver::DBI to check that the DBI handle still exists before trying
+           to ping it. This handles the case where the DBI object is destroyed before the session object.
+           See RT#35925.
+    * FIX: Patch CGI::Session::Driver::DBI's remove() which still hard-coded the column name 'id' instead
+           of using the new feature which allows the user to specify the name of the column. See RT#36235.
+    * FIX: Patch POD yet again to emphasize that an explicit call to destroy() should be followed by
+           explicit call to flush(), in particular in the case where the program is not exiting and
+           hence auto-flushing is not activated. Sections patched are 'A Warning about Auto-flushing'
+           and the docs for delete(). See RT#34668.
+
 4.30 - Friday, April 25, 2008
 
     * FIX: Patch POD for CGI::Session in various places, to emphasize even more that auto-flushing is
