@@ -507,6 +507,16 @@ program exits.
 
 For instance, in a C<CGI::Application>-based program, C<sub teardown()> would be the appropriate place to do this.
 
+This is all part of what might be called "Object life-cycle 'v' Program life-cycle".
+
+In the simplest case the program has one object of type CGI::Session, and that object is destroyed when the
+program exits.
+
+If, however, you wish to delete objects explicitly, then each call to C<delete()> should be followed by a call
+to C<flush()>.
+
+For more detail, see the discussion of the C<delete()> method, below.
+
 =head1 A Warning about UTF8
 
 Trying to use UTF8 in a program which uses CGI::Session has lead to problems. See RT#21981 and RT#28516.
@@ -1130,7 +1140,7 @@ Deletes a session from the data store and empties session data from memory, comp
 
 The intention is that in due course (of the program's execution) this will trigger L<flush()|/"flush">, and flush() will do the actual removal.
 
-However: Auto-flushing can be unreliable, and always explicitly calling C<flush()> on the session before the program exits
+However: Auto-flushing can be unreliable, and always explicitly calling C<flush()> on the session after C<delete()>
 should be regarded as mandatory until this problem is rectified.
 
 =head2 find( \&code )
