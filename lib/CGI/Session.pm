@@ -463,34 +463,38 @@ CGI::Session - persistent session data in CGI applications
 
     $CGISESSID = $session->id();
 
-    # send proper HTTP header with cookies:
+    # Send proper HTTP header with cookies:
     print $session->header();
 
-    # storing data in the session
+    # Storing data in the session:
     $session->param('f_name', 'Sherzod');
     # or
     $session->param(-name=>'l_name', -value=>'Ruzmetov');
 
-    # flush the data from memory to the storage driver at least before your
-    # program finishes since auto-flushing can be unreliable
+    # Flush the data from memory to the storage driver at least before your
+    # program finishes since auto-flushing can be unreliable.
+    # Warning: A bug in your logic whereby the DBI handle has gone
+    # out of scope before flush() is called means flush() won't work
+    # (when the session is a database session), so don't do that.
     $session->flush();
 
-    # retrieving data
+    # Retrieving data:
     my $f_name = $session->param('f_name');
     # or
     my $l_name = $session->param(-name=>'l_name');
 
-    # clearing a certain session parameter
+    # Clearing a certain session parameter:
     $session->clear(["l_name", "f_name"]);
 
-    # expire '_is_logged_in' flag after 10 idle minutes:
+    # Expire '_is_logged_in' flag after 10 idle minutes:
     $session->expire('is_logged_in', '+10m')
 
-    # expire the session itself after 1 idle hour
+    # Expire the session itself after 1 idle hour:
     $session->expire('+1h');
 
-    # delete the session for good
+    # Delete the session for good:
     $session->delete();
+    $session->flush(); # Recommended practice says use flush() after delete().
 
 =head1 DESCRIPTION
 
@@ -514,6 +518,10 @@ program exits.
 
 If, however, you wish to delete objects explicitly, then each call to C<delete()> should be followed by a call
 to C<flush()>.
+
+Warning: A bug in your logic whereby the DBI handle has gone out
+out of scope before flush() is called means flush() won't work
+(when the session is a database session), so don't do that.
 
 For more detail, see the discussion of the C<delete()> method, below.
 
@@ -975,6 +983,10 @@ that worked with 3.x. For further details see:
 Consequently, always explicitly calling C<flush()> on the session before the program exits
 should be regarded as mandatory until this problem is rectified.
 
+Warning: A bug in your logic whereby the DBI handle has gone out
+out of scope before flush() is called means flush() won't work
+(when the session is a database session), so don't do that.
+
 =head2 atime()
 
 Read-only method. Returns the last access time of the session in seconds from epoch. This time is used internally while
@@ -1142,6 +1154,10 @@ The intention is that in due course (of the program's execution) this will trigg
 
 However: Auto-flushing can be unreliable, and always explicitly calling C<flush()> on the session after C<delete()>
 should be regarded as mandatory until this problem is rectified.
+
+Warning: A bug in your logic whereby the DBI handle has gone out
+out of scope before flush() is called means flush() won't work
+(when the session is a database session), so don't do that.
 
 =head2 find( \&code )
 
