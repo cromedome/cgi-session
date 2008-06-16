@@ -9,7 +9,7 @@ use Carp;
 use CGI::Session::Driver;
 
 @CGI::Session::Driver::DBI::ISA = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::DBI::VERSION = '4.30';
+$CGI::Session::Driver::DBI::VERSION = '4.31';
 
 
 sub init {

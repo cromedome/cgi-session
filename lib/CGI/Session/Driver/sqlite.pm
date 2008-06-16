@@ -9,7 +9,7 @@ use base 'CGI::Session::Driver::DBI';
 use DBI qw(SQL_BLOB);
 use Fcntl;
 
-$CGI::Session::Driver::sqlite::VERSION    = '4.30';
+$CGI::Session::Driver::sqlite::VERSION    = '4.31';
 
 sub init {
     my $self = shift;
