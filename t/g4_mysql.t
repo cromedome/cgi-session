@@ -70,17 +70,21 @@ plan tests => $t->number_of_tests + 2;
 $t->run();
 
 {
-    # This was documented to work in 3.95 and should be supported for compatibility
+	# This used to test setting the global variable $CGI::Session::MySQL::TABLE_NAME.
+	# However, since V 4.29_1, changes to CGI::Session::Driver's new() method mean
+	# the unless test in CGI::Session::Driver::mysql's table_name() method was not executed,
+	# and so $CGI::Session::MySQL::TABLE_NAME is never used. That 'unless' has been deleted.
+	# V 4.32 explicitly documents this new situation. Moral: Don't use global variables.
+	# This test was introduced in V 4.00_09.
+
     my $obj;
     eval {
-        # test.sessions will refer to the same 'sessions' table but is a unique name to test with
-        $CGI::Session::MySQL::TABLE_NAME = 'test.sessions';
-        my $avoid_warning = $CGI::Session::MySQL::TABLE_NAME;
         require CGI::Session::Driver::mysql;
         $obj = CGI::Session::Driver::mysql->new( {Handle=>$dbh} );
+        $obj -> table_name('my_sessions');
     };
     is($@,'', 'survived eval');
-    is($obj->table_name, 'test.sessions', "setting table name through CGI::Session::MySQL::TABLE_NAME works");
+    is($obj->table_name, 'my_sessions', "setting table name through the table_name() method works");
 }
 
 
