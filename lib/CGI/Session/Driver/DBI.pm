@@ -47,9 +47,7 @@ sub table_name {
 
     no strict 'refs';
     if ( @_ ) {
-        my $new_name = shift;
-        $self->{TableName}           = $new_name;
-        ${ $class . "::TABLE_NAME" } = $new_name;
+        $self->{TableName} = shift;
     }
 
     unless (defined $self->{TableName}) {
