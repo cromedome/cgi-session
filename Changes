@@ -1,6 +1,24 @@
 CGI::Session Change Log
 =====================================================================
 
+4.32 - Friday, June 27, 2008
+    * FIX: Patch CGI::Session::Driver::mysql to replace 'REPLACE INTO ...' with
+           'INSERT INTO ... ON DUPLICATE KEY UPDATE ...'. See RT#37069.
+           Thanks to Steve Kirkup for the patch. I (Ron) installed MySQL V 5.0.51a for testing.
+           Note: http://dev.mysql.com/doc/refman/5.0/en/releasenotes-cs-5-0-45.html and similar docs
+           list various MySQL errors fixed recently for the above new syntax. Also, the new version
+           is now much more like the Postgres code, which is another reason it has been adopted.
+    * FIX: t/mysql.t used to test setting the global variable $CGI::Session::MySQL::TABLE_NAME.
+           The test for this (in t/mysql.t) was introduced in V 4.00_09.
+           However, since V 4.29_1, changes to CGI::Session::Driver's new() method mean
+           this way of setting the session table's name no longer works, and so the variable
+           $CGI::Session::MySQL::TABLE_NAME is now not used. Hence it has been removed.
+           Code in CGI::Session::Driver::DBI used to set $class::TABLE_NAME for all database drivers.
+           This code has also been removed. Moral: Don't use global variables.
+           Call $session = CGI::Session -> new(..., ..., (TableName => 'new_name'}) or,
+           after creating the object, call $session -> table_name('new_name').
+           To retrieve the name, call $name = $session -> table_name().
+
 4.31 - Tuesday, June 10, 2008
     * FIX: Patch CGI::Session::Driver::DBI to check that the DBI handle still exists before trying
            to ping it. This handles the case where the DBI object is destroyed before the session object.
