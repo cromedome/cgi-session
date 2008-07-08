@@ -19,7 +19,7 @@ BEGIN {
 }
 
 @CGI::Session::Driver::file::ISA        = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::file::VERSION    = '4.31';
+$CGI::Session::Driver::file::VERSION    = '4.33';
 $FileName                               = "cgisess_%s";
 $NoFlock                                = 0;
 $UMask                                  = 0660;

@@ -1,7 +1,7 @@
 CGI::Session Change Log
 =====================================================================
 
-4.32 - Friday, June 27, 2008
+4.33 - Monday, July 7, 2008
     * FIX: Patch CGI::Session::Driver::mysql to replace 'REPLACE INTO ...' with
            'INSERT INTO ... ON DUPLICATE KEY UPDATE ...'. See RT#37069.
            Thanks to Steve Kirkup for the patch. I (Ron) installed MySQL V 5.0.51a for testing.
@@ -18,6 +18,9 @@ CGI::Session Change Log
            Call $session = CGI::Session -> new(..., ..., (TableName => 'new_name'}) or,
            after creating the object, call $session -> table_name('new_name').
            To retrieve the name, call $name = $session -> table_name().
+
+4.32 - Tuesday, June 17, 2008
+    * FIX: Packaging of 4.31 release was botched. 
 
 4.31 - Tuesday, June 10, 2008
     * FIX: Patch CGI::Session::Driver::DBI to check that the DBI handle still exists before trying
