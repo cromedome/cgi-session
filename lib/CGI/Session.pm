@@ -774,6 +774,12 @@ sub load {
 
     $self->_load_pluggables();
 
+    # Did load_pluggable fail? If so, tell our caller.
+    if ($class->errstr)
+    {
+        return $class->errstr;
+    }
+
     if (not defined $self->{_CLAIMED_ID}) {
         my $query = $self->query();
         eval {
