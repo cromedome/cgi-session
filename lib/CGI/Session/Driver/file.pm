@@ -44,6 +44,14 @@ sub init {
 
 sub _file {
     my ($self,$sid) = @_;
+    my $id = $sid;
+    $id =~ s|\\|/|g;
+
+	if ($id =~ m|/|)
+    {
+        return $self->set_error( "_file(): Session ids cannot contain \\ or / chars: $sid" );
+    }
+
     return File::Spec->catfile($self->{Directory}, sprintf( $FileName, $sid ));
 }
 
