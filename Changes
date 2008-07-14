@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.35 - Monday, July 14, 2008
+    * INTERNAL - Patch Build.PL and Makefile.PL to run Module::Metadata::Changes's ini.report.pl,
+           if available, to regenerate Changelog.ini from this file (Changes), when creating a makefile.
+
 4.34 - Sunday, July 13, 2008
     * SECURITY: Patch CGI::Session::Driver::file to stop \ and / characters being used in
            session ids and hence in file names. These characters, possibly combined with '..',
