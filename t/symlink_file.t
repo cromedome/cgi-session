@@ -2,17 +2,18 @@
 # $Id: $
 
 use strict;
-use diagnostics;
 
 use Test::More;
 use CGI::Session;
+use Carp; 
 
 {
     no strict 'refs';
     no warnings 'redefine';
     *CGI::Session::ErrorHandler::set_error = sub {
-        shift;
-        die @_;
+        my $class = shift;
+        my $error = shift;
+        croak $error if $error;
     };
 
 }

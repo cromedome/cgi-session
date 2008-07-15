@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.34';
+$CGI::Session::VERSION  = '4.35';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -56,11 +56,16 @@ sub new {
         #
         # Called as a class method as in CGI::Session->new()
         #
+
+        # Start fresh with error reporting. Errors in past objects shouldn't affect this one. 
+        $class->set_error('');
+
         $self = $class->load( @args );
         if (not defined $self) {
             return $class->set_error( "new(): failed: " . $class->errstr );
         }
     }
+
     my $dataref = $self->{_DATA};
     unless ($dataref->{_SESSION_ID}) {
         #
@@ -709,7 +714,7 @@ or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, a
 sub load {
     my $class = shift;
     return $class->set_error( "called as instance method")    if ref $class;
-    return $class->set_error( "Too many arguments")  if @_ > 5;
+    return $class->set_error( "Too many arguments provided to load()")  if @_ > 5;
 
     my $self = bless {
         _DATA       => {
@@ -758,7 +763,7 @@ sub load {
         # Since $update_atime is not part of the public API
         # we ignore any value but the one we use internally: 0.
         if (defined $update_atime and $update_atime ne '0') {
-            return $class->set_error( "Too many arguments");
+            return $class->set_error( "Too many arguments to load(). First extra argument was: $update_atime");
          }
 
         if ( defined $dsn ) {      # <-- to avoid 'Uninitialized value...' warnings
@@ -774,10 +779,12 @@ sub load {
 
     $self->_load_pluggables();
 
-    # Did load_pluggable fail? If so, tell our caller.
+    # Did load_pluggable fail? If so, return undef, just like $class->set_error() would
     if ($class->errstr)
     {
-        return $class->errstr;
+        warn "here!";
+        #return $class->errstr;
+        return undef;
     }
 
     if (not defined $self->{_CLAIMED_ID}) {

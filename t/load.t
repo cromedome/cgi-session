@@ -3,7 +3,7 @@
 use strict;
 use diagnostics;
 
-use Test::More qw/no_plan/;
+use Test::More 'no_plan';
 
 # Some driver independent tests for load();
 
@@ -17,6 +17,7 @@ use CGI::Session;
 }
 {
     my $s = CGI::Session->new();
+    is(CGI::Session->errstr, '', "reality check: no error when calling new()");
     $s->load();
     like($s->errstr, qr/instance method/, "expected error when load() called as instance method.");
     $s->delete();

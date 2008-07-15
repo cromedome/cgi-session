@@ -1,7 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
-4.35 - Monday, July 14, 2008
+4.35 - Tuesday, July 15, 2008
+    * FIX: Fix the bug fix for error propagation from 4.34, RT#37628
+    * FIX: Reset errors when creating a new object. Previously, errors from   
+           a previous object could show up in the current object. 
     * INTERNAL - Patch Build.PL and Makefile.PL to run Module::Metadata::Changes's ini.report.pl,
            if available, to regenerate Changelog.ini from this file (Changes), when creating a makefile.
 

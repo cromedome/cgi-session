@@ -2,7 +2,7 @@
 # $Id: $
 
 use strict;
-use diagnostics;
+use Carp;
 
 use Test::More;
 use CGI::Session;
@@ -11,8 +11,9 @@ use File::Spec;
     no strict 'refs';
     no warnings 'redefine';
     *CGI::Session::ErrorHandler::set_error = sub {
-        shift;
-        die @_;
+        my $class = shift;
+        my $error = shift;
+        croak $error if $error;
     };
 
 }
