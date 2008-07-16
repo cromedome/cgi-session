@@ -780,12 +780,7 @@ sub load {
     $self->_load_pluggables();
 
     # Did load_pluggable fail? If so, return undef, just like $class->set_error() would
-    if ($class->errstr)
-    {
-        warn "here!";
-        #return $class->errstr;
-        return undef;
-    }
+    return undef if $class->errstr;
 
     if (not defined $self->{_CLAIMED_ID}) {
         my $query = $self->query();
