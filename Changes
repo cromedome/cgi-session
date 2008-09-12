@@ -1,6 +1,12 @@
 CGI::Session Change Log
 =====================================================================
 
+4.36 - Friday, September 12, 2008
+    * FIX: The sample code for find() had 2 errors in it:
+           o It assumed delete() returned a meaningful value, which it doesn't
+           o It did not follow the call to delete() with a (recommended) call to flush()
+           o Thanks to Mario Domgoergen for the report, RT#39201
+
 4.35 - Tuesday, July 15, 2008
     * FIX: Fix the bug fix for error propagation from 4.34, RT#37628
     * FIX: Reset errors when creating a new object. Previously, errors from   

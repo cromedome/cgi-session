@@ -1186,7 +1186,8 @@ Notice, above \&code didn't have to do anything, because load(), which is called
         my ($session) = @_;
         next if $session->is_empty;    # <-- already expired?!
         if ( ($session->ctime + 3600*240) <= time() ) {
-            $session->delete() or warn "couldn't remove " . $session->id . ": " . $session->errstr;
+            $session->delete();
+            $session->flush(); # Recommended practice says use flush() after delete().
         }
     }
 
