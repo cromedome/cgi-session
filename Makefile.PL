@@ -131,6 +131,11 @@ WriteMakefile(
     ABSTRACT => 'Persistent session data in CGI applications',
     AUTHOR   => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
     clean    => { FILES => [ 't/cgisess.*', 't/sessiondata' ] },
+    EXTRA_META => "
+no_index:
+    package:
+    - SimpleObjectClass
+",
 );
 
 #
