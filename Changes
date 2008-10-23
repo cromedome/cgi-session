@@ -1,6 +1,9 @@
 CGI::Session Change Log
 =====================================================================
 
+4.37 - Wednesday, October 22, 2008
+    * INTERNAL - Patch Makefile.PL and Build.PL to request that SimpleObjectClass not be indexed. 
+
 4.36 - Friday, September 12, 2008
     * FIX: The sample code for find() had 2 errors in it:
            o It assumed delete() returned a meaningful value, which it doesn't

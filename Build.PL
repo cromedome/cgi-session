@@ -139,4 +139,7 @@ Module::Build -> new
 		'Digest::MD5'  => 0,
 		'Scalar::Util' => 0,
 	},
+    no_index => {
+        'package' => 'SimpleObjectClass',
+    },
 ) -> create_build_script();
