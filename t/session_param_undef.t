@@ -77,7 +77,7 @@ test_can($container,$item, 'Check in LOAD after loading from session');
 
 sub test_can {
 	my ($container, $item, $descr) = @_;
-	warn "$descr\n";
+	diag "$descr\n";
 	can_ok('Container', 'add_item');
 	isa_ok($container,  'Container');
 	can_ok($container,  'add_item');
