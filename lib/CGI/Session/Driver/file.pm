@@ -122,12 +122,9 @@ sub store {
 
 
 sub remove {
-    my $self = shift;
+    my $self  = shift;
     my ($sid) = @_;
-
-    my $directory = $self->{Directory};
-    my $file      = sprintf( $FileName, $sid );
-    my $path      = File::Spec->catfile($directory, $file);
+    my $path  = $self -> _file($sid);
     unlink($path) or return $self->set_error( "remove(): couldn't unlink '$path': $!" );
     return 1;
 }
