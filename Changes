@@ -13,7 +13,7 @@ CGI::Session Change Log
     * INTERNAL: return explicit values in _set_status and _unset_status 
                 (RT#39201, Mario Domgoergen, Mark Stosberg) 
 
-    * FIX: RT#37877: The storable serializer wasn't probably inheriting the 'errstr'
+    * FIX: RT#37877: The storable serializer wasn't properly inheriting the 'errstr'
            method. This could have resulted an error like:
            "Can't locate errstr via package "CGI::Session::Serialize::storable"
            Thanks to Michael Greenish, Mark Stosberg.  
