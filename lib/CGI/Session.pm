@@ -7,14 +7,15 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.37';
+$CGI::Session::VERSION  = '4.38';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
-sub STATUS_NEW      () { 1 }        # denotes session that's just created
-sub STATUS_MODIFIED () { 2 }        # denotes session that needs synchronization
-sub STATUS_DELETED  () { 4 }        # denotes session that needs deletion
-sub STATUS_EXPIRED  () { 8 }        # denotes session that was expired.
+sub STATUS_UNSET    () { 1 << 0 } # denotes session that's resetted
+sub STATUS_NEW      () { 1 << 1 } # denotes session that's just created
+sub STATUS_MODIFIED () { 1 << 2 } # denotes session that needs synchronization
+sub STATUS_DELETED  () { 1 << 3 } # denotes session that needs deletion
+sub STATUS_EXPIRED  () { 1 << 4 } # denotes session that was expired.
 
 sub import {
     my ($class, @args) = @_;
@@ -195,21 +196,19 @@ sub dump {
 sub _set_status {
     my $self    = shift;
     croak "_set_status(): usage error" unless @_;
-    $self->{_STATUS} |= $_ for @_;
-    return $self->{_STATUS};
+    $self->{_STATUS} |= $_[0];
 }
 
 
 sub _unset_status {
     my $self = shift;
     croak "_unset_status(): usage error" unless @_;
-    $self->{_STATUS} &= ~$_ for @_;
-    return $self->{_STATUS}; 
+    $self->{_STATUS} &= ~$_[0];
 }
 
 
 sub _reset_status {
-    $_[0]->{_STATUS} = 0;
+    $_[0]->{_STATUS} = STATUS_UNSET;
 }
 
 sub _test_status {
@@ -226,11 +225,13 @@ sub flush {
     # return unless defined $self;
 
     return unless $self->id;            # <-- empty session
-    return if !defined($self->{_STATUS}) or $self->{_STATUS} == 0;    # <-- neither new, nor deleted nor modified
+    
+    # neither new, nor deleted nor modified
+    return if !defined($self->{_STATUS}) or $self->{_STATUS} == STATUS_UNSET;
 
     if ( $self->_test_status(STATUS_NEW) && $self->_test_status(STATUS_DELETED) ) {
         $self->{_DATA} = {};
-        return $self->_unset_status(STATUS_NEW, STATUS_DELETED);
+        return $self->_unset_status(STATUS_NEW | STATUS_DELETED);
     }
 
     my $driver      = $self->_driver();
@@ -244,14 +245,14 @@ sub flush {
         return $self->_unset_status(STATUS_DELETED);
     }
 
-    if ( $self->_test_status(STATUS_NEW) || $self->_test_status(STATUS_MODIFIED) ) {
+    if ( $self->_test_status(STATUS_NEW | STATUS_MODIFIED) ) {
         my $datastr = $serializer->freeze( $self->dataref );
         unless ( defined $datastr ) {
             return $self->set_error( "flush(): couldn't freeze data: " . $serializer->errstr );
         }
         defined( $driver->store($self->id, $datastr) ) or
             return $self->set_error( "flush(): couldn't store datastr: " . $driver->errstr);
-        $self->_unset_status(STATUS_NEW, STATUS_MODIFIED);
+        $self->_unset_status(STATUS_NEW | STATUS_MODIFIED);
     }
     return 1;
 }
@@ -736,7 +737,7 @@ sub load {
         _OBJECTS    => {},          # keeps necessary objects
         _DRIVER_ARGS=> {},          # arguments to be passed to driver
         _CLAIMED_ID => undef,       # id **claimed** by client
-        _STATUS     => 0,           # status of the session object
+        _STATUS     => STATUS_UNSET,# status of the session object
         _QUERY      => undef        # query object
     }, $class;
 
@@ -831,8 +832,8 @@ sub load {
     # checking for expiration ticker
     if ( $self->{_DATA}->{_SESSION_ETIME} ) {
         if ( ($self->{_DATA}->{_SESSION_ATIME} + $self->{_DATA}->{_SESSION_ETIME}) <= time() ) {
-            $self->_set_status( STATUS_EXPIRED );   # <-- so client can detect expired sessions
-            $self->_set_status( STATUS_DELETED );   # <-- session should be removed from database
+            $self->_set_status( STATUS_EXPIRED |    # <-- so client can detect expired sessions
+                                STATUS_DELETED );   # <-- session should be removed from database
             $self->flush();                         # <-- flush() will do the actual removal!
             return $self;
         }
