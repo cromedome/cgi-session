@@ -24,6 +24,8 @@ CGI::Session Change Log
     * FIX: RT#39679 pointed out a simplification in method remove() in CGI::Session::Driver::file.
       	   By calling _file() instead of duplicating code, we get the benefit of extra error checking.
       	   Thanx to Sergiy Borodych for noticing this
+    * FIX: Stop using the return value of delete() in t/find.t. This means that when the patch
+	  	   provided in RT#37752 is applied, t/find.t will not start failing
 
 4.37 - Wednesday, October 22, 2008
     * INTERNAL: Patch Makefile.PL and Build.PL to request that SimpleObjectClass not be indexed. 
