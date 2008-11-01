@@ -13,7 +13,7 @@ CGI::Session::ErrorHandler - error handling routines for CGI::Session
 
 =head1 SYNOPSIS
 
-    require CGI::Session::ErrorHandler
+    require CGI::Session::ErrorHandler;
     @ISA = qw( CGI::Session::ErrorHandler );
 
     sub some_method {
