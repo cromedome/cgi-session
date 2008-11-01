@@ -48,8 +48,12 @@ sub __walk {
     my %seen;
     my @filter = __scan(shift);
     local %overloaded;
-    
-    while (defined(my $x = shift @filter)) {
+
+    # We allow the value assigned to a key to be undef.
+    # Hence the defined() test is not in the while().
+
+    while (@filter) {
+		defined(my $x = shift @filter) or next;
         $seen{refaddr $x || ''}++ and next;
           
         my $r = reftype $x or next;
