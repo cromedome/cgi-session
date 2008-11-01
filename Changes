@@ -1,6 +1,12 @@
 CGI::Session Change Log
 =====================================================================
 
+4.38 - Saturday, November 1, 2008
+	* FIX: RT#40405 reported a case where the default serializer would have a problem after the user
+	  	   set a parameter's value to undef, in certain circumstances.
+		   A test file was kindly provided by cowomally[...]nullium.net.
+		   The fix was spelled out by Matt LeBlanc
+
 4.37 - Wednesday, October 22, 2008
     * INTERNAL - Patch Makefile.PL and Build.PL to request that SimpleObjectClass not be indexed. 
 
