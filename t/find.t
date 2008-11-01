@@ -16,7 +16,7 @@ BEGIN {
 
     if (CGI::Session->can('find') )
     {
-        plan tests => 8;
+        plan tests => 7;
 
         # Remove any other test sessions, so sub find is called once,
         # which means the test count above is correct, since every extra
@@ -58,7 +58,9 @@ sub callback {
     isa_ok($session, 'CGI::Session', 'CGI::Session::find() found a session whose class');
     ok($session->param('purpose'), "The found session's param called 'purpose' has a true value");
     is($original_purpose, $session->param('purpose'), "The found session's param called 'purpose' has the expected value");
-    ok(! $session->delete(), 'The found session has been deleted');
+    $session->delete();
+    $session->flush();
+    diag 'The found session has been deleted and flushed';
 
 }   
 
