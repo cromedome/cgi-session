@@ -123,6 +123,7 @@ WriteMakefile(
     VERSION_FROM => 'lib/CGI/Session.pm',
     PL_FILES     => {},
     PREREQ_PM    => {
+        'CGI'           => 3.26,
         'Digest::MD5'   => undef,
         'Data::Dumper'  => undef,
         'Test::More'    => undef,
@@ -134,7 +135,7 @@ WriteMakefile(
     EXTRA_META => "
 no_index:
     package:
-    - SimpleObjectClass
+    - CGI::Session::Test::SimpleObjectClass
 ",
 );
 

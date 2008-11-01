@@ -135,11 +135,12 @@ Module::Build -> new
 	},
 	requires =>
 	{
+        'CGI'          => 3.26,
 		'Data::Dumper' => 0,
 		'Digest::MD5'  => 0,
 		'Scalar::Util' => 0,
 	},
     no_index => {
-        'package' => 'SimpleObjectClass',
+        'package' => [ 'CGI::Session::Test::SimpleObjectClass'],
     },
 ) -> create_build_script();
