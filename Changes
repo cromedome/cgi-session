@@ -10,6 +10,8 @@ CGI::Session Change Log
                 Safari in particular is sensitive to. So, if you are using
                 CGI.pm, you should upgrade to at least this version.  RT#34216,
                 thanks to Astar, Michael Hampton, Ron Savage and Mark Stosberg. 
+    * INTERNAL: return explicit values in _set_status and _unset_status 
+                (RT#39201, Mario Domgoergen, Mark Stosberg) 
 
     * FIX: RT#37877: The storable serializer wasn't probably inheriting the 'errstr'
            method. This could have resulted an error like:

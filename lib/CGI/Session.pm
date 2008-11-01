@@ -196,6 +196,7 @@ sub _set_status {
     my $self    = shift;
     croak "_set_status(): usage error" unless @_;
     $self->{_STATUS} |= $_ for @_;
+    return $self->{_STATUS};
 }
 
 
@@ -203,6 +204,7 @@ sub _unset_status {
     my $self = shift;
     croak "_unset_status(): usage error" unless @_;
     $self->{_STATUS} &= ~$_ for @_;
+    return $self->{_STATUS}; 
 }
 
 
