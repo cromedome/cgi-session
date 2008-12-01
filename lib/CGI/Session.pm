@@ -521,17 +521,70 @@ For instance, in a C<CGI::Application>-based program, C<sub teardown()> would be
 
 This is all part of what might be called "Object life-cycle 'v' Program life-cycle".
 
-In the simplest case the program has one object of type CGI::Session, and that object is destroyed when the
+In the simplest case the program has one object of type C<CGI::Session>, and that object is destroyed when the
 program exits.
 
 If, however, you wish to delete objects explicitly, then each call to C<delete()> should be followed by a call
 to C<flush()>.
 
-Warning: A bug in your logic whereby the DBI handle has gone out
-out of scope before flush() is called means flush() won't work
-(when the session is a database session), so don't do that.
+Situations to be aware of:
 
-For more detail, see the discussion of the C<delete()> method, below.
+=over 4
+
+=item The C<DBI> handle goes out of scope before the session variable
+
+A bug in your logic whereby the C<DBI> handle has gone out of scope before flush() is called (on your
+C<CGI::Session> variable) means flush() won't work (for database-based sessions), so don't do that.
+
+This is not a problem with C<CGI::Session>, but with the program using it.
+
+=item Circular references
+
+A separate problem arises when a bug in someone's code creates a circular reference. In such a case it's quite
+likely that some variables, I<including your C<CGI::Session> variable>, will not be destroyed properly.
+
+In this case, the C<CGI::Session> variable does not go out of scope, and hence the auto-flush logic is not
+triggered. This in turn means the contents of such a variable are not saved, as you would expect, when the
+program terminates.
+
+In particular, these plug-ins are known to contain circular references which lead to this problem:
+
+=over 4
+
+=item CGI::Application::Plugin::DebugScreen V 0.06
+
+=item CGI::Application::Plugin::ErrorPage V 1.12
+
+=back
+
+It should be obvious that, in such cases, the problem lies elsewhere, even though the symptom makes it look
+like the problem resides in C<CGI::Session>.
+
+For a long discussion on this topic, start with:
+
+http://www.erlbaum.net/pipermail/cgiapp/2008q4/000865.html
+
+and
+
+http://www.erlbaum.net/pipermail/cgiapp/2008q4/000888.html
+
+Briefly, to check if circular references have appeared in your code, run C<Devel::Cycle> on your
+C<CGI::Application> variable.
+
+=item Signal handlers
+
+In some cases, signal handlers will cause a program to stop without normal object destruction code being
+executed.
+
+The result is the same as for circular references.
+
+See chapter 16 in the camel book for information on signal handlers.
+
+Again, this is not a problem with C<CGI::Session>, but with the program using it.
+
+=back
+
+See also the discussion of the C<delete()> method, below.
 
 =head1 A Warning about UTF8
 
@@ -1415,7 +1468,16 @@ CGI::Session evolved to what it is today with the help of following developers. 
 
 =item Shawn Sorichetti
 
+=item Ron Savage
+
+=item Rhesa Rozendaal
+
+He suggested Devel::Cycle to help debugging.
+
 =back
+
+Also, many people on the CGI::Application and CGI::Session mailing lists have contributed ideas and
+suggestions, and battled publicly with bugs, all of which has helped.
 
 =head1 COPYRIGHT
 
