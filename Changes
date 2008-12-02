@@ -1,6 +1,9 @@
 CGI::Session Change Log
 =====================================================================
 
+4.39 - Wednesday, December 3, 2008
+    * Expand the discussion of auto-flushing in the POD. No code changes.
+
 4.38 - Friday, October 31, 2008
     * INTERNAL: Rename SimpleObjectClass to CGI::Session::Test::SimpleObjectClass 
                 to avoid namespace ownership issue (Mark Stosberg). 
