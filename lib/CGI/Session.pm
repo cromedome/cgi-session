@@ -587,17 +587,13 @@ L<CGI::Session::Tutorial|CGI::Session::Tutorial> - extended CGI::Session manual.
 
 We also provide mailing lists for CGI::Session users. To subscribe to the list or browse the archives visit https://lists.sourceforge.net/lists/listinfo/cgi-session-user
 
-=item *
-
-B<RFC 2965> - "HTTP State Management Mechanism" found at ftp://ftp.isi.edu/in-notes/rfc2965.txt
-
-=item *
-
-L<CGI|CGI> - standard CGI library
+=item * B<RFC 2109> - The primary spec for cookie handing in use, defining the  "Cookie:" and "Set-Cookie:" HTTP headers.
+Available at L<http://www.ietf.org/rfc/rfc2109.txt>. A newer spec, RFC 2965 is meant to obsolete it with "Set-Cookie2" 
+and "Cookie2" headers, but even of 2008, the newer spec is not widely supported. See L<http://www.ietf.org/rfc/rfc2965.txt>
 
 =item *
 
-L<Apache::Session|Apache::Session> - another fine alternative to CGI::Session.
+L<Apache::Session|Apache::Session> - an alternative to CGI::Session.
 
 =back
 
