@@ -503,9 +503,7 @@ CGI::Session - persistent session data in CGI applications
 
 =head1 DESCRIPTION
 
-CGI-Session is a Perl5 library that provides an easy, reliable and modular session management system across HTTP requests.
-Persistency is a key feature for such applications as shopping carts, login/authentication routines, and application that
-need to carry data across HTTP requests. CGI::Session does that and many more.
+CGI::Session provides an easy, reliable and modular session management system across HTTP requests.
 
 =head1 A Warning about Auto-flushing
 
