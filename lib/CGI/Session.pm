@@ -481,9 +481,6 @@ CGI::Session - persistent session data in CGI applications
 
     # Flush the data from memory to the storage driver at least before your
     # program finishes since auto-flushing can be unreliable.
-    # Warning: A bug in your logic whereby the DBI handle has gone
-    # out of scope before flush() is called means flush() won't work
-    # (when the session is a database session), so don't do that.
     $session->flush();
 
     # Retrieving data:
@@ -512,79 +509,41 @@ need to carry data across HTTP requests. CGI::Session does that and many more.
 
 =head1 A Warning about Auto-flushing
 
-As mentioned above in the Synopsis, auto-flushing can be unreliable.
-
-Consequently, you should regard it as mandatory that sessions always need to be explicitly flushed before the
-program exits.
-
-For instance, in a C<CGI::Application>-based program, C<sub teardown()> would be the appropriate place to do this.
-
-This is all part of what might be called "Object life-cycle 'v' Program life-cycle".
-
-In the simplest case the program has one object of type C<CGI::Session>, and that object is destroyed when the
-program exits.
-
-If, however, you wish to delete objects explicitly, then each call to C<delete()> should be followed by a call
-to C<flush()>.
-
-Situations to be aware of:
+Auto-flushing can be unreliable for the following reasons. Explict flushing
+after key session updates is recommended. 
 
 =over 4
 
-=item The C<DBI> handle goes out of scope before the session variable
+=item If the C<DBI> handle goes out of scope before the session variable
 
-A bug in your logic whereby the C<DBI> handle has gone out of scope before flush() is called (on your
-C<CGI::Session> variable) means flush() won't work (for database-based sessions), so don't do that.
-
-This is not a problem with C<CGI::Session>, but with the program using it.
+For database-stored sessions, if the C<DBI> handle has gone out of scope before
+the auto-flushing happens, auto-flushing will fail.
 
 =item Circular references
 
-A separate problem arises when a bug in someone's code creates a circular reference. In such a case it's quite
-likely that some variables, I<including your C<CGI::Session> variable>, will not be destroyed properly.
+If the calling code contains a circular reference, it's possible that your
+C<CGI::Session> object will not be destroyed until it is too late for
+auto-flushing to work. You can find circular reference with a tool like
+L<Devel::Cycle>.
 
-In this case, the C<CGI::Session> variable does not go out of scope, and hence the auto-flush logic is not
-triggered. This in turn means the contents of such a variable are not saved, as you would expect, when the
-program terminates.
-
-In particular, these plug-ins are known to contain circular references which lead to this problem:
+In particular, these modules are known to contain circular references which
+lead to this problem:
 
 =over 4
 
 =item CGI::Application::Plugin::DebugScreen V 0.06
 
-=item CGI::Application::Plugin::ErrorPage V 1.12
+=item CGI::Application::Plugin::ErrorPage before version 1.20
 
 =back
-
-It should be obvious that, in such cases, the problem lies elsewhere, even though the symptom makes it look
-like the problem resides in C<CGI::Session>.
-
-For a long discussion on this topic, start with:
-
-http://www.erlbaum.net/pipermail/cgiapp/2008q4/000865.html
-
-and
-
-http://www.erlbaum.net/pipermail/cgiapp/2008q4/000888.html
-
-Briefly, to check if circular references have appeared in your code, run C<Devel::Cycle> on your
-C<CGI::Application> variable.
 
 =item Signal handlers
 
-In some cases, signal handlers will cause a program to stop without normal object destruction code being
-executed.
-
-The result is the same as for circular references.
-
-See chapter 16 in the camel book for information on signal handlers.
-
-Again, this is not a problem with C<CGI::Session>, but with the program using it.
+If your application may receive signals, there is an increased chance that the
+signal will arrive after the session was updated but before it is auto-flushed
+at object destruction time.
 
 =back
-
-See also the discussion of the C<delete()> method, below.
 
 =head1 A Warning about UTF8
 
@@ -1033,23 +992,18 @@ reference to an array, only the named parameters are cleared.
 
 Synchronizes data in memory  with the copy serialized by the driver. Call flush() 
 if you need to access the session from outside the current session object. You should
-at least call flush() before your program exits. 
+call flush() sometime before your program exits. 
 
 As a last resort, CGI::Session will automatically call flush for you just
-before the program terminates or session object goes out of scope. This automatic
-behavior was the recommended behavior until the 4.x series. Automatic flushing
-has since proven to be unreliable, and in some cases is now required in places
-that worked with 3.x. For further details see:
+before the program terminates or session object goes out of scope. Automatic
+flushing has proven to be unreliable, and in some cases is now required
+in places that worked with CGI::Session 3.x. 
 
- http://rt.cpan.org/Ticket/Display.html?id=17541
- http://rt.cpan.org/Ticket/Display.html?id=17299
+Always explicitly calling C<flush()> on the session before the
+program exits is recommended. For extra safety, call it immediately after
+every important session update.
 
-Consequently, always explicitly calling C<flush()> on the session before the program exits
-should be regarded as mandatory until this problem is rectified.
-
-Warning: A bug in your logic whereby the DBI handle has gone out
-out of scope before flush() is called means flush() won't work
-(when the session is a database session), so don't do that.
+Also see L<A Warning about Auto-flushing>
 
 =head2 atime()
 
@@ -1212,16 +1166,10 @@ L<is_empty()|/"is_empty"> is useful only if you wanted to catch requests for exp
 
 =head2 delete()
 
-Deletes a session from the data store and empties session data from memory, completely, so subsequent read/write requests on the same object will fail. Technically speaking, though, it will only set the object's status to I<STATUS_DELETED>.
-
-The intention is that in due course (of the program's execution) this will trigger L<flush()|/"flush">, and flush() will do the actual removal.
-
-However: Auto-flushing can be unreliable, and always explicitly calling C<flush()> on the session after C<delete()>
-should be regarded as mandatory until this problem is rectified.
-
-Warning: A bug in your logic whereby the DBI handle has gone out
-out of scope before flush() is called means flush() won't work
-(when the session is a database session), so don't do that.
+Sets the objects status to be "deleted".  Subsequent read/write requests on the
+same object will fail.  To physically delete it from the data store you need to call L<flush()>.
+CGI::Session attempts to do this automatically when the object is being destroyed (usually as
+the script exits), but see L<A Warning about Auto-flushing>.
 
 =head2 find( \&code )
 
