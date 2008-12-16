@@ -1,7 +1,7 @@
 CGI::Session Change Log
 =====================================================================
 
-4.39 - Wednesday, December 3, 2008
+4.39 - Monday, December 15, 2008
     No code changes.
     * INTERNAL: Expand the discussion of auto-flushing in the POD. (Ron Savage, Mark Stosberg)
     * INTERNAL: Re-organize the documentation a bit. 
