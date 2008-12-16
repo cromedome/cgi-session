@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.38';
+$CGI::Session::VERSION  = '4.39';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -1313,7 +1313,7 @@ the auto-flushing happens, auto-flushing will fail.
 
 If the calling code contains a circular reference, it's possible that your
 C<CGI::Session> object will not be destroyed until it is too late for
-auto-flushing to work. You can find circular reference with a tool like
+auto-flushing to work. You can find circular references with a tool like
 L<Devel::Cycle>.
 
 In particular, these modules are known to contain circular references which
