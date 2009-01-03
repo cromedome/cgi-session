@@ -1,6 +1,11 @@
 CGI::Session Change Log
 =====================================================================
 
+4.40 - Friday, January 2, 2009
+    No code changes.
+    * DOCUMENTATION: Clarify that users should use the mailing list
+        for support, instead of e-mailing the maintainers directly. 
+
 4.39 - Monday, December 15, 2008
     No code changes.
     * INTERNAL: Expand the discussion of auto-flushing in the POD. (Ron Savage, Mark Stosberg)
