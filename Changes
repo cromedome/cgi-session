@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.41 - Friday, February 6, 2009
+    No code changes.
+    * DOCUMENTATION: Add comments about using the header() method to set the charset to 'utf-8'.
+
 4.40 - Friday, January 2, 2009
     No code changes.
     * DOCUMENTATION: Clarify that users should use the mailing list

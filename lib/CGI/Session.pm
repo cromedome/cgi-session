@@ -1206,6 +1206,10 @@ It will retrieve the name of the session cookie from C<$session->name()> which d
 
 Now, $session->header() uses "MY_SID" as a name for the session cookie.
 
+Also, other parameters can be passed to the C<header()> method. E.g.:
+
+	print $session->header(charset => 'utf-8');
+
 =head2 query()
 
 Returns query object associated with current session object. Default query object class is L<CGI.pm|CGI>.
@@ -1345,6 +1349,13 @@ In the first case the user tried "use encoding 'utf8';" in the program, and in t
 Until this problem is understood and corrected, users are advised to avoid UTF8 in conjunction with CGI::Session.
 
 For details, see: http://rt.cpan.org/Public/Bug/Display.html?id=28516 (and ...id=21981).
+
+Lastly, note that parameters such as 'utf-8' can be passed to the C<header()> method
+when C<header()> is used to send a cookie. E.g.:
+
+	print $session->header(charset => 'utf-8');
+
+See L</header()> for a fuller discussion of the use of the C<header()> method in conjunction with cookies.
 
 =head1 TRANSLATIONS
 
