@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.40';
+$CGI::Session::VERSION  = '4.41';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -1190,10 +1190,11 @@ Returns a dump of the session object. Useful for debugging purposes only.
 
 =head2 header()
 
-Replacement for L<CGI.pm|CGI>'s header() method. Without this method, you usually need to create a CGI::Cookie object and send it as part of the HTTP header:
+A wrapper for L<CGI.pm|CGI>'s header() method. Calling this method
+is equivalent to something like this:
 
     $cookie = CGI::Cookie->new(-name=>$session->name, -value=>$session->id);
-    print $cgi->header(-cookie=>$cookie);
+    print $cgi->header(-cookie=>$cookie, @_);
 
 You can minimize the above into:
 
@@ -1202,13 +1203,10 @@ You can minimize the above into:
 It will retrieve the name of the session cookie from C<$session->name()> which defaults to C<$CGI::Session::NAME>. If you want to use a different name for your session cookie, do something like following before creating session object:
 
     CGI::Session->name("MY_SID");
-    $session = new CGI::Session(undef, $cgi, \%attrs);
+    $session = CGI::Session->new(undef, $cgi, \%attrs);
 
-Now, $session->header() uses "MY_SID" as a name for the session cookie.
-
-Also, other parameters can be passed to the C<header()> method. E.g.:
-
-	print $session->header(charset => 'utf-8');
+Now, $session->header() uses "MY_SID" as a name for the session cookie. For all additional options that can
+be passed, see the C<header()> docs in L<CGI>. 
 
 =head2 query()
 
