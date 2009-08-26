@@ -46,7 +46,7 @@ COPYRIGHT
     terms as Perl itself.
 
 AUTHOR
-    Sherzod Ruzmetov <sherzodr@cpan.org>, http://author.handalak.com/
+    Sherzod Ruzmetov <sherzodr@cpan.org>
 
 SEE ALSO
     *   CGI::Session::Tutorial - extended CGI::Session manual

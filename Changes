@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.42 - Wednesday, August 26, 2009
+    No code changes.
+    * DOCUMENTATION: Fix broken links in documentation and tests. (RT##49020) 
+
 4.41 - Friday, March 20, 2009
     * FIX: RT#43290. In CGI::Session::Driver::sqlite, ensure database handle is still defined in DESTROY()
            before calling ping(). For more detail see RT#35925 as discussed under V 4.31 below.
