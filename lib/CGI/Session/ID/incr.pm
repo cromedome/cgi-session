@@ -8,7 +8,7 @@ use Carp "croak";
 use Fcntl qw( :DEFAULT :flock );
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::ID::incr::VERSION = '4.38';
+$CGI::Session::ID::incr::VERSION = '4.43';
 @CGI::Session::ID::incr::ISA     = qw( CGI::Session::ErrorHandler );
 
 

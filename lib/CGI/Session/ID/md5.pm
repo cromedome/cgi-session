@@ -6,7 +6,7 @@ use strict;
 use Digest::MD5;
 use CGI::Session::ErrorHandler;
 
-$CGI::Session::ID::md5::VERSION = '4.33';
+$CGI::Session::ID::md5::VERSION = '4.43';
 @CGI::Session::ID::md5::ISA     = qw( CGI::Session::ErrorHandler );
 
 *generate = \&generate_id;
