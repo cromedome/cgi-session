@@ -2,12 +2,10 @@ CGI::Session Change Log
 =====================================================================
 
 4.43 - Monday, August 31, 2009
-    * FIX: RT#48733. Replace call to sprintf() in CGI::Session::ErrorHandler,
-           to solve taint error for Perl V 5.10.0. This simplifies the code, specifically
-           sub set_error() and sub errstr(). The old design/behaviour of set_error()
-           [implicitly generating a per-class variable to hold error messages] has been removed.
-           All well-written code will have been using errstr() to retrieve errors anyway,
-           so this change will not affect any code which obeys the API.
+    * FIX: RT#48733. Avoid calling sprintf() in CGI::Session::ErrorHandler,
+           to solve taint error for Perl V 5.10.0. All well-written code will have 
+           been using errstr() to retrieve errors anyway, so this change will not 
+           affect any code which obeys the API. (Peter Kaminsk, Ron Savage, Mark Stosberg)
     * FIX: CGI::Session::Serialize::freezethaw: Change the VERSION line syntax to match the other modules.
     * FIX: CGI::Session::Driver::db_file: Ditto.
     * FIX: CGI::Session::Test::Default (Embedded packages): Ditto.
