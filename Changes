@@ -1,6 +1,21 @@
 CGI::Session Change Log
 =====================================================================
 
+4.44 - Tuesday, September 8, 2009
+    * Add sub _report_status() to display the status flags within the object. Used for debugging.
+    * Change the parameters to load() so that the 4th parameter is always a hashref (or undef). In the past
+           it could be a scalar, but this scalar was undocumented.
+    * Add a note under load() to explain the previously undocumented 4th parameter to load(), which
+           was a scalar only used internally. Explain that now the 4th parameter to load() must be a hashref (or undef).
+    * Add a note under load() about usage of the global variable $CGI::Session::IP_MATCH, and how it can be
+           set with    use CGI::Session qw/ip_match/.    This was previously only documented in the POD
+           for CGI::Session::Tutorial.
+    * FIX: RT#47795. Fix load() whereby find() can now call load() when $CGI::Session::IP_MATCH is set, and
+           sessions are not deleted just because their IP addresses do not match the client. (Ron Savage)
+    * Add t/find_ip_matches.t to demonstrate the new behaviour when find() calls load(). The new behaviour
+           is that calling find(), which calls load(), with $CGI::Session::IP_MATCH set to 1, does not
+           delete the sessions whose IP addresses do not match the client's IP address. (Ron Savage)
+
 4.43 - Monday, August 31, 2009
     * FIX: RT#48733. Avoid calling sprintf() in CGI::Session::ErrorHandler,
            to solve taint error for Perl V 5.10.0. All well-written code will have 

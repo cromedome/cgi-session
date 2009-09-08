@@ -9,7 +9,6 @@ use strict;
 
 my($original_purpose);
 
-
 BEGIN {
     use CGI::Session;
     use Test::More;

@@ -11,11 +11,12 @@ $CGI::Session::VERSION  = '4.43';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
-sub STATUS_UNSET    () { 1 << 0 } # denotes session that's resetted
+sub STATUS_UNSET    () { 1 << 0 } # denotes session that's not yet initialized
 sub STATUS_NEW      () { 1 << 1 } # denotes session that's just created
 sub STATUS_MODIFIED () { 1 << 2 } # denotes session that needs synchronization
 sub STATUS_DELETED  () { 1 << 3 } # denotes session that needs deletion
 sub STATUS_EXPIRED  () { 1 << 4 } # denotes session that was expired.
+sub STATUS_IGNORE   () { 1 << 5 } # denotes session that is ignored by find() and, hence, flush().
 
 sub import {
     my ($class, @args) = @_;
@@ -90,7 +91,8 @@ sub new {
         $self->_set_status( STATUS_NEW );
     }
     return $self;
-}
+
+} # End of new.
 
 sub DESTROY         {   $_[0]->flush()      }
 sub close           {   $_[0]->flush()      }
@@ -215,6 +217,32 @@ sub _test_status {
     return $_[0]->{_STATUS} & $_[1];
 }
 
+sub _report_status {
+	my(@status) = 'Status:';
+	if (! defined $_[0]->{_STATUS}) {
+		push @status, 'Not defined';
+	}
+	else
+	{
+		my(%status) =
+			(
+				UNSET    => STATUS_UNSET,
+				NEW      => STATUS_NEW,
+				MODIFIED => STATUS_MODIFIED,
+				DELETED  => STATUS_DELETED,
+				EXPIRED  => STATUS_EXPIRED,
+				IGNORE   => STATUS_IGNORE,
+			);
+		for (keys %status)
+		{
+			if ($_[0]->_test_status($status{$_}) ) {
+				push @status, $_;
+			}
+		}
+	}
+
+	return join(' ', @status);
+}
 
 sub flush {
     my $self = shift;
@@ -227,7 +255,8 @@ sub flush {
     return unless $self->id;            # <-- empty session
     
     # neither new, nor deleted nor modified
-    return if !defined($self->{_STATUS}) or $self->{_STATUS} == STATUS_UNSET;
+    # Warning: $self->_test_status(STATUS_UNSET | STATUS_IGNORE) does not work on the next line.
+    return if !defined($self->{_STATUS}) or $self->{_STATUS} == STATUS_UNSET or $self->_test_status(STATUS_IGNORE);
 
     if ( $self->_test_status(STATUS_NEW) && $self->_test_status(STATUS_DELETED) ) {
         $self->{_DATA} = {};
@@ -255,7 +284,8 @@ sub flush {
         $self->_unset_status(STATUS_NEW | STATUS_MODIFIED);
     }
     return 1;
-}
+
+} # End of flush.
 
 sub trace {}
 sub tracemsg {}
@@ -319,7 +349,8 @@ sub param {
     # If we reached this far none of the expected syntax were
     # detected. Syntax error
     croak "param(): usage error. Invalid syntax";
-}
+
+} # End of param.
 
 
 
@@ -440,20 +471,27 @@ sub find {
         return $class->set_error( "find(): couldn't create driver object. " . $pm->errstr );
     }
 
-    my $dont_update_atime = 0;
     my $driver_coderef = sub {
         my ($sid) = @_;
-        my $session = $class->load( $dsn, $sid, $dsn_args, $dont_update_atime );
+        my $session = $class->load( $dsn, $sid, $dsn_args, {update_atime => 0, find_is_caller => 1} );
         unless ( $session ) {
             return $class->set_error( "find(): couldn't load session '$sid'. " . $class->errstr );
         }
-        $coderef->( $session );
+        if ( $session->_test_status(STATUS_IGNORE) ) {
+          # Ignore. IP_MATCH set and IPs do not match.
+          # Ensure we don't accidently think the session has been modified.
+            $session->_reset_status(STATUS_IGNORE);
+		}
+        else {
+            $coderef->( $session );
+        }
     };
 
     defined($driver_obj->traverse( $driver_coderef ))
         or return $class->set_error( "find(): traverse seems to have failed. " . $driver_obj->errstr );
     return 1;
-}
+
+} # End of find.
 
 # $Id$
 
@@ -616,7 +654,47 @@ C<load()> is useful to detect expired or non-existing sessions without forcing t
 
 Notice: All I<expired> sessions are empty, but not all I<empty> sessions are expired!
 
-Briefly, C<new()> will return an initialized session object with a valid id, whereas C<load()> may return
+The 4th parameter to load() must be a hashref (or undef). In the past, there was an undocumented case where load()
+would accept a scalar as the 4th parameter. This scalar was used to stop find(), which calls load(), from updating
+the session's atime. That is, by default, this value is not defined, so the atime gets updated. find() used to specify
+a scalar (value 0, and thus defined) to stop this happening at the end of load(). Now find() sets the update_atime key
+in the hashref.
+
+Also, find() now sets the find_is_caller key in this hashref, so load() knows not to delete sessions whose IP addresses
+don't match, when called by find(). This only matters when $CGI::Session::IP_MATCH is set to 1, which can be achieved by
+either setting the global variable directly, or loading the module with:
+
+    use CGI::session qw/ip_match/;
+
+The purpose is so that when $CGI::Session::IP_MATCH is reset (the default), sessions are loaded as normal. But,
+when $CGI::Session::IP_MATCH is set, there are 3 situations:
+
+=over 4
+
+=item The IP of the client and the session match
+
+Load the session as normal.
+
+The client's IP is determined by $ENV{REMOTE_ADDR}.
+
+=item The IPs don't match, and find() is the caller.
+
+Ignore the session (i.e. don't load it).
+
+This is new code. Previously, the code deleted the session as in the next point.
+
+=item The IPs don't match, and find() is not the caller.
+
+Delete the session.
+
+The POD for CGI::Session::Tutorial used to say (falsely) that the code died in this case.
+
+=back
+
+This is actually a design fault in the module: It should be possible to specify the IP matching behaviour of the module on a
+session-by-session basis, rather than having to set it globally, and hence have it on or off for all objects.
+
+Brief summary: C<new()> will return an initialized session object with a valid id, whereas C<load()> may return
 an empty session object with an undefined id.
 
 Tests are provided (t/new_with_undef.t and t/load_with_undef.t) to clarify the result of calling C<new()> and C<load()>
@@ -657,7 +735,8 @@ sub load {
         _QUERY      => undef        # query object
     }, $class;
 
-    my ($dsn,$query_or_sid,$dsn_args,$update_atime,$params);
+    my ($dsn, $query_or_sid, $dsn_args);
+    my $params = {};
     # load($query||$sid)
     if ( @_ == 1 ) {
         $self->_set_query_or_sid($_[0]);
@@ -665,25 +744,19 @@ sub load {
     # Two or more args passed:
     # load($dsn, $query||$sid)
     elsif ( @_ > 1 ) {
-        ($dsn, $query_or_sid, $dsn_args,$update_atime) = @_;
+        ($dsn, $query_or_sid, $dsn_args, $params) = @_;
 
-        # Make it backwards-compatible (update_atime is an undocumented key in %$params).
-        # In fact, update_atime as a key is not used anywhere in the code as yet.
-        # This patch is part of the patch for RT#33437.
-        if ( ref $update_atime and ref $update_atime eq 'HASH' ) {
-            $params = {%$update_atime};
-            $update_atime = $params->{'update_atime'};
-
-            if ($params->{'name'}) {
-                $self->{_NAME} = $params->{'name'};
-            }
+        # This is part of the patches for RT#33437 and RT#47795.
+        if (! defined $params) {
+            $params = {}
+        }
+        elsif ( ! (ref $params && (ref $params eq 'HASH') ) ) {
+            return $class->set_error( "4th parameter to load() must be hashref (or undef)");
         }
 
-        # Since $update_atime is not part of the public API
-        # we ignore any value but the one we use internally: 0.
-        if (defined $update_atime and $update_atime ne '0') {
-            return $class->set_error( "Too many arguments to load(). First extra argument was: $update_atime");
-         }
+        if ($params->{'name'}) {
+            $self->{_NAME} = $params->{'name'};
+        }
 
         if ( defined $dsn ) {      # <-- to avoid 'Uninitialized value...' warnings
             $self->{_DSN} = $self->parse_dsn($dsn);
@@ -693,7 +766,6 @@ sub load {
         # load($dsn, $query, \%dsn_args);
 
         $self->{_DRIVER_ARGS} = $dsn_args if defined $dsn_args;
-
     }
 
     $self->_load_pluggables();
@@ -738,7 +810,16 @@ sub load {
 
     # checking if previous session ip matches current ip
     if($CGI::Session::IP_MATCH) {
-      unless($self->_ip_matches) {
+      if ($self->_ip_matches) {
+        # Fall thru.
+      }
+      elsif ($params->{find_is_caller}) {
+        # Ignore. Caller (find) must check if to be ignored.
+          $self->_set_status( STATUS_IGNORE );
+		  return $self;
+      }
+      else {
+        # IP does not match. Caller is not find. Delete.
         $self->_set_status( STATUS_DELETED );
         $self->flush;
         return $self;
@@ -766,13 +847,14 @@ sub load {
 
     # We update the atime by default, but if this (otherwise undocoumented)
     # parameter is explicitly set to false, we'll turn the behavior off
-    if ( ! defined $update_atime ) {
+    if ( ! defined $params->{update_atime} ) {
         $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
         $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
     }
     
     return $self;
-}
+
+} # End of load.
 
 
 # set the input as a query object or session ID, depending on what it looks like.  
@@ -1081,7 +1163,7 @@ the script exits), but see L<A Warning about Auto-flushing>.
 
 =head2 find( $dsn, \&code, \%dsn_args )
 
-Experimental feature. Executes \&code for every session object stored in disk, passing initialized CGI::Session object as the first argument of \&code. Useful for housekeeping purposes, such as for removing expired sessions. Following line, for instance, will remove sessions already expired, but are still in disk:
+Experimental feature. Executes \&code for every session object stored on disk, passing initialized CGI::Session object as the first argument of \&code. Useful for housekeeping purposes, such as for removing expired sessions.
 
 The following line, for instance, will remove sessions already expired, but which are still on disk:
 
