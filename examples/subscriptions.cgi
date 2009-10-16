@@ -22,7 +22,7 @@ for my $mod ( @required ) {
     }
 }
 
-my $cgi     = new CGI();
+my $cgi     = CGI->new();
 my $session = CGI::Session->load() or die CGI::Session->errstr;
 
 if ( $session->is_expired ) {
@@ -269,7 +269,7 @@ sub finish {
 
     my $to = sprintf("%s <%s>", $session->param('name'),
                                 $session->param('email'));
-    my $msg = new MIME::Lite(
+    my $msg = MIME::Lite->new(
         From        => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
         To          => $to,
         Subject     => 'CGI-Session Demo',
@@ -336,7 +336,7 @@ HTML
 
 sub template {
     my ($HTML, $cgi, $session, $no_html) = @_;
-    my $t = new HTML::Template( scalarref=>$HTML,
+    my $t = HTML::Template->new( scalarref=>$HTML,
                                 vanguard_compatibility_mode=>1,
                                 associate => [$session, $cgi] );
 
