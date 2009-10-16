@@ -89,12 +89,12 @@ CGI::Session::Driver::sqlite - CGI::Session driver for SQLite
 
 =head1 SYNOPSIS
 
-    $s = new CGI::Session("driver:sqlite", $sid, {DataSource=>'/my/folder/sessions.sqlt'});
-    $s = new CGI::Session("driver:sqlite", $sid, {Handle=>$dbh});
+    $s = CGI::Session->new("driver:sqlite", $sid, {DataSource=>'/my/folder/sessions.sqlt'});
+    $s = CGI::Session->new("driver:sqlite", $sid, {Handle=>$dbh});
 
 or
 
-    $s = new CGI::Session('driver:sqlite', undef,
+    $s = CGI::Session->new('driver:sqlite', undef,
     {
         TableName=>'session',
         IdColName=>'my_id',

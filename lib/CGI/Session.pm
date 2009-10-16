@@ -505,7 +505,7 @@ CGI::Session - persistent session data in CGI applications
 
     # Object initialization:
     use CGI::Session;
-    $session = new CGI::Session();
+    $session = CGI::Session->new();
 
     $CGISESSID = $session->id();
 
@@ -605,7 +605,7 @@ B<id> - ID generator to use when new session is to be created. Available ID gene
 
 For example, to get CGI::Session store its data using DB_File and serialize data using FreezeThaw:
 
-    $s = new CGI::Session("driver:DB_File;serializer:FreezeThaw", undef);
+    $s = CGI::Session->new("driver:DB_File;serializer:FreezeThaw", undef);
 
 If called with three arguments, first two will be treated as in the previous example, and third argument will be C<\%dsn_args>, which will be passed to C<$dsn> components (namely, driver, serializer and id generators) for initialization purposes. Since all the $dsn components must initialize to some default value, this third argument should not be required for most drivers to operate properly.
 

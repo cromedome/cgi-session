@@ -179,8 +179,8 @@ CGI::Session::Driver::db_file - CGI::Session driver for BerkeleyDB using DB_File
 
 =head1 SYNOPSIS
 
-    $s = new CGI::Session("driver:db_file", $sid);
-    $s = new CGI::Session("driver:db_file", $sid, {FileName=>'/tmp/cgisessions.db'});
+    $s = CGI::Session->new("driver:db_file", $sid);
+    $s = CGI::Session->new("driver:db_file", $sid, {FileName=>'/tmp/cgisessions.db'});
 
 =head1 DESCRIPTION
 

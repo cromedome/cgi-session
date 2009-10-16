@@ -4,7 +4,7 @@ NAME
 SYNOPSIS
         # Object initialization:
         use CGI::Session;
-        $session = new CGI::Session();
+        $session = CGI::Session->new();
 
         $CGISESSID = $session->id();
 

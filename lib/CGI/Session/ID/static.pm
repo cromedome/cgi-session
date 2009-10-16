@@ -27,7 +27,7 @@ CGI::Session::ID::static - CGI::Session ID Driver for generating static IDs
 =head1 SYNOPSIS
 
     use CGI::Session;
-    $session = new CGI::Session("id:static", $ENV{REMOTE_ADDR});
+    $session = CGI::Session->new("id:static", $ENV{REMOTE_ADDR});
 
 =head1 DESCRIPTION
 
