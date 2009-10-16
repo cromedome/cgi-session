@@ -21,7 +21,7 @@ BEGIN {
 my $dr_args = {Directory=>'t', IDFile=>File::Spec->catfile('t', 'cgisess.id')};
 my $args    = "driver:DB_File;serializer;Storable;id:Incr";
 
-my $s = new CGI::Session($args, undef, $dr_args );
+my $s = CGI::Session->new($args, undef, $dr_args );
 
 ok($s);
 ok($s->id);
@@ -46,7 +46,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session($args, $sid, $dr_args);
+my $s2 = CGI::Session->new($args, $sid, $dr_args);
 
 ok($s2);
 ok($s2->id() eq $sid);

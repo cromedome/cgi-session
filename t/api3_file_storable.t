@@ -13,7 +13,7 @@ BEGIN {
     use_ok('CGI::Session',qw/-api3/);
 };
 
-my $s = new CGI::Session("serializer:Storable", undef, {Directory=>"t"} );
+my $s = CGI::Session->new("serializer:Storable", undef, {Directory=>"t"} );
 
 ok($s);
     
@@ -42,7 +42,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session("serializer:Storable", $sid, {Directory=>'t'});
+my $s2 = CGI::Session->new("serializer:Storable", $sid, {Directory=>'t'});
 ok($s2);
 
 ok($s2->id() eq $sid);

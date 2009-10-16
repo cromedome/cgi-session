@@ -12,7 +12,7 @@ BEGIN {
 # its man page ( perldoc Test ) for help writing this test script.
 use CGI::Session;
 
-my $s = new CGI::Session('driver:File',undef, {Directory=>"t"} ) or die $CGI::Session::errstr;
+my $s = CGI::Session->new('driver:File',undef, {Directory=>"t"} ) or die $CGI::Session::errstr;
 
 ok($s);
 ok($s->id());
@@ -39,7 +39,7 @@ my $sid = $s->id();
 $s->flush();
 
 eval { 
-    my $s1 = new CGI::Session('driver:File',$sid, {Directory=>"t"})
+    my $s1 = CGI::Session->new('driver:File',$sid, {Directory=>"t"})
         or die $CGI::Session::errstr;
 
     ok($s1->param('d3'));

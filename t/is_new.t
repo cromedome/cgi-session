@@ -6,7 +6,7 @@ use diagnostics;
 use Test::More qw/no_plan/;
 BEGIN { use_ok ('CGI::Session') };
 
-my $ses = new CGI::Session();
+my $ses = CGI::Session->new();
 
 eval { $ses->is_new() };
 is ($@,'', "session has is_new() method");

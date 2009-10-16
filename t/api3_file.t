@@ -9,7 +9,7 @@ BEGIN {
     use_ok('CGI::Session');
 };
 
-my $s = new CGI::Session("dr:File;ser:Default;id:MD5", undef, {Directory=>"t"} );
+my $s = CGI::Session->new("dr:File;ser:Default;id:MD5", undef, {Directory=>"t"} );
 
 ok($s);
     
@@ -38,7 +38,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session(undef, $sid, {Directory=>'t'});
+my $s2 = CGI::Session->new(undef, $sid, {Directory=>'t'});
 ok($s2);
 
 ok($s2->id() eq $sid);

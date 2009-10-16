@@ -33,8 +33,8 @@ my $dr_args = {Directory=>'t'};
 
 print "1..8\n";
 
-my $cgi = new CGI;
-my $s   = new CGI::Session($args, undef, $dr_args);
+my $cgi = CGI->new;
+my $s   = CGI::Session->new($args, undef, $dr_args);
 
 
 print defined($s) ? "ok\n" : "not ok\n";
@@ -49,7 +49,7 @@ my $sid = $s->id();
 
 $s->flush();
 
-my $s2 = new CGI::Session($args, $sid, $dr_args);
+my $s2 = CGI::Session->new($args, $sid, $dr_args);
 print defined($s2) ? "ok\n" : "not ok\n";
 
 print $s2->id eq $sid ? "ok\n" : "not ok\n";
