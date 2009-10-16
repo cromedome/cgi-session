@@ -143,4 +143,12 @@ Module::Build -> new
     no_index => {
         'package' => [ 'CGI::Session::Test::SimpleObjectClass'],
     },
+    meta_merge => {
+        resources => {
+            repository => 'http://github.com/cromedome/cgi-session',
+        },
+        keywords => [
+            'session','http',
+        ],
+    },
 ) -> create_build_script();
