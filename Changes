@@ -3,11 +3,11 @@ CGI::Session Change Log
 
 4.45 - Wednesday, February 3, 2010
 	* Edit files with an editor (UEX) set to remove trailing spaces. Yea! (Ron Savage).
-	* Fix:  RT#50232. Add these files: MANIFEST, META.yml, MYMETA.yml. Thanx to Lawrence L. Gilbert.
+	* Fix: RT#50232. Add these files: MANIFEST, META.yml, MYMETA.yml. Thanx to Lawrence L. Gilbert.
 	* Fix a bug in parameter validation in load(). This required a corresponding patch to t/load.t. (Ron Savage).
 	* Patch t/g4_sqlite.t, t/g4_sqllite_freezethaw.t, t/g4_sqlite_storable.t, to change the
 		tablename from 'sessions' to 'main.sessions'. (Ron Savage).
-	* Fix:  RT#51192. In load(), check the existance of SESSION_EXPIRE_LIST before building
+	* Patch: RT#51192. In load(), check the existence of SESSION_EXPIRE_LIST before building
 		the list of expired paramters. Thanx to Pavel V. Rochnyack.
 	* Patch: RT#51191. Patch store() in CGI::Session::Driver::DBI, CGI::Session::Driver::db_file,
 		CGI::Session::Driver::file, CGI::Session::Driver::mysql and CGI::Session::Driver::postgresql
@@ -24,7 +24,7 @@ CGI::Session Change Log
 		before attempting to use them. This change file does not attempt to document use cases.
 		Thanx to Jonathan Swartz.
 	* Patch: Add is_params_modified(). Returns 1 if any param has been modified (changes to
-		the sessions access time are ignored), else returns 0. (Ron Savage).
+		the session's access time are ignored), else returns 0. (Ron Savage).
 	* Patch: Add reset_modified(). This resets the modified flag on the session,
 		and hence stops flush() writing the session to storage. (Ron Savage).
 	* Patch: Add t/modified.t, to exercise the new code. (Ron Savage)
