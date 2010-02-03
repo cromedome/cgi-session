@@ -8,7 +8,7 @@ use Test::More;
 use CGI::Session::Test::Default;
 
 for ( "DBI", "DBD::SQLite", "Storable", "MIME::Base64" ) {
-    eval "require $_"; 
+    eval "require $_";
     if ( $@ ) {
         plan(skip_all=>"$_ is NOT available");
         exit(0);
@@ -17,7 +17,7 @@ for ( "DBI", "DBD::SQLite", "Storable", "MIME::Base64" ) {
 
 my %dsn = (
     DataSource  => "dbi:SQLite:dbname=" . File::Spec->catfile('t', 'sessiondata', 'sessions.sqlt'),
-    TableName   => 'sessions'
+    TableName   => 'main.sessions'
 );
 
 my $dbh = DBI->connect($dsn{DataSource}, '', '', {RaiseError=>0, PrintError=>0, sqlite_handle_binary_nulls=>1});
