@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::ErrorHandler;
 
 @CGI::Session::ISA      = qw( CGI::Session::ErrorHandler );
-$CGI::Session::VERSION  = '4.43';
+$CGI::Session::VERSION  = '4.45';
 $CGI::Session::NAME     = 'CGISESSID';
 $CGI::Session::IP_MATCH = 0;
 
@@ -94,26 +94,30 @@ sub new {
 
 } # End of new.
 
-sub DESTROY         {   $_[0]->flush()      }
-sub close           {   $_[0]->flush()      }
+sub DESTROY            {   $_[0]->flush()      }
+sub close              {   $_[0]->flush()      }
 
 *param_hashref      = \&dataref;
 my $avoid_single_use_warning = *param_hashref;
-sub dataref         { $_[0]->{_DATA}        }
+sub dataref            { $_[0]->{_DATA}        }
 
-sub is_empty        { !defined($_[0]->id)   }
+sub is_empty           { !defined($_[0]->id)   }
 
-sub is_expired      { $_[0]->_test_status( STATUS_EXPIRED ) }
+sub is_expired         { $_[0]->_test_status( STATUS_EXPIRED ) }
 
-sub is_new          { $_[0]->_test_status( STATUS_NEW ) }
+sub is_params_modified { $_[0]->{_PARAMS_MODIFIED} }
 
-sub id              { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ID}    : undef }
+sub reset_modified     { $_[0]->_unset_status( STATUS_MODIFIED ) }
+
+sub is_new             { $_[0]->_test_status( STATUS_NEW ) }
+
+sub id                 { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ID}    : undef }
 
 # Last Access Time
-sub atime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ATIME} : undef }
+sub atime              { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ATIME} : undef }
 
 # Creation Time
-sub ctime           { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_CTIME} : undef }
+sub ctime              { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_CTIME} : undef }
 
 sub _driver {
     my $self = shift;
@@ -279,7 +283,9 @@ sub flush {
         unless ( defined $datastr ) {
             return $self->set_error( "flush(): couldn't freeze data: " . $serializer->errstr );
         }
-        defined( $driver->store($self->id, $datastr) ) or
+        my $etime = undef;
+        $etime = time + $self->{_DATA}->{_SESSION_ETIME} if ($self->{_DATA}->{_SESSION_ETIME});
+        defined( $driver->store($self->id, $datastr, $etime) ) or
             return $self->set_error( "flush(): couldn't store datastr: " . $driver->errstr);
         $self->_unset_status(STATUS_NEW | STATUS_MODIFIED);
     }
@@ -351,27 +357,6 @@ sub param {
 
 } # End of param.
 
-=pod
-
-=head2 _set_value($name, $new_value)
-
-This method takes the name of any field within the object's data structure,
-and a value to be stored there, but only updates the data structure if the current
-value differs from the new value. Hence:
-
-	$session -> set_value('_SESSION_ATIME', $x)
-
-means $self->{_DATA}->{ '_SESSION_ATIME' } I<may> be updated.
-
-If the update takes place, this method sets the modified flag on the object.
-
-Return value: 0 if the object was not modified, and 1 if it was.
-
-This method is private because you should not base any code on knowing the internal
-structure of these objects.
-
-=cut
-
 sub _set_value
 {
 	my($self, $key, $new_value) = @_;
@@ -406,7 +391,12 @@ sub _set_value
 		$self->_set_status(STATUS_MODIFIED);
 		$modified = 1;
 	}
-	# else both old and new values not defined. Do nothing.
+	# else: Both old and new values not defined. Do nothing.
+
+	if ($modified && ($key ne '_SESSION_ATIME') )
+	{
+		$self->{_PARAMS_MODIFIED} = 1;
+	}
 
 	return $modified;
 
@@ -782,12 +772,13 @@ sub load {
 #            _SESSION_ETIME  => undef,
 #            _SESSION_EXPIRE_LIST => {}
         },          # session data
-        _DSN        => {},          # parsed DSN params
-        _OBJECTS    => {},          # keeps necessary objects
-        _DRIVER_ARGS=> {},          # arguments to be passed to driver
-        _CLAIMED_ID => undef,       # id **claimed** by client
-        _STATUS     => STATUS_UNSET,# status of the session object
-        _QUERY      => undef        # query object
+        _PARAMS_MODIFIED => 0,           # Set to 1 if a param (not _SESSION_ATIME) is changed
+        _DSN             => {},          # parsed DSN params
+        _OBJECTS         => {},          # keeps necessary objects
+        _DRIVER_ARGS     => {},          # arguments to be passed to driver
+        _CLAIMED_ID      => undef,       # id **claimed** by client
+        _STATUS          => STATUS_UNSET,# status of the session object
+        _QUERY           => undef        # query object
     }, $class;
 
     my ($dsn, $query_or_sid, $dsn_args);
@@ -900,11 +891,13 @@ sub load {
 
     # checking expiration tickers of individuals parameters, if any:
     my @expired_params = ();
-    while (my ($param, $max_exp_interval) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
-        if ( ($self->{_DATA}->{_SESSION_ATIME} + $max_exp_interval) <= time() ) {
-            push @expired_params, $param;
-        }
-    }
+    if ($self->{_DATA}->{_SESSION_EXPIRE_LIST}) {
+		while (my ($param, $max_exp_interval) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
+			if ( ($self->{_DATA}->{_SESSION_ATIME} + $max_exp_interval) <= time() ) {
+				push @expired_params, $param;
+			}
+		}
+	}
     $self->clear(\@expired_params) if @expired_params;
 
     # We update the atime by default, but if this (otherwise undocoumented)
@@ -1209,6 +1202,61 @@ Actually, the above code is nothing but waste. The same effect could've been ach
 
 L<is_empty()|/"is_empty"> is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<is_expired()|/"is_expired"> for an example.
 
+=head2 is_params_modified()
+
+Returns 1 if any param has been modified (not counting changes to the session's access time),
+else returns 0.
+
+Note: Setting a param to the existing value is not regarded as a change. This is discussed under
+_set_value().
+
+The point of this method is that all sessions loaded by a call to load() - whether from within
+this module or by the user - have their access time changed, and hence their modified flag set.
+
+Setting the modified flag means such session will be saved when flush() is called.
+
+See also reset_modified().
+
+=head2 reset_modified()
+
+Resets the modified flag, if you think such a dangerous idea is a good idea.
+
+It works like this: Just before exiting your program, you can call $session -> is_params_modified,
+and if it returns 0, and you wish to stop the session being written to storage just because the
+session's atime - and nothing else - was set, then call $session -> reset_modified.
+
+Resetting the modified flag in this way means flush() will not write the session to storage.
+
+Warnings:
+
+=over 4
+
+=item Potential for confusion # 1
+
+Many uses will want to know the session has been accessed, even if none of the parameters change.
+
+That is the default behaviour of this module, and has not changed.
+
+This means merely accessing the session, without the user changing any parameters, will still mean
+the session's access time changes, and hence the session will (eventually) be written to storage.
+
+So, using is_params_modified() together with reset_modified() should only be used in the special
+case documented just above.
+
+=item Potential for confusion # 2
+
+flush() can be called explicitly by your code, but it is also called from within DESTROY(),
+close() and load().
+
+In other words, do I<not> rely on calls to flush() being skipped just because you did not call it
+yourself.
+
+=item Potential for confusion # 3
+
+Calling reset_modified() does I<not> change the value returned by is_params_modified().
+
+=back
+
 =head2 delete()
 
 Sets the objects status to be "deleted".  Subsequent read/write requests on the
@@ -1314,6 +1362,29 @@ B<Note:> find() is meant to be convenient, not necessarily efficient. It's best 
 =head2 remote_addr()
 
 Returns the remote address of the user who created the session for the first time. Returns undef if variable REMOTE_ADDR wasn't present in the environment when the session was created.
+
+=head2 _set_value($name, $new_value)
+
+This method, used internally, takes the name of any field within the object's data structure,
+and a value to be stored there, but only updates the data structure if the current
+value differs from the new value. Hence:
+
+	$session -> set_value(some_key => $some_value)
+
+means $self->{_DATA}->{'some_key'} I<may> be updated.
+
+If the update takes place, this method sets the modified flag on the session.
+
+Note: All objects loaded via a call to load() - either from within the object or by the user -
+have their access time set, and hence have their modified flag set. This in turn means all such
+object are written to disk by flush(). This behaviour has not changed.
+
+Return value: 0 if the object was not modified, and 1 if it was.
+
+This method is private because - naturally - you should not base any code on knowing the internal
+structure of session objects.
+
+See also: is_params_modified() and reset_modified().
 
 =cut
 

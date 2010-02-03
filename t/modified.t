@@ -3,7 +3,7 @@
 use strict;
 use diagnostics;
 
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 # Some driver independent tests for is_params_modified() and reset_modified().
 
@@ -28,7 +28,7 @@ my($status);
 	$modified = $s -> is_params_modified;
 
 	diag "After param: $status. Modified: $modified";
-	is($s -> param('key'), 'value', 'Value set and recovered ok');
+	is($s -> param('key'), 'value', "'value' set and recovered ok");
 	diag '-' x 20;
 }
 
@@ -43,7 +43,7 @@ my($status);
 
 	diag "After new: $status. Modified: $modified.";
 
-	is($s -> param('key'), 'value', 'Value recovered ok');
+	is($s -> param('key'), 'value', "'value' recovered ok");
 
 	diag '-' x 20;
 }
@@ -71,6 +71,9 @@ my($status);
 
 	diag "After param: $status. Modified: $modified.";
 
+	# Reset the modification flag. This means in this block the session will not be saved.
+	# So in the next block the value recovered will be 'value' and not 'new value'.
+
 	$s -> reset_modified;
 
 	$modified = $s -> is_params_modified;
@@ -80,3 +83,22 @@ my($status);
 
 	diag '-' x 20;
 }
+
+{
+	my $s      = CGI::Session -> load($new_id);
+	$loaded_id = $s -> id;
+
+	is($new_id, $loaded_id, 'Loaded id matches new id');
+
+	$status   = $s -> _report_status;
+	$modified = $s -> is_params_modified;
+
+	diag "After new: $status. Modified: $modified.";
+
+	# This should recover 'value' and not 'new value'.
+
+	is($s -> param('key'), 'value', "'value' and not 'new value' recovered ok");
+
+	diag '-' x 20;
+}
+
