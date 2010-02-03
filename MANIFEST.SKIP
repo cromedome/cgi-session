@@ -18,3 +18,4 @@ docs
 \.r\d+$
 .*sessiondata.*
 .*cgisess.*
+^MYMETA.yml$
