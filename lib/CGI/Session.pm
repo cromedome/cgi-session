@@ -59,7 +59,7 @@ sub new {
         # Called as a class method as in CGI::Session->new()
         #
 
-        # Start fresh with error reporting. Errors in past objects shouldn't affect this one. 
+        # Start fresh with error reporting. Errors in past objects shouldn't affect this one.
         $class->set_error('');
 
         $self = $class->load( @args );
@@ -124,14 +124,14 @@ sub _driver {
     return $self->{_OBJECTS}->{driver};
 }
 
-sub _serializer     { 
+sub _serializer     {
     my $self = shift;
     defined($self->{_OBJECTS}->{serializer}) and return $self->{_OBJECTS}->{serializer};
     return $self->{_OBJECTS}->{serializer} = "CGI::Session::Serialize::" . $self->{_DSN}->{serializer};
 }
 
 
-sub _id_generator   { 
+sub _id_generator   {
     my $self = shift;
     defined($self->{_OBJECTS}->{id}) and return $self->{_OBJECTS}->{id};
     return $self->{_OBJECTS}->{id} = "CGI::Session::ID::" . $self->{_DSN}->{id};
@@ -172,14 +172,14 @@ sub query {
 
 sub name {
     my $self = shift;
-    
+
     if (ref $self) {
         unless ( @_ ) {
             return $self->{_NAME} || $CGI::Session::NAME;
         }
         return $self->{_NAME} = $_[0];
     }
-    
+
     $CGI::Session::NAME = $_[0] if @_;
     return $CGI::Session::NAME;
 }
@@ -247,13 +247,13 @@ sub _report_status {
 sub flush {
     my $self = shift;
 
-    # Would it be better to die or err if something very basic is wrong here? 
+    # Would it be better to die or err if something very basic is wrong here?
     # I'm trying to address the DESTORY related warning
     # from: http://rt.cpan.org/Ticket/Display.html?id=17541
     # return unless defined $self;
 
     return unless $self->id;            # <-- empty session
-    
+
     # neither new, nor deleted nor modified
     # Warning: $self->_test_status(STATUS_UNSET | STATUS_IGNORE) does not work on the next line.
     return if !defined($self->{_STATUS}) or $self->{_STATUS} == STATUS_UNSET or $self->_test_status(STATUS_IGNORE);
@@ -320,8 +320,8 @@ sub param {
             carp "param(): attempt to write to private parameter";
             return undef;
         }
-        $self->_set_status( STATUS_MODIFIED );
-        return $self->{_DATA}->{ $name } = $value;
+        $self->_set_value($name, $value);
+        return $value;
     }
 
     # USAGE: $s->param(-name=>$n);
@@ -334,15 +334,14 @@ sub param {
     if ((@args % 2) == 0) {
         my $modified_cnt = 0;
 	ARG_PAIR:
-        while (my ($name, $val) = each %args) {
+        while (my ($name, $value) = each %args) {
             if ( $name =~ m/^_SESSION_/) {
                 carp "param(): attempt to write to private parameter";
                 next ARG_PAIR;
             }
-            $self->{_DATA}->{ $name } = $val;
+	        $self->_set_value($name, $value);
             ++$modified_cnt;
         }
-        $self->_set_status(STATUS_MODIFIED);
         return $modified_cnt;
     }
 
@@ -352,7 +351,66 @@ sub param {
 
 } # End of param.
 
+=pod
 
+=head2 _set_value($name, $new_value)
+
+This method takes the name of any field within the object's data structure,
+and a value to be stored there, but only updates the data structure if the current
+value differs from the new value. Hence:
+
+	$session -> set_value('_SESSION_ATIME', $x)
+
+means $self->{_DATA}->{ '_SESSION_ATIME' } I<may> be updated.
+
+If the update takes place, this method sets the modified flag on the object.
+
+Return value: 0 if the object was not modified, and 1 if it was.
+
+This method is private because you should not base any code on knowing the internal
+structure of these objects.
+
+=cut
+
+sub _set_value
+{
+	my($self, $key, $new_value) = @_;
+	my($old_value) = $self->{_DATA}->{$key};
+	my($modified)  = 0;
+
+	if (defined $old_value)
+	{
+		if (defined $new_value)
+		{
+			if ($old_value eq $new_value)
+			{
+				# Both values defined, and equal to each other. Do nothing.
+			}
+			else
+			{	# Both values defined, and different from each other.
+				$self->{_DATA}->{ $key } = $new_value;
+				$self->_set_status(STATUS_MODIFIED);
+				$modified = 1;
+			}
+		}
+		else
+		{	# Old value defined. New value not defined.
+			$self->{_DATA}->{ $key } = $new_value;
+			$self->_set_status(STATUS_MODIFIED);
+			$modified = 1;
+		}
+	}
+	elsif (defined $new_value)
+	{	# Old value not defined. New value defined.
+		$self->{_DATA}->{ $key } = $new_value;
+		$self->_set_status(STATUS_MODIFIED);
+		$modified = 1;
+	}
+	# else both old and new values not defined. Do nothing.
+
+	return $modified;
+
+} # End of _set_value.
 
 sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 
@@ -372,10 +430,10 @@ sub cookie {
 
     if ( $self->is_expired ) {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '-1d', @_ );
-    } 
+    }
     elsif ( my $t = $self->expire ) {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, -expires=> '+' . $t . 's', @_ );
-    } 
+    }
     else {
         $cookie = $query->cookie( -name=>$self->name, -value=>$self->id, @_ );
     }
@@ -401,9 +459,7 @@ sub save_param {
             $self->param($p, $values[0]);
         }
     }
-    $self->_set_status( STATUS_MODIFIED );
 }
-
 
 
 sub load_param {
@@ -431,9 +487,8 @@ sub clear {
     }
 
     for ( grep { ! /^_SESSION_/ } @$params ) {
-        delete $self->{_DATA}->{$_};
+        $self->_set_value($_, undef);
     }
-    $self->_set_status( STATUS_MODIFIED );
 }
 
 
@@ -444,7 +499,7 @@ sub find {
     # find( \%code )
     if ( @_ == 1 ) {
         $coderef = $_[0];
-    } 
+    }
     # find( $dsn, \&code, \%dsn_args )
     else {
         ($dsn, $coderef, $dsn_args) = @_;
@@ -747,6 +802,13 @@ sub load {
         ($dsn, $query_or_sid, $dsn_args, $params) = @_;
 
         # This is part of the patches for RT#33437 and RT#47795.
+        if (! defined $dsn_args) {
+            $dsn_args = {}
+        }
+        elsif ( ! (ref $dsn_args && (ref $dsn_args eq 'HASH') ) ) {
+            return $class->set_error( "3rd parameter to load() must be hashref (or undef)");
+        }
+
         if (! defined $params) {
             $params = {}
         }
@@ -792,7 +854,7 @@ sub load {
     unless ( defined $raw_data ) {
         return $self->set_error( "load(): couldn't retrieve data: " . $driver->errstr );
     }
-    
+
     # Requested session couldn't be retrieved
     return $self unless $raw_data;
 
@@ -848,16 +910,15 @@ sub load {
     # We update the atime by default, but if this (otherwise undocoumented)
     # parameter is explicitly set to false, we'll turn the behavior off
     if ( ! defined $params->{update_atime} ) {
-        $self->{_DATA}->{_SESSION_ATIME} = time();      # <-- updating access time
-        $self->_set_status( STATUS_MODIFIED );          # <-- access time modified above
+        $self->_set_value('_SESSION_ATIME', time);
     }
-    
+
     return $self;
 
 } # End of load.
 
 
-# set the input as a query object or session ID, depending on what it looks like.  
+# set the input as a query object or session ID, depending on what it looks like.
 sub _set_query_or_sid {
     my $self = shift;
     my $query_or_sid = shift;
@@ -976,14 +1037,14 @@ reference to an array, only the named parameters are cleared.
 
 =head2 flush()
 
-Synchronizes data in memory  with the copy serialized by the driver. Call flush() 
+Synchronizes data in memory  with the copy serialized by the driver. Call flush()
 if you need to access the session from outside the current session object. You should
-call flush() sometime before your program exits. 
+call flush() sometime before your program exits.
 
 As a last resort, CGI::Session will automatically call flush for you just
 before the program terminates or session object goes out of scope. Automatic
 flushing has proven to be unreliable, and in some cases is now required
-in places that worked with CGI::Session 3.x. 
+in places that worked with CGI::Session 3.x.
 
 Always explicitly calling C<flush()> on the session before the
 program exits is recommended. For extra safety, call it immediately after
@@ -1014,7 +1075,7 @@ Second form sets an expiration time. This value is checked when previously store
 
 By using the third syntax you can set the expiration interval for a particular
 session parameter, say I<~logged-in>. This would cause the library call clear()
-on the parameter when its time is up. Note it only makes sense to set this value to 
+on the parameter when its time is up. Note it only makes sense to set this value to
 something I<earlier> than when the whole session expires.  Passing 0 cancels expiration.
 
 All the time values should be given in the form of seconds. Following keywords are also supported for your convenience:
@@ -1056,13 +1117,11 @@ sub expire {
         my $time = $_[0];
         # If 0 is passed, cancel expiration
         if ( defined $time && ($time =~ m/^\d$/) && ($time == 0) ) {
-            $self->{_DATA}->{_SESSION_ETIME} = undef;
-            $self->_set_status( STATUS_MODIFIED );
+ 	        $self->_set_value('_SESSION_ETIME', undef);
         }
         # set the expiration to this time
         else {
-            $self->{_DATA}->{_SESSION_ETIME} = $self->_str2seconds( $time );
-            $self->_set_status( STATUS_MODIFIED );
+ 	        $self->_set_value('_SESSION_ETIME', $self->_str2seconds( $time ) );
         }
     }
     # If we get this far, we expect expire($param,$time)
@@ -1213,14 +1272,14 @@ with the parameters you want. For example:
 
     CGI::Session->find($dsn, sub { my_subroutine( @_, 'param 1', 'param 2' ) } );
     CGI::Session->find($dsn, sub { $coderef->( @_, $extra_arg ) } );
-    
+
 Or if you wish, you can define a sub generator as such:
 
     sub coderef_with_args {
         my ( $coderef, @params ) = @_;
         return sub { $coderef->( @_, @params ) };
     }
-    
+
     CGI::Session->find($dsn, coderef_with_args( $coderef, 'param 1', 'param 2' ) );
 
 =item \%dsn_args
@@ -1288,7 +1347,7 @@ It will retrieve the name of the session cookie from C<$session->name()> which d
     $session = CGI::Session->new(undef, $cgi, \%attrs);
 
 Now, $session->header() uses "MY_SID" as a name for the session cookie. For all additional options that can
-be passed, see the C<header()> docs in L<CGI>. 
+be passed, see the C<header()> docs in L<CGI>.
 
 =head2 query()
 
@@ -1384,7 +1443,7 @@ L<static|CGI::Session::ID::static> - generates static session ids. B<CGI::Sessio
 =head1 A Warning about Auto-flushing
 
 Auto-flushing can be unreliable for the following reasons. Explict flushing
-after key session updates is recommended. 
+after key session updates is recommended.
 
 =over 4
 
@@ -1443,7 +1502,7 @@ This document is also available in Japanese.
 
 =over 4
 
-=item o 
+=item o
 
 Translation based on 4.14: http://digit.que.ne.jp/work/index.cgi?Perldoc/ja
 
@@ -1459,7 +1518,7 @@ CGI::Session evolved to what it is today with the help of following developers. 
 
 =over 4
 
-=item Andy Lester 
+=item Andy Lester
 
 =item Brian King E<lt>mrbbking@mac.comE<gt>
 
@@ -1469,7 +1528,7 @@ CGI::Session evolved to what it is today with the help of following developers. 
 
 =item Igor Plisco E<lt>igor@plisco.ruE<gt>
 
-=item Mark Stosberg 
+=item Mark Stosberg
 
 =item Matt LeBlanc E<lt>mleblanc@cpan.orgE<gt>
 
@@ -1520,9 +1579,9 @@ Mark Stosberg became a co-maintainer during the development of 4.0. C<markstos@c
 Ron Savage became a co-maintainer during the development of 4.30. C<rsavage@cpan.org>.
 
 If you would like support, ask on the mailing list as describe above. The
-maintainers and other users are subscribed to it. 
+maintainers and other users are subscribed to it.
 
-=head1 SEE ALSO 
+=head1 SEE ALSO
 
 To learn more both about the philosophy and CGI::Session programming style,
 consider the following:
@@ -1540,7 +1599,7 @@ or browse the archives visit
 https://lists.sourceforge.net/lists/listinfo/cgi-session-user
 
 =item * B<RFC 2109> - The primary spec for cookie handing in use, defining the  "Cookie:" and "Set-Cookie:" HTTP headers.
-Available at L<http://www.ietf.org/rfc/rfc2109.txt>. A newer spec, RFC 2965 is meant to obsolete it with "Set-Cookie2" 
+Available at L<http://www.ietf.org/rfc/rfc2109.txt>. A newer spec, RFC 2965 is meant to obsolete it with "Set-Cookie2"
 and "Cookie2" headers, but even of 2008, the newer spec is not widely supported. See L<http://www.ietf.org/rfc/rfc2965.txt>
 
 =item *
