@@ -15,7 +15,7 @@ use Carp "croak";
 use CGI::Session::Driver::DBI;
 use DBD::Pg qw(PG_BYTEA PG_TEXT);
 
-$CGI::Session::Driver::postgresql::VERSION = '4.43';
+$CGI::Session::Driver::postgresql::VERSION = '4.45';
 @CGI::Session::Driver::postgresql::ISA     = qw( CGI::Session::Driver::DBI );
 
 
@@ -34,7 +34,7 @@ sub init {
 
 sub store {
     my $self = shift;
-    my ($sid, $datastr) = @_;
+    my ($sid, $datastr, $etime) = @_;
     croak "store(): usage error" unless $sid && $datastr;
 
     my $dbh = $self->{Handle};
@@ -50,7 +50,7 @@ sub store {
         # There is a race condition were two clients could run this code concurrently,
         # and both end up trying to insert. That's why we check for "duplicate" below
         my $sth = $dbh->prepare(
-             "INSERT INTO " . $self->table_name . " ($self->{DataColName},$self->{IdColName})  SELECT ?, ? 
+             "INSERT INTO " . $self->table_name . " ($self->{DataColName},$self->{IdColName})  SELECT ?, ?
                 WHERE NOT EXISTS (SELECT 1 FROM " . $self->table_name . " WHERE $self->{IdColName}=? LIMIT 1)");
 
         $sth->bind_param(1,$datastr,{ pg_type => $type });
@@ -63,15 +63,15 @@ sub store {
             $sth->bind_param(1,$datastr,{ pg_type => $type });
             $sth->bind_param(2,$sid);
             $sth->execute;
-        } 
+        }
         else {
             # Nothing. Our insert has already happened
         }
     };
-    if ($@) { 
+    if ($@) {
       return $self->set_error( "store(): failed with message: $@ " . $dbh->errstr );
 
-    } 
+    }
     else {
         return 1;
 

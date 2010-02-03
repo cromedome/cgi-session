@@ -7,7 +7,7 @@ use Carp;
 use CGI::Session::Driver::DBI;
 
 @CGI::Session::Driver::mysql::ISA       = qw( CGI::Session::Driver::DBI );
-$CGI::Session::Driver::mysql::VERSION   = '4.43';
+$CGI::Session::Driver::mysql::VERSION   = '4.45';
 
 sub _mk_dsnstr {
     my ($class, $dsn) = @_;
@@ -43,7 +43,7 @@ sub init {
 
 sub store {
     my $self = shift;
-    my ($sid, $datastr) = @_;
+    my ($sid, $datastr, $etime) = @_;
     croak "store(): usage error" unless $sid && $datastr;
 
     my $dbh = $self->{Handle};

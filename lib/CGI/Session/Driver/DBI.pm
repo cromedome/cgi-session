@@ -9,7 +9,7 @@ use Carp;
 use CGI::Session::Driver;
 
 @CGI::Session::Driver::DBI::ISA = ( "CGI::Session::Driver" );
-$CGI::Session::Driver::DBI::VERSION = '4.43';
+$CGI::Session::Driver::DBI::VERSION = '4.45';
 
 
 sub init {
@@ -19,12 +19,12 @@ sub init {
             $self->{Handle} = $self->{Handle}->();
         }
         else {
-            # We assume the handle is working, and there is nothing to do. 
+            # We assume the handle is working, and there is nothing to do.
         }
     }
     else {
-        $self->{Handle} = DBI->connect( 
-            $self->{DataSource}, $self->{User}, $self->{Password}, 
+        $self->{Handle} = DBI->connect(
+            $self->{DataSource}, $self->{User}, $self->{Password},
             { RaiseError=>1, PrintError=>1, AutoCommit=>1 }
         );
         unless ( $self->{Handle} ) {
@@ -83,7 +83,7 @@ sub retrieve {
 sub store {
 #    die;
     my $self = shift;
-    my ($sid, $datastr) = @_;
+    my ($sid, $datastr, $etime) = @_;
     croak "store(): usage error" unless $sid && $datastr;
 
 
@@ -103,7 +103,7 @@ sub store {
     } else {
         $action_sth = $dbh->prepare_cached("INSERT INTO " . $self->table_name . " ($self->{DataColName}, $self->{IdColName}) VALUES(?, ?)", undef, 3);
     }
-    
+
     unless ( defined $action_sth ) {
         return $self->set_error( "store(): \$dbh->prepare failed with message " . $dbh->errstr );
     }
@@ -125,7 +125,7 @@ sub remove {
     unless ( $rc ) {
         croak "remove(): \$dbh->do failed!";
     }
-    
+
     return 1;
 }
 
@@ -156,7 +156,7 @@ sub traverse {
     }
 
     my $tablename = $self->table_name();
-    my $sth = $self->{Handle}->prepare_cached("SELECT $self->{IdColName} FROM $tablename", undef, 3) 
+    my $sth = $self->{Handle}->prepare_cached("SELECT $self->{IdColName} FROM $tablename", undef, 3)
         or return $self->set_error("traverse(): couldn't prepare SQL statement. " . $self->{Handle}->errstr);
     $sth->execute() or return $self->set_error("traverse(): couldn't execute statement $sth->{Statement}. " . $sth->errstr);
 
@@ -238,7 +238,7 @@ Following driver arguments are supported:
 =item DataSource
 
 First argument to be passed to L<DBI|DBI>->L<connect()|DBI/connect()>. If the driver makes
-the database connection itself, it will also explicitly disconnect from the database when 
+the database connection itself, it will also explicitly disconnect from the database when
 the driver object is DESTROYed.
 
 =item User
@@ -255,7 +255,7 @@ An existing L<DBI> database handle object. The handle can be created on demand
 by providing a code reference as a argument, such as C<<sub{DBI->connect}>>.
 This way, the database connection is only created if it actually needed. This can be useful
 when combined with a framework plugin like L<CGI::Application::Plugin::Session>, which creates
-a CGI::Session object on demand as well. 
+a CGI::Session object on demand as well.
 
 C<Handle> will override all the above arguments, if any present.
 
