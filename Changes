@@ -1,6 +1,10 @@
 CGI::Session Change Log
 =====================================================================
 
+4.46 - Thursday, February 4, 2010
+	* Patch: Re-work docs (just for CGI::Session) to fix broken links in POD.
+	* Patch: Simplify code in the name() method.
+
 4.45 - Wednesday, February 3, 2010
 	* Edit files with an editor (UEX) set to remove trailing spaces. Yea! (Ron Savage).
 	* Fix: RT#50232. Add these files: MANIFEST, META.yml, MYMETA.yml. Thanx to Lawrence L. Gilbert.

@@ -173,21 +173,15 @@ sub query {
     return $self->{_QUERY} = CGI->new();
 }
 
-
 sub name {
-    my $self = shift;
+	my($self, $name) = @_;
 
-    if (ref $self) {
-        unless ( @_ ) {
-            return $self->{_NAME} || $CGI::Session::NAME;
-        }
-        return $self->{_NAME} = $_[0];
-    }
+	if ($name) {
+		$self->{_NAME} = $name;
+	}
 
-    $CGI::Session::NAME = $_[0] if @_;
-    return $CGI::Session::NAME;
+	return $self->{_NAME};
 }
-
 
 sub dump {
     my $self = shift;
@@ -604,17 +598,77 @@ Following is the overview of all the available methods accessible via CGI::Sessi
 
 =head2 new( $dsn, $query||$sid, \%dsn_args, \%session_params )
 
-Constructor. Returns new session object, or undef on failure. Error message is accessible through L<errstr() - class method|CGI::Session::ErrorHandler/errstr>. If called on an already initialized session will re-initialize the session based on already configured object. This is only useful after a call to L<load()|/"load">.
+Constructor. Returns new session object, or undef on failure.
 
-Can accept up to three arguments, $dsn - Data Source Name, $query||$sid - query object OR a string representing session id, and finally, \%dsn_args, arguments used by $dsn components.
+Error message is accessible through L<errstr() - class method|CGI::Session::ErrorHandler/errstr>.
 
-If called without any arguments, $dsn defaults to I<driver:file;serializer:default;id:md5>, $query||$sid defaults to C<< CGI->new() >>, and C<\%dsn_args> defaults to I<undef>.
+If called on an already initialized session, will re-initialize the session based on already configured object. This is only useful after a call to L<load()|/"load()">.
 
-If called with a single argument, it will be treated either as C<$query> object, or C<$sid>, depending on its type. If argument is a string , C<new()> will treat it as session id and will attempt to retrieve the session from data store. If it fails, will create a new session id, which will be accessible through L<id() method|/"id">. If argument is an object, L<cookie()|CGI/cookie> and L<param()|CGI/param> methods will be called on that object to recover a potential C<$sid> and retrieve it from data store. If it fails, C<new()> will create a new session id, which will be accessible through L<id() method|/"id">. C<name()> will define the name of the query parameter and/or cookie name to be requested, defaults to I<CGISESSID>.
+C<new()>, like C<load()>, can accept up to four arguments:
 
-If called with two arguments first will be treated as $dsn, and second will be treated as $query or $sid or undef, depending on its type. Some examples of this syntax are:
+=over 4
 
-    $s = CGI::Session->new("driver:mysql", undef);
+=item $dsn
+
+Data Source Name - a string. See samples below.
+
+Default: I<driver:file;serializer:default;id:md5>.
+
+=item $query || $sid
+
+Query object, or a string representing the session id.
+
+Default: C<< CGI->new() >>.
+
+=item \%dsn_args
+
+A hashref of arguments used by the $dsn parser.
+
+Whether or not it's optional depends on the $dsn parser.
+
+See the docs for the subclasses - e.g. C<CGI::Session::Driver::postgresql> - for details.
+
+If undef is supplied, it is converted into {}.
+
+Default: {}.
+
+=item \%session_params
+
+A optional hashref of arguments used by the session object.
+
+Note: if you don't wish to supply anything for \%dsn_args, just use {}, so that \%session_params
+will not be assumed to be \%dsn_args.
+
+Currently, the only key recognized in \%session_params is 'name'.
+
+The value defines the name of the query parameter and/or cookie name to be used.
+
+It defaults to I<$CGI::Session::NAME>, which defaults to I<CGISESSID>.
+
+The current value of the query parameter or cookie name can be set and queried with the L<name()|/"name($new_name)"> method.
+
+You are strongly discouraged from using the global variable I<$CGI::Session::NAME>, since it is
+deprecated (as are all global variables) and will be removed in a future version of this module.
+
+If undef is supplied, it is converted into {}.
+
+Default: {}.
+
+=back
+
+If called with a single argument, it will be treated either as C<$query> object, or C<$sid>, depending on its type.
+
+If the argument is a string , C<new()> will treat it as session id and will attempt to retrieve the session from data store. If it fails, will create a new session id, which will be accessible through L<id()|/"id()"> method.
+
+If the argument is an object, C<cookie()> and C<param()> methods will be called on that object to recover a potential C<$sid> and retrieve it from data store.
+
+If that fails, C<new()> will create a new session id, which will be accessible through L<id()|/"id()"> method.
+
+If called with two arguments, the first will be treated as $dsn, and the second will be treated as $query or $sid or undef, depending on its type.
+
+Some examples of this syntax are:
+
+    $s = CGI::Session->new("driver:mysql", undef, {}, {name => 'sid'});
     $s = CGI::Session->new("driver:sqlite", $sid);
     $s = CGI::Session->new("driver:db_file", $query);
     $s = CGI::Session->new("serializer:storable;id:incr", $sid);
@@ -678,8 +732,8 @@ undef is acceptable as a valid placeholder to any of the above arguments, which 
 
 =head2 load( $dsn, $query, \%dsn_args, \%session_params )
 
-Accepts the same arguments as new(), and also returns a new session object, or
-undef on failure.  The difference is, L<new()|/"new"> can create a new session if
+Accepts the same arguments as L<new()|/"new()">, and also returns a new session object, or
+undef on failure.  The difference is, L<new()|/"new()"> can create a new session if
 it detects expired and non-existing sessions, but C<load()> does not.
 
 C<load()> is useful to detect expired or non-existing sessions without forcing the library to create new sessions. So now you can do something like this:
@@ -700,9 +754,9 @@ C<load()> is useful to detect expired or non-existing sessions without forcing t
 Notice: All I<expired> sessions are empty, but not all I<empty> sessions are expired!
 
 The 4th parameter to load() must be a hashref (or undef). In the past, there was an undocumented case where load()
-would accept a scalar as the 4th parameter. This scalar was used to stop find(), which calls load(), from updating
-the session's atime. That is, by default, this value is not defined, so the atime gets updated. find() used to specify
-a scalar (value 0, and thus defined) to stop this happening at the end of load(). Now find() sets the update_atime key
+would accept a scalar as the 4th parameter. This scalar was used to stop L<find()|/"find( \&code )">, which calls load(), from updating
+the session's atime. That is, by default, this value is not defined, so the atime gets updated. L<find()|/"find( \&code )"> used to specify
+a scalar (value 0, and thus defined) to stop this happening at the end of load(). Now L<find()|/"find( \&code )"> sets the update_atime key
 in the hashref.
 
 Also, find() now sets the find_is_caller key in this hashref, so load() knows not to delete sessions whose IP addresses
@@ -722,13 +776,13 @@ Load the session as normal.
 
 The client's IP is determined by $ENV{REMOTE_ADDR}.
 
-=item The IPs don't match, and find() is the caller.
+=item The IPs don't match, and C<find> is the caller.
 
 Ignore the session (i.e. don't load it).
 
 This is new code. Previously, the code deleted the session as in the next point.
 
-=item The IPs don't match, and find() is not the caller.
+=item The IPs don't match, and C<find> is not the caller.
 
 Delete the session.
 
@@ -772,6 +826,7 @@ sub load {
 #            _SESSION_ETIME  => undef,
 #            _SESSION_EXPIRE_LIST => {}
         },          # session data
+        _NAME            => $CGI::SESSION::NAME,
         _PARAMS_MODIFIED => 0,           # Set to 1 if a param (not _SESSION_ATIME) is changed
         _DSN             => {},          # parsed DSN params
         _OBJECTS         => {},          # keeps necessary objects
@@ -988,7 +1043,7 @@ a warning and undef will be returned.
 
 =head2 param_hashref()
 
-B<Deprecated>. Use L<dataref()|/"dataref"> instead.
+B<Deprecated>. Use L<dataref()|/"dataref()"> instead.
 
 =head2 dataref()
 
@@ -1007,7 +1062,12 @@ Useful for having all session data in a hashref, but too risky to update.
 
 =head2 save_param($query, \@list)
 
-Saves query parameters to session object. In other words, it's the same as calling L<param($name, $value)|/"param"> for every single query parameter returned by C<< $query->param() >>. The first argument, if present, should be either CGI object or any object which can provide param() method. If it's undef, defaults to the return value of L<query()|/"query">, which returns C<< CGI->new >>. If second argument is present and is a reference to an array, only those query parameters found in the array will be stored in the session. undef is a valid placeholder for any argument to force default behavior.
+Saves query parameters to session object.
+In other words, it's the same as calling L<param($name, $value)|/"param"> for every single query parameter returned by C<< $query->param() >>.
+The first argument, if present, should be either CGI object or any object which can provide param() method.
+If it's undef, defaults to the return value of L<query()|/"query()">, which returns C<< CGI->new >>.
+If second argument is present and is a reference to an array, only those query parameters found in the array will be stored in the session.
+undef is a valid placeholder for any argument to force default behavior.
 
 =head2 load_param()
 
@@ -1060,7 +1120,7 @@ Read-only method. Returns the time when the session was first created in seconds
 
 =head2 expire($param, $time)
 
-Sets expiration interval relative to L<atime()|/"atime">.
+Sets expiration interval relative to L<atime()|/"atime()">.
 
 If used with no arguments, returns the expiration interval if it was ever set. If no expiration was ever set, returns undef. For backwards compatibility, a method named C<etime()> does the same thing.
 
@@ -1260,7 +1320,7 @@ Calling reset_modified() does I<not> change the value returned by is_params_modi
 =head2 delete()
 
 Sets the objects status to be "deleted".  Subsequent read/write requests on the
-same object will fail.  To physically delete it from the data store you need to call L<flush()>.
+same object will fail.  To physically delete it from the data store you need to call L<flush()|/"flush()">.
 CGI::Session attempts to do this automatically when the object is being destroyed (usually as
 the script exits), but see L<A Warning about Auto-flushing>.
 
@@ -1357,6 +1417,17 @@ The default value of this hashref is undef.
 
 B<Note:> find() is meant to be convenient, not necessarily efficient. It's best suited in cron scripts.
 
+=head2 name($new_name)
+
+The $new_name parameter is optional. If supplied it sets the query or cookie parameter name to be used.
+
+It defaults to I<$CGI::Session::NAME>, which defaults to I<CGISESSID>.
+
+You are strongly discouraged from using the global variable I<$CGI::Session::NAME>, since it is
+deprecated (as are all global variables) and will be removed in a future version of this module.
+
+Return value: The current query or cookie parameter name.
+
 =head1 MISCELLANEOUS METHODS
 
 =head2 remote_addr()
@@ -1402,7 +1473,7 @@ Returns a dump of the session object. Useful for debugging purposes only.
 
 =head2 header()
 
-A wrapper for L<CGI.pm|CGI>'s header() method. Calling this method
+A wrapper for C<CGI's> header() method. Calling this method
 is equivalent to something like this:
 
     $cookie = CGI::Cookie->new(-name=>$session->name, -value=>$session->id);
@@ -1412,17 +1483,19 @@ You can minimize the above into:
 
     print $session->header();
 
-It will retrieve the name of the session cookie from C<$session->name()> which defaults to C<$CGI::Session::NAME>. If you want to use a different name for your session cookie, do something like following before creating session object:
+It will retrieve the name of the session cookie from C<< $session->name() >> which defaults to the deprecated global variable C<$CGI::Session::NAME>.
+
+If you want to use a different name for your session cookie, do something like following before creating session object:
 
     CGI::Session->name("MY_SID");
     $session = CGI::Session->new(undef, $cgi, \%attrs);
 
 Now, $session->header() uses "MY_SID" as a name for the session cookie. For all additional options that can
-be passed, see the C<header()> docs in L<CGI>.
+be passed, see the C<header()> docs in C<CGI>.
 
 =head2 query()
 
-Returns query object associated with current session object. Default query object class is L<CGI.pm|CGI>.
+Returns query object associated with current session object. Default query object class is C<CGI>.
 
 =head2 DEPRECATED METHODS
 
@@ -1439,75 +1512,73 @@ CGI::Session consists of several components such as L<drivers|"DRIVERS">, L<seri
 
 =head2 DRIVERS
 
-Following drivers are included in the standard distribution:
+The following drivers are included in the standard distribution:
 
 =over 4
 
-=item *
+=item db_file
 
-L<file|CGI::Session::Driver::file> - default driver for storing session data in plain files. Full name: B<CGI::Session::Driver::file>
+C<CGI::Session::Driver::db_file> - for storing session data in BerkelyDB. Requires: C<DB_File>.
 
-=item *
+=item file
 
-L<db_file|CGI::Session::Driver::db_file> - for storing session data in BerkelyDB. Requires: L<DB_File>.
-Full name: B<CGI::Session::Driver::db_file>
+C<CGI::Session::Driver::file> - default driver for storing session data in plain files.
 
-=item *
+=item mysql
 
-L<mysql|CGI::Session::Driver::mysql> - for storing session data in MySQL tables. Requires L<DBI|DBI> and L<DBD::mysql|DBD::mysql>.
-Full name: B<CGI::Session::Driver::mysql>
+C<CGI::Session::Driver::mysql> - for storing session data in MySQL tables. Requires C<DBI> and C<DBD::mysql>.
 
-=item *
+=item postgresql
 
-L<sqlite|CGI::Session::Driver::sqlite> - for storing session data in SQLite. Requires L<DBI|DBI> and L<DBD::SQLite|DBD::SQLite>.
-Full name: B<CGI::Session::Driver::sqlite>
+C<CGI::Session::Driver::postgresql> - for storing session data in PostgreSQL tables. Requires C<DBI> and C<DBD::Pg>.
+
+=item sqlite
+
+C<CGI::Session::Driver::sqlite> - for storing session data in SQLite. Requires C<DBI> and C<DBD::SQLite>
 
 =back
+
+Other drivers are available from CPAN.
 
 =head2 SERIALIZERS
 
+The following serializers are included in the standard distribution:
+
 =over 4
 
-=item *
+=item default
 
-L<default|CGI::Session::Serialize::default> - default data serializer. Uses standard L<Data::Dumper|Data::Dumper>.
-Full name: B<CGI::Session::Serialize::default>.
+C<CGI::Session::Serialize::default> - default data serializer. Uses standard C<Data::Dumper>.
 
-=item *
+=item freezethaw
 
-L<storable|CGI::Session::Serialize::storable> - serializes data using L<Storable>. Requires L<Storable>.
-Full name: B<CGI::Session::Serialize::storable>.
+C<CGI::Session::Serialize::freezethaw> - serializes data using C<FreezeThaw>.
 
-=item *
+=item storable
 
-L<freezethaw|CGI::Session::Serialize::freezethaw> - serializes data using L<FreezeThaw>. Requires L<FreezeThaw>.
-Full name: B<CGI::Session::Serialize::freezethaw>
-
-=item *
-
-L<yaml|CGI::Session::Serialize::yaml> - serializes data using YAML. Requires L<YAML> or L<YAML::Syck>.
-Full name: B<CGI::Session::Serialize::yaml>
+C<CGI::Session::Serialize::storable> - serializes data using C<Storable>.
 
 =back
 
+Other drivers are available from CPAN.
+
 =head2 ID GENERATORS
 
-Following ID generators are available:
+The following ID generators are included in the standard distribution:
 
 =over 4
 
-=item *
+=item incr
 
-L<md5|CGI::Session::ID::md5> - generates 32 character long hexadecimal string. Requires L<Digest::MD5|Digest::MD5>.
-Full name: B<CGI::Session::ID::md5>.
+C<CGI::Session::ID::incr> - generates incremental session ids.
 
-=item *
+=item md5
 
-L<incr|CGI::Session::ID::incr> - generates incremental session ids.
+C<CGI::Session::ID::md5> - generates 32 character long hexadecimal string. Requires C<Digest::MD5>.
 
-=item *
+=item static
 
-L<static|CGI::Session::ID::static> - generates static session ids. B<CGI::Session::ID::static>
+C<CGI::Session::ID::static> - generates static session ids.
 
 =back
 
