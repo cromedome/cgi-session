@@ -94,7 +94,13 @@ sub new {
 
 } # End of new.
 
-sub DESTROY            {   $_[0]->flush()      }
+sub DESTROY {
+	my $self = $_[0]; # Can't use @_.
+	if ($self->{_AUTO_FLUSH}) {
+		$self->flush();
+	}
+}
+
 sub close              {   $_[0]->flush()      }
 
 *param_hashref      = \&dataref;
@@ -167,20 +173,29 @@ sub query {
     if ( $self->{_QUERY} ) {
         return $self->{_QUERY};
     }
-#   require CGI::Session::Query;
-#   return $self->{_QUERY} = CGI::Session::Query->new();
-    require CGI;
-    return $self->{_QUERY} = CGI->new();
+
+	eval "require $self->{_QUERY_CLASS}";
+
+	if ($@) {
+		croak "Error. Unable to 'require' $self->{_QUERY_CLASS}: $@";
+	}
+
+    return $self->{_QUERY} = $self->{_QUERY_CLASS}->new();
 }
 
 sub name {
 	my($self, $name) = @_;
 
-	if ($name) {
-		$self->{_NAME} = $name;
+	if (ref $self) {
+		if ($name) {
+			$self->{_NAME} = $name;
+		}
+		return $self->{_NAME} || $CGI::Session::NAME;
 	}
 
-	return $self->{_NAME};
+    $CGI::Session::NAME = $name if ($name);
+
+    return $CGI::Session::NAME;
 }
 
 sub dump {
@@ -246,7 +261,7 @@ sub flush {
     my $self = shift;
 
     # Would it be better to die or err if something very basic is wrong here?
-    # I'm trying to address the DESTORY related warning
+    # I'm trying to address the DESTROY related warning
     # from: http://rt.cpan.org/Ticket/Display.html?id=17541
     # return unless defined $self;
 
@@ -403,7 +418,12 @@ sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 my $avoid_single_use_warning_again = *header;
 sub http_header {
     my $self = shift;
-    return $self->query->header(-cookie=>$self->cookie, -type=>'text/html', @_);
+    if ($self->{_QUERY_CAN_COOKIE}) {
+		return $self->query->header(-cookie=>$self->cookie, -type=>'text/html', @_);
+    }
+    else {
+		return $self->query->header(-type=>'text/html', @_);
+	}
 }
 
 sub cookie {
@@ -423,10 +443,6 @@ sub cookie {
     }
     return $cookie;
 }
-
-
-
-
 
 sub save_param {
     my $self = shift;
@@ -600,7 +616,7 @@ Following is the overview of all the available methods accessible via CGI::Sessi
 
 Constructor. Returns new session object, or undef on failure.
 
-Error message is accessible through L<errstr() - class method|CGI::Session::ErrorHandler/errstr>.
+Error message is accessible through L<errstr()|/"errstr()">.
 
 If called on an already initialized session, will re-initialize the session based on already configured object. This is only useful after a call to L<load()|/"load()">.
 
@@ -620,6 +636,8 @@ Query object, or a string representing the session id.
 
 Default: C<< CGI->new() >>.
 
+This default can be overridden. See {query_class => 'Some::Class'} under \%session_params.
+
 =item \%dsn_args
 
 A hashref of arguments used by the $dsn parser.
@@ -628,7 +646,7 @@ Whether or not it's optional depends on the $dsn parser.
 
 See the docs for the subclasses - e.g. C<CGI::Session::Driver::postgresql> - for details.
 
-If undef is supplied, it is converted into {}.
+If undef is supplied for \%dsn_args, it is converted into the default.
 
 Default: {}.
 
@@ -639,9 +657,39 @@ A optional hashref of arguments used by the session object.
 Note: if you don't wish to supply anything for \%dsn_args, just use {}, so that \%session_params
 will not be assumed to be \%dsn_args.
 
-Currently, the only key recognized in \%session_params is 'name'.
+Keys in \%session_params:
 
-The value defines the name of the query parameter and/or cookie name to be used.
+=over 4
+
+=item auto_flush
+
+The value (0 or 1) determines whether or not the C<DESTROY()> method calls L<flush()|/"flush()">.
+
+{auto_flush => 0} means C<DESTROY()> does not call L<flush()|/"flush()">.
+
+{auto_flush => 1} means C<DESTROY()> calls L<flush()|/"flush()">.
+
+This (1) is the default, since C<DESTROY()> call always called L<flush()|/"flush()"> in the past.
+
+=item query_can_cookie
+
+The value (0 or 1) determines whether or not the session object calls the C<cookie()> method,
+- and failing that, the C<param()> method - on the query object, to find the session's id.
+
+{query_can_cookie => 0} means the session object does not call the query object's C<cookie()> method.
+It only calls the C<param()> method on the query object.
+
+By setting the value to 0, the query object no longer needs to support a C<cookie()> method.
+
+{query_can_cookie => 1} means the session object calls the query object's C<cookie()> method.
+And, if that returns a false value, it calls the query object's C<param()> method.
+
+This (1) is the default, since the session object has always called the query object's C<cookie()>
+method, and (if necessary) C<param()> method, in the past.
+
+=item name
+
+The value defines the name of the query parameter or cookie name to be used.
 
 It defaults to I<$CGI::Session::NAME>, which defaults to I<CGISESSID>.
 
@@ -650,9 +698,22 @@ The current value of the query parameter or cookie name can be set and queried w
 You are strongly discouraged from using the global variable I<$CGI::Session::NAME>, since it is
 deprecated (as are all global variables) and will be removed in a future version of this module.
 
-If undef is supplied, it is converted into {}.
+=item query_class
 
-Default: {}.
+The value specifies the class of the query object, when the second parameter to L<new()|/"new()">
+or L<load()|/"load()"> is not an object.
+
+In such a case, C<CGI::Session> I<requires> an object of some class to create a query object.
+
+So, if you wish to use a substitute to C<CGI>, use something like {query_class => 'CGI::Simple'}.
+
+The default is {query_class => 'CGI'}.
+
+=back
+
+If undef is supplied for \%session_params, it is converted into the default.
+
+Default: {auto_flush => 1}.
 
 =back
 
@@ -678,7 +739,7 @@ Briefly, C<new()> will return an initialized session object with a valid id, whe
 an empty session object with an undefined id.
 
 Tests are provided (t/new_with_undef.t and t/load_with_undef.t) to clarify the result of calling C<new()> and C<load()>
-with undef, or with an initialized CGI object with an undefined or fake CGISESSID.
+with undef, or with an initialized CGI-like object with an undefined or fake CGISESSID.
 
 You are strongly advised to run the old-fashioned 'make test TEST_FILES=t/new_with_undef.t TEST_VERBOSE=1'
 or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, and examine the output.
@@ -710,16 +771,6 @@ If called with three arguments, first two will be treated as in the previous exa
 
 If called with four arguments, the first three match previous examples. The fourth argument must be a hash reference with parameters to be used by the CGI::Session object. (see \%session_params above )
 
-The following is a list of the current keys:
-
-=over
-
-=item *
-
-B<name> - Name to use for the cookie/query parameter name. This defaults to CGISESSID. This can be altered or accessed by the C<name> accessor.
-
-=back
-
 undef is acceptable as a valid placeholder to any of the above arguments, which will force default behavior.
 
 =head2 load()
@@ -738,6 +789,7 @@ it detects expired and non-existing sessions, but C<load()> does not.
 
 C<load()> is useful to detect expired or non-existing sessions without forcing the library to create new sessions. So now you can do something like this:
 
+    $cgi = CGI->new;
     $s = CGI::Session->load() or die CGI::Session->errstr();
     if ( $s->is_expired ) {
         print $s->header(),
@@ -797,7 +849,7 @@ Brief summary: C<new()> will return an initialized session object with a valid i
 an empty session object with an undefined id.
 
 Tests are provided (t/new_with_undef.t and t/load_with_undef.t) to clarify the result of calling C<new()> and C<load()>
-with undef, or with an initialized CGI object with an undefined or fake CGISESSID.
+with undef, or with an initialized CGI-like object with an undefined or fake CGISESSID.
 
 You are strongly advised to run the old-fashioned 'make test TEST_FILES=t/new_with_undef.t TEST_VERBOSE=1'
 or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, and examine the output.
@@ -807,6 +859,7 @@ or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, a
 # pass a true value as the fourth parameter if you want to skip the changing of
 # access time This isn't documented more formally, because it only called by
 # find().
+
 sub load {
     my $class = shift;
     return $class->set_error( "called as instance method")    if ref $class;
@@ -826,14 +879,17 @@ sub load {
 #            _SESSION_ETIME  => undef,
 #            _SESSION_EXPIRE_LIST => {}
         },          # session data
-        _NAME            => $CGI::SESSION::NAME,
-        _PARAMS_MODIFIED => 0,           # Set to 1 if a param (not _SESSION_ATIME) is changed
-        _DSN             => {},          # parsed DSN params
-        _OBJECTS         => {},          # keeps necessary objects
-        _DRIVER_ARGS     => {},          # arguments to be passed to driver
-        _CLAIMED_ID      => undef,       # id **claimed** by client
-        _STATUS          => STATUS_UNSET,# status of the session object
-        _QUERY           => undef        # query object
+        _AUTO_FLUSH       => 1,           # Set to 1 for DESTROY() to call flush().
+        _QUERY_CAN_COOKIE => 1,           # Set to 0 to never call cookie() on the query object.
+        _NAME             => $CGI::SESSION::NAME,
+        _PARAMS_MODIFIED  => 0,           # Set to 1 if a param (not _SESSION_ATIME) is changed
+        _DSN              => {},          # parsed DSN params
+        _OBJECTS          => {},          # keeps necessary objects
+        _DRIVER_ARGS      => {},          # arguments to be passed to driver
+        _CLAIMED_ID       => undef,       # id **claimed** by client
+        _STATUS           => STATUS_UNSET,# status of the session object
+        _QUERY            => undef,       # query object
+        _QUERY_CLASS      => 'CGI',       # The class of the query object.
     }, $class;
 
     my ($dsn, $query_or_sid, $dsn_args);
@@ -856,14 +912,30 @@ sub load {
         }
 
         if (! defined $params) {
-            $params = {}
+            $params = {auto_flush => 1, query_class => 'CGI'}
         }
         elsif ( ! (ref $params && (ref $params eq 'HASH') ) ) {
             return $class->set_error( "4th parameter to load() must be hashref (or undef)");
         }
 
+		# Must use defined here because the value can be 0.
+
+        if (defined $params->{'auto_flush'}) {
+            $self->{_AUTO_FLUSH} = $params->{'auto_flush'};
+        }
+
+		# Must use defined here because the value can be 0.
+
+        if (defined $params->{'query_can_cookie'}) {
+            $self->{_QUERY_CAN_COOKIE} = $params->{'query_can_cookie'};
+        }
+
         if ($params->{'name'}) {
             $self->{_NAME} = $params->{'name'};
+        }
+
+        if ($params->{'query_class'}) {
+            $self->{_QUERY_CLASS} = $params->{'query_class'};
         }
 
         if ( defined $dsn ) {      # <-- to avoid 'Uninitialized value...' warnings
@@ -884,7 +956,7 @@ sub load {
     if (not defined $self->{_CLAIMED_ID}) {
         my $query = $self->query();
         eval {
-            $self->{_CLAIMED_ID} = $query->cookie( $self->name ) || $query->param( $self->name );
+            $self->{_CLAIMED_ID} = $self->{_QUERY_CAN_COOKIE} ? ($query->cookie( $self->name ) || $query->param( $self->name ) ) : $query->param( $self->name );
         };
         if ( my $errmsg = $@ ) {
             return $class->set_error( "query object $query does not support cookie() and param() methods: " .  $errmsg );
@@ -1064,8 +1136,8 @@ Useful for having all session data in a hashref, but too risky to update.
 
 Saves query parameters to session object.
 In other words, it's the same as calling L<param($name, $value)|/"param"> for every single query parameter returned by C<< $query->param() >>.
-The first argument, if present, should be either CGI object or any object which can provide param() method.
-If it's undef, defaults to the return value of L<query()|/"query()">, which returns C<< CGI->new >>.
+The first argument, if present, should be a CGI-like object (which can provide a param() method).
+If it's undef, defaults to the return value of L<query()|/"query()">, which returns C<< CGI->new >> by default, but this can be overridden.
 If second argument is present and is a reference to an array, only those query parameters found in the array will be stored in the session.
 undef is a valid placeholder for any argument to force default behavior.
 
@@ -1305,8 +1377,8 @@ case documented just above.
 
 =item Potential for confusion # 2
 
-flush() can be called explicitly by your code, but it is also called from within DESTROY(),
-close() and load().
+flush() can be called explicitly by your code, but it is also called from within L<DESTROY()|/"DESTROY()">,
+L<close()|/"close()"> and L<load()|/"load()">.
 
 In other words, do I<not> rely on calls to flush() being skipped just because you did not call it
 yourself.
@@ -1473,7 +1545,7 @@ Returns a dump of the session object. Useful for debugging purposes only.
 
 =head2 header()
 
-A wrapper for C<CGI's> header() method. Calling this method
+A wrapper for CGI-like header() method. Calling this method
 is equivalent to something like this:
 
     $cookie = CGI::Cookie->new(-name=>$session->name, -value=>$session->id);
@@ -1496,6 +1568,18 @@ be passed, see the C<header()> docs in C<CGI>.
 =head2 query()
 
 Returns query object associated with current session object. Default query object class is C<CGI>.
+
+This can be overridden in the call to L<new()|/"new()"> or L<load()|/"load()"> with
+{query_class => 'Some::Class'} as the value for \%session_params.
+
+=head2 DESTROY()
+
+When the session object goes out of scope, Perl calls the C<DESTROY()> method.
+
+By default, this calls L<flush()|/"flush()">.
+
+However, if L<new()|/"new()"> or L<load()|/"load()"> is called with {auto_flush => 0}
+as the value for \%session_params, then L<flush()|/"flush()"> is not called.
 
 =head2 DEPRECATED METHODS
 
