@@ -5,7 +5,7 @@ CGI::Session Change Log
 	* Patch: Re-work docs (just for CGI::Session) to fix broken POD links.
 	* Patch: Add {auto_flush => 0|1} to the \%session_params in the calls to new() and load().
 		This determines whether or not DESTROY() calls flush().
-		The default (0) is to call flush(), as always.
+		The default (1) is to call flush(), as always.
 	* Patch: Add {query_can_cookie => 0|1} to the \%session_params in the calls to new() and load().
 		This determines whether or not load() calls cookie() on the query object.
 		The default (1) is to call cookie(), as always, on the query object. If that returns a
