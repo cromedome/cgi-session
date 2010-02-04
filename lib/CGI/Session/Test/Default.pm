@@ -11,7 +11,7 @@ our $CURRENT;
 sub ok_later (&;$);
     
 
-$CGI::Session::Test::Default::VERSION = '4.45';
+$CGI::Session::Test::Default::VERSION = '4.46';
 
 =head1 CGI::Session::Test::Default
 
@@ -389,7 +389,7 @@ sub DESTROY { 1; }
 package CGI::Session::Test::SimpleObjectClass;
 use strict;
 use Class::Struct;
-$CGI::Session::Test::SimpleObjectClass::VERSION = '4.45';
+$CGI::Session::Test::SimpleObjectClass::VERSION = '4.46';
 
 
 struct (
@@ -407,7 +407,7 @@ use overload (
     '""'    => \&as_string,
     'eq'    => \&equals
 );
-$OverloadedObjectClass::VERSION = '4.45';
+$OverloadedObjectClass::VERSION = '4.46';
 
 sub new {
     return bless {
