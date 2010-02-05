@@ -111,10 +111,6 @@ sub is_empty           { !defined($_[0]->id)   }
 
 sub is_expired         { $_[0]->_test_status( STATUS_EXPIRED ) }
 
-sub is_params_modified { $_[0]->{_PARAMS_MODIFIED} }
-
-sub reset_modified     { $_[0]->_unset_status( STATUS_MODIFIED ) }
-
 sub is_new             { $_[0]->_test_status( STATUS_NEW ) }
 
 sub id                 { return defined($_[0]->dataref) ? $_[0]->dataref->{_SESSION_ID}    : undef }
@@ -400,12 +396,7 @@ sub _set_value
 		$self->_set_status(STATUS_MODIFIED);
 		$modified = 1;
 	}
-	# else: Both old and new values not defined. Do nothing.
-
-	if ($modified && ($key ne '_SESSION_ATIME') )
-	{
-		$self->{_PARAMS_MODIFIED} = 1;
-	}
+	# else: Neither old nor new value defined. Do nothing.
 
 	return $modified;
 
@@ -528,7 +519,7 @@ sub find {
 
     my $driver_coderef = sub {
         my ($sid) = @_;
-        my $session = $class->load( $dsn, $sid, $dsn_args, {update_atime => 0, find_is_caller => 1} );
+        my $session = $class->load( $dsn, $sid, $dsn_args, {find_is_caller => 1, update_atime => 0} );
         unless ( $session ) {
             return $class->set_error( "find(): couldn't load session '$sid'. " . $class->errstr );
         }
@@ -671,6 +662,62 @@ The value (0 or 1) determines whether or not the C<DESTROY()> method calls L<flu
 
 This (1) is the default, since C<DESTROY()> call always called L<flush()|/"flush()"> in the past.
 
+=item find_is_caller
+
+The value (0 or 1) says whether or not the caller of C<load()> is L<find()|/"find()">.
+
+{find_is_caller => 0} means the caller is not L<find()|/"find()">.
+
+This (0) is the default.
+
+{find_is_caller => 1} means the caller is L<find()|/"find()">.
+
+L<find()|/"find()"> sets the find_is_caller key in this hashref, so C<load()> knows not to
+delete sessions whose IP addresses don't match, when called by L<find()|/"find()">.
+This only matters when $CGI::Session::IP_MATCH is set to 1, which can be achieved by
+either setting the global variable directly, or loading the module with:
+
+    use CGI::session qw/ip_match/;
+
+The purpose is so that when $CGI::Session::IP_MATCH is reset (the default), sessions are loaded as normal.
+But, when $CGI::Session::IP_MATCH is set to 1, there are 3 situations:
+
+=over 4
+
+=item The IP of the client and the session match
+
+Load the session as normal.
+
+The client's IP is determined by $ENV{REMOTE_ADDR}.
+
+=item The IPs don't match, and C<find> is the caller.
+
+Ignore the session (i.e. don't load it).
+
+This is new code. Previously, the code deleted the session as in the next point.
+
+=item The IPs don't match, and C<find> is not the caller.
+
+Delete the session.
+
+The POD for CGI::Session::Tutorial used to say (falsely) that the code died in this case.
+
+=back
+
+This is actually a design fault in the module: It should be possible to specify the IP matching behaviour of the module on a
+session-by-session basis, rather than having to set it globally, and hence have it on or off for all objects.
+
+=item name
+
+The value defines the name of the query parameter or cookie name to be used.
+
+It defaults to I<$CGI::Session::NAME>, which defaults to I<CGISESSID>.
+
+The current value of the query parameter or cookie name can be set and queried with the L<name()|/"name($new_name)"> method.
+
+You are strongly discouraged from using the global variable I<$CGI::Session::NAME>, since it is
+deprecated (as are all global variables) and will be removed in a future version of this module.
+
 =item query_can_cookie
 
 The value (0 or 1) determines whether or not the session object calls the C<cookie()> method,
@@ -687,17 +734,6 @@ And, if that returns a false value, it calls the query object's C<param()> metho
 This (1) is the default, since the session object has always called the query object's C<cookie()>
 method, and (if necessary) C<param()> method, in the past.
 
-=item name
-
-The value defines the name of the query parameter or cookie name to be used.
-
-It defaults to I<$CGI::Session::NAME>, which defaults to I<CGISESSID>.
-
-The current value of the query parameter or cookie name can be set and queried with the L<name()|/"name($new_name)"> method.
-
-You are strongly discouraged from using the global variable I<$CGI::Session::NAME>, since it is
-deprecated (as are all global variables) and will be removed in a future version of this module.
-
 =item query_class
 
 The value specifies the class of the query object, when the second parameter to L<new()|/"new()">
@@ -709,11 +745,23 @@ So, if you wish to use a substitute to C<CGI>, use something like {query_class =
 
 The default is {query_class => 'CGI'}.
 
+=item update_atime
+
+The value (0 or 1) determines whether or not C<load()> updates the atime of the session upon
+loading it. Updating atime means L<flush()|/"flush()"> will write the session to storage even
+if none of the session's parameters are changed by the user.
+
+{update_atime => 0} stops the atime being updated by C<load()>.
+
+{update_atime => 1) causes C<load()> to update atime, and hence forces the session to be flushed.
+
+The default is {update_atime => 1}, since C<load()> always did that in the past.
+
 =back
 
 If undef is supplied for \%session_params, it is converted into the default.
 
-Default: {auto_flush => 1}.
+Default: {auto_flush => 1, find_is_caller => 0, query_can_cookie => 1, query_class => 'CGI', update_atime => 1}.
 
 =back
 
@@ -805,45 +853,14 @@ C<load()> is useful to detect expired or non-existing sessions without forcing t
 
 Notice: All I<expired> sessions are empty, but not all I<empty> sessions are expired!
 
-The 4th parameter to load() must be a hashref (or undef). In the past, there was an undocumented case where load()
-would accept a scalar as the 4th parameter. This scalar was used to stop L<find()|/"find( \&code )">, which calls load(), from updating
-the session's atime. That is, by default, this value is not defined, so the atime gets updated. L<find()|/"find( \&code )"> used to specify
-a scalar (value 0, and thus defined) to stop this happening at the end of load(). Now L<find()|/"find( \&code )"> sets the update_atime key
-in the hashref.
+The 4th parameter to load() must be a hashref (or undef).
 
-Also, find() now sets the find_is_caller key in this hashref, so load() knows not to delete sessions whose IP addresses
-don't match, when called by find(). This only matters when $CGI::Session::IP_MATCH is set to 1, which can be achieved by
-either setting the global variable directly, or loading the module with:
-
-    use CGI::session qw/ip_match/;
-
-The purpose is so that when $CGI::Session::IP_MATCH is reset (the default), sessions are loaded as normal. But,
-when $CGI::Session::IP_MATCH is set, there are 3 situations:
-
-=over 4
-
-=item The IP of the client and the session match
-
-Load the session as normal.
-
-The client's IP is determined by $ENV{REMOTE_ADDR}.
-
-=item The IPs don't match, and C<find> is the caller.
-
-Ignore the session (i.e. don't load it).
-
-This is new code. Previously, the code deleted the session as in the next point.
-
-=item The IPs don't match, and C<find> is not the caller.
-
-Delete the session.
-
-The POD for CGI::Session::Tutorial used to say (falsely) that the code died in this case.
-
-=back
-
-This is actually a design fault in the module: It should be possible to specify the IP matching behaviour of the module on a
-session-by-session basis, rather than having to set it globally, and hence have it on or off for all objects.
+In the past, there was an undocumented case where load() would accept a scalar as the 4th parameter.
+This scalar was used to stop L<find()|/"find( \&code )">, which calls load(), from updating
+the session's atime.
+That is, by default, this value is not defined, so the atime gets updated.
+L<find()|/"find( \&code )"> used to specify a scalar (value 0, and thus defined) to stop this happening at the end of load().
+Now L<find()|/"find( \&code )"> sets the update_atime key to the value 1 in the hashref documented under \%session_params.
 
 Brief summary: C<new()> will return an initialized session object with a valid id, whereas C<load()> may return
 an empty session object with an undefined id.
@@ -880,16 +897,16 @@ sub load {
 #            _SESSION_EXPIRE_LIST => {}
         },          # session data
         _AUTO_FLUSH       => 1,           # Set to 1 for DESTROY() to call flush().
-        _QUERY_CAN_COOKIE => 1,           # Set to 0 to never call cookie() on the query object.
-        _NAME             => $CGI::SESSION::NAME,
-        _PARAMS_MODIFIED  => 0,           # Set to 1 if a param (not _SESSION_ATIME) is changed
-        _DSN              => {},          # parsed DSN params
-        _OBJECTS          => {},          # keeps necessary objects
-        _DRIVER_ARGS      => {},          # arguments to be passed to driver
         _CLAIMED_ID       => undef,       # id **claimed** by client
-        _STATUS           => STATUS_UNSET,# status of the session object
+        _DRIVER_ARGS      => {},          # arguments to be passed to driver
+        _DSN              => {},          # parsed DSN params
+        _NAME             => $CGI::SESSION::NAME, # Default query parameter or cookie name.
+        _OBJECTS          => {},          # keeps necessary objects
         _QUERY            => undef,       # query object
+        _QUERY_CAN_COOKIE => 1,           # Set to 0 to never call cookie() on the query object.
         _QUERY_CLASS      => 'CGI',       # The class of the query object.
+        _STATUS           => STATUS_UNSET,# status of the session object
+        _UPDATE_ATIME     => 1,           # Set to 1 to update atime upon loading, hence causing flushing.
     }, $class;
 
     my ($dsn, $query_or_sid, $dsn_args);
@@ -912,7 +929,7 @@ sub load {
         }
 
         if (! defined $params) {
-            $params = {auto_flush => 1, query_class => 'CGI'}
+            $params = {auto_flush => 1, find_is_caller => 0, query_can_cookie => 1, query_class => 'CGI', update_atime => 1};
         }
         elsif ( ! (ref $params && (ref $params eq 'HASH') ) ) {
             return $class->set_error( "4th parameter to load() must be hashref (or undef)");
@@ -924,18 +941,24 @@ sub load {
             $self->{_AUTO_FLUSH} = $params->{'auto_flush'};
         }
 
+        if ($params->{'name'}) {
+            $self->{_NAME} = $params->{'name'};
+        }
+
 		# Must use defined here because the value can be 0.
 
         if (defined $params->{'query_can_cookie'}) {
             $self->{_QUERY_CAN_COOKIE} = $params->{'query_can_cookie'};
         }
 
-        if ($params->{'name'}) {
-            $self->{_NAME} = $params->{'name'};
-        }
-
         if ($params->{'query_class'}) {
             $self->{_QUERY_CLASS} = $params->{'query_class'};
+        }
+
+		# Must use defined here because the value can be 0.
+
+        if (defined $params->{'update_atime'}) {
+            $self->{_UPDATE_ATIME} = $params->{'update_atime'};
         }
 
         if ( defined $dsn ) {      # <-- to avoid 'Uninitialized value...' warnings
@@ -1027,9 +1050,7 @@ sub load {
 	}
     $self->clear(\@expired_params) if @expired_params;
 
-    # We update the atime by default, but if this (otherwise undocoumented)
-    # parameter is explicitly set to false, we'll turn the behavior off
-    if ( ! defined $params->{update_atime} ) {
+    if ( $self->{_UPDATE_ATIME} ) {
         $self->_set_value('_SESSION_ATIME', time);
     }
 
@@ -1162,7 +1183,7 @@ reference to an array, only the named parameters are cleared.
 
 =head2 flush()
 
-Synchronizes data in memory  with the copy serialized by the driver. Call flush()
+Synchronizes data in memory with the copy serialized by the driver. Call flush()
 if you need to access the session from outside the current session object. You should
 call flush() sometime before your program exits.
 
@@ -1334,61 +1355,6 @@ Actually, the above code is nothing but waste. The same effect could've been ach
 
 L<is_empty()|/"is_empty"> is useful only if you wanted to catch requests for expired sessions, and create new session afterwards. See L<is_expired()|/"is_expired"> for an example.
 
-=head2 is_params_modified()
-
-Returns 1 if any param has been modified (not counting changes to the session's access time),
-else returns 0.
-
-Note: Setting a param to the existing value is not regarded as a change. This is discussed under
-_set_value().
-
-The point of this method is that all sessions loaded by a call to load() - whether from within
-this module or by the user - have their access time changed, and hence their modified flag set.
-
-Setting the modified flag means such session will be saved when flush() is called.
-
-See also reset_modified().
-
-=head2 reset_modified()
-
-Resets the modified flag, if you think such a dangerous idea is a good idea.
-
-It works like this: Just before exiting your program, you can call $session -> is_params_modified,
-and if it returns 0, and you wish to stop the session being written to storage just because the
-session's atime - and nothing else - was set, then call $session -> reset_modified.
-
-Resetting the modified flag in this way means flush() will not write the session to storage.
-
-Warnings:
-
-=over 4
-
-=item Potential for confusion # 1
-
-Many uses will want to know the session has been accessed, even if none of the parameters change.
-
-That is the default behaviour of this module, and has not changed.
-
-This means merely accessing the session, without the user changing any parameters, will still mean
-the session's access time changes, and hence the session will (eventually) be written to storage.
-
-So, using is_params_modified() together with reset_modified() should only be used in the special
-case documented just above.
-
-=item Potential for confusion # 2
-
-flush() can be called explicitly by your code, but it is also called from within L<DESTROY()|/"DESTROY()">,
-L<close()|/"close()"> and L<load()|/"load()">.
-
-In other words, do I<not> rely on calls to flush() being skipped just because you did not call it
-yourself.
-
-=item Potential for confusion # 3
-
-Calling reset_modified() does I<not> change the value returned by is_params_modified().
-
-=back
-
 =head2 delete()
 
 Sets the objects status to be "deleted".  Subsequent read/write requests on the
@@ -1526,8 +1492,6 @@ Return value: 0 if the object was not modified, and 1 if it was.
 
 This method is private because - naturally - you should not base any code on knowing the internal
 structure of session objects.
-
-See also: is_params_modified() and reset_modified().
 
 =cut
 
