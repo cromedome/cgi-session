@@ -1,8 +1,8 @@
 CGI::Session Change Log
 =====================================================================
 
-4.46 - Thursday, February 4, 2010
-	* Patch: Re-work docs (just for CGI::Session) to fix broken POD links.
+4.45 - Thursday, February 4, 2010
+	* Patch: Re-work docs (just for CGI::Session) to fix many broken POD links.
 	* Patch: Add {auto_flush => 0|1} to the \%session_params in the calls to new() and load().
 		This determines whether or not DESTROY() calls flush().
 		The default (1) is to call flush(), as always.
@@ -18,14 +18,11 @@ CGI::Session Change Log
 	* Patch: Re-write the DESTROY() method, and its docs.
 	* Patch: Re-write the the query() method, and its docs.
 	* Patch: Re-write the the name() method slightly, and its docs.
-	* Patch: t/modified.t to exercise the new code.
-
-4.45 - Wednesday, February 3, 2010
-	* Edit files with an editor (UEX) set to remove trailing spaces. Yea! (Ron Savage).
+	* Edit files with an editor (UEX) set to remove trailing spaces. Yea!
 	* Fix: RT#50232. Add these files: MANIFEST, META.yml, MYMETA.yml. Thanx to Lawrence L. Gilbert.
-	* Fix a bug in parameter validation in load(). This required a corresponding patch to t/load.t. (Ron Savage).
+	* Fix a bug in parameter validation in load(). This required a corresponding patch to t/load.t.
 	* Patch t/g4_sqlite.t, t/g4_sqllite_freezethaw.t, t/g4_sqlite_storable.t, to change the
-		tablename from 'sessions' to 'main.sessions'. (Ron Savage).
+		tablename from 'sessions' to 'main.sessions'.
 	* Patch: RT#51192. In load(), check the existence of SESSION_EXPIRE_LIST before building
 		the list of expired paramters. Thanx to Pavel V. Rochnyack.
 	* Patch: RT#51191. Patch store() in CGI::Session::Driver::DBI, CGI::Session::Driver::db_file,
@@ -35,20 +32,14 @@ CGI::Session Change Log
 		Note: The code shipped in this module does not yet make any use of this parameter.
 		Thanx to Pavel V. Rochnyack.
 	* Patch: Add _set_value(), documented under MISCELLANEOUS METHODS, to avoid setting the modified
-		flag when a value being stored into the object is the same as the current value. (Ron Savage).
+		flag when a value being stored into the object is the same as the current value.
 		Note: All objects loaded via a call to load() - either from within the object or by the user -
 		have their access time set, and hence have the modified flag set. This in turn means all such
-		object are written to disk by flush(). The behaviour has not changed.
-	* Warning: It is vital you read the POD pertaining to the next 2 methods, which are both new,
-		before attempting to use them. This change file does not attempt to document use cases.
-		Thanx to Jonathan Swartz.
-	* Patch: Add is_params_modified(). Returns 1 if any param has been modified (changes to
-		the session's access time are ignored), else returns 0. (Ron Savage).
-	* Patch: Add reset_modified(). This resets the modified flag on the session,
-		and hence stops flush() writing the session to storage. (Ron Savage).
-	* Patch: Add t/modified.t, to exercise the new code. (Ron Savage)
+		object are written to disk by flush(). This default behaviour has not changed.
+	* Patch: Add t/modified.t, to exercise the new code.
 
 4.44 - Tuesday, September 8, 2009
+	* Note: Not uploaded to CPAN.
     * Add sub _report_status() to display the status flags within the object. Used for debugging.
     * Change the parameters to load() so that the 4th parameter is always a hashref (or undef). In the past
            it could be a scalar, but this scalar was undocumented.
@@ -58,12 +49,13 @@ CGI::Session Change Log
            set with    use CGI::Session qw/ip_match/.    This was previously only documented in the POD
            for CGI::Session::Tutorial.
     * FIX: RT#47795. Fix load() whereby find() can now call load() when $CGI::Session::IP_MATCH is set, and
-           sessions are not deleted just because their IP addresses do not match the client. (Ron Savage)
+           sessions are not deleted just because their IP addresses do not match the client.
     * Add t/find_ip_matches.t to demonstrate the new behaviour when find() calls load(). The new behaviour
            is that calling find(), which calls load(), with $CGI::Session::IP_MATCH set to 1, does not
-           delete the sessions whose IP addresses do not match the client's IP address. (Ron Savage)
+           delete the sessions whose IP addresses do not match the client's IP address.
 
 4.43 - Monday, August 31, 2009
+	* Note: Not uploaded to CPAN.
     * FIX: RT#48733. Avoid calling sprintf() in CGI::Session::ErrorHandler,
            to solve taint error for Perl V 5.10.0. All well-written code will have
            been using errstr() to retrieve errors anyway, so this change will not
