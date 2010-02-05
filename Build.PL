@@ -11,9 +11,9 @@ use Text::Wrap;
 sub create_changelog_ini
 {
 	my($error);
-	
+
 	eval "require Module::Metadata::Changes";
-	
+
 	if ($@)
 	{
 		$error = $@;
@@ -34,19 +34,19 @@ sub create_changelog_ini
 				print "Regenerating Changelog.ini...\n";
 
 				`ini.report.pl -c -i Changes`;
-		
+
 				if (! -e 'Changelog.ini')
 				{
 					# Warning: Can't use $@ to carry msg out of block(s).
-		
+
 					$error = 'Failed to generate Changelog.ini';
 				}
 				else
 				{
 					my(@stat) = stat 'Changelog.ini';
-		
+
 					# Was the file modified in the last 2 seconds?
-		
+
 					if ( (time() - $stat[9]) < 2)
 					{
 						# Yes. Do nothing.
@@ -57,16 +57,16 @@ sub create_changelog_ini
 					}
 				}
 			};
-		
+
 			if ($@)
 			{
 				$error = $@;
 			}
 		}
 	}
-	
+
 	# We ignore the precise value of $@ here.
-	
+
 	if ($error)
 	{
 		print "Warning: Module::Metadata::Changes's ini.report.pl failed to generate or update Changelog.ini. \n";
@@ -130,8 +130,8 @@ Module::Build -> new
 	dist_author    => 'Sherzod Ruzmetov <sherzodr@cpan.org>',
 	build_requires =>
 	{
-		'Test::More' => 0,
-		'Test::Pod'  => 0,
+		'Test::Differences' => 0,
+		'Test::More'        => 0,
 	},
 	requires =>
 	{
