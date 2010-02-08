@@ -37,6 +37,8 @@ CGI::Session Change Log
 		have their access time set, and hence have the modified flag set. This in turn means all such
 		object are written to disk by flush(). This default behaviour has not changed.
 	* Patch: Add t/modified.t, to exercise the new code.
+	* Patch: Force t/modified.t to run in a separate directory,
+		so session files names don't clash with test/user files.
 	* Patch: Add Test::Differences to Build.PL and Makefile.PL. Remove Test::Pod.
 
 4.44 - Tuesday, September 8, 2009
