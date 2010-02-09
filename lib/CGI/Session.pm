@@ -362,45 +362,37 @@ sub param {
 
 } # End of param.
 
-sub _set_value
-{
-	my($self, $key, $new_value) = @_;
-	my($old_value) = $self->{_DATA}->{$key};
-	my($modified)  = 0;
+sub _set_value {
+    my($self, $key, $new_value) = @_;
+    my($old_value) = $self->{_DATA}->{$key};
+    my($modified)  = 0;
 
-	if (defined $old_value)
-	{
-		if (defined $new_value)
-		{
-			if ($old_value eq $new_value)
-			{
-				# Both values defined, and equal to each other. Do nothing.
-			}
-			else
-			{	# Both values defined, and different from each other.
-				$self->{_DATA}->{ $key } = $new_value;
-				$self->_set_status(STATUS_MODIFIED);
-				$modified = 1;
-			}
-		}
-		else
-		{	# Old value defined. New value not defined.
-			$self->{_DATA}->{ $key } = $new_value;
-			$self->_set_status(STATUS_MODIFIED);
-			$modified = 1;
-		}
-	}
-	elsif (defined $new_value)
-	{	# Old value not defined. New value defined.
-		$self->{_DATA}->{ $key } = $new_value;
-		$self->_set_status(STATUS_MODIFIED);
-		$modified = 1;
-	}
-	# else: Neither old nor new value defined. Do nothing.
+    if (defined $old_value) {
+        if (defined $new_value) {
+            if ($old_value eq $new_value) {
+                # Both values defined, and equal to each other. Do nothing.
+            }
+            else {   # Both values defined, and different from each other.
+                $self->{_DATA}->{ $key } = $new_value;
+                $self->_set_status(STATUS_MODIFIED);
+                $modified = 1;
+            }
+        }
+        else {   # Old value defined. New value not defined.
+            $self->{_DATA}->{ $key } = $new_value;
+            $self->_set_status(STATUS_MODIFIED);
+            $modified = 1;
+        }
+    }
+    elsif (defined $new_value) {   # Old value not defined. New value defined.
+        $self->{_DATA}->{ $key } = $new_value;
+        $self->_set_status(STATUS_MODIFIED);
+        $modified = 1;
+    }
+    # else: Neither old nor new value defined. Do nothing.
 
-	return $modified;
-
-} # End of _set_value.
+    return $modified;
+}
 
 sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 
