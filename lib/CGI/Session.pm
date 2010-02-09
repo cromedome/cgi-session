@@ -982,7 +982,7 @@ sub load {
             $self->{_CLAIMED_ID} = $self->{_QUERY_CAN_COOKIE} ? ($query->cookie( $self->name ) || $query->param( $self->name ) ) : $query->param( $self->name );
         };
         if ( my $errmsg = $@ ) {
-            return $class->set_error( "query object $query does not support cookie() and param() methods: " .  $errmsg );
+            return $class->set_error( "query object $query does not support cookie() or param() methods: " .  $errmsg );
         }
     }
 
