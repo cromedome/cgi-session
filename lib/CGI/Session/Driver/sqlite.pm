@@ -50,7 +50,7 @@ sub store {
 sub DESTROY {
     my $self = shift;
 
-    unless ( defined( $self->{Handle} ) && $self->{Handle} -> ping ) {
+    unless ( defined( $self->{Handle} ) && $self->{Handle}->ping ) {
         $self->set_error(__PACKAGE__ . '::DESTROY(). Database handle has gone away');
         return;
 	}

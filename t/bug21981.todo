@@ -16,7 +16,7 @@ my $s;
 {
     ok($s = CGI::Session->new('driver:file;serializer:default', undef), 'Created CGI::Session object successfully');
 
-    $id = $s -> id();
+    $id = $s->id();
 }
 
 diag("Warnings expected. Consult docs re 'utf8'");

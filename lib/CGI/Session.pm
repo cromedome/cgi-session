@@ -1470,7 +1470,7 @@ This method, used internally, takes the name of any field within the object's da
 and a value to be stored there, but only updates the data structure if the current
 value differs from the new value. Hence:
 
-	$session -> set_value(some_key => $some_value)
+	$session->set_value(some_key => $some_value)
 
 means $self->{_DATA}->{'some_key'} I<may> be updated.
 

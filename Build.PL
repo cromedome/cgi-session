@@ -122,7 +122,7 @@ print "-" x 40, "\n";
 create_changelog_ini();
 print "-" x 40, "\n";
 
-Module::Build -> new
+Module::Build->new
 (
 	module_name    => 'CGI::Session',
 	license        => 'artistic',
@@ -151,4 +151,4 @@ Module::Build -> new
             'session','http',
         ],
     },
-) -> create_build_script();
+)->create_build_script();

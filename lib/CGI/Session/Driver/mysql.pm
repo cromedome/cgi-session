@@ -132,7 +132,7 @@ See the documentation for CGI::Session::Driver::DBI for details.
 In particular, the new syntax for C<new()> applies to all database drivers, whereas the old - and bad -
 global variable method only applied to MySQL.
 
-Alternately, call $session -> table_name('new_name') just after creating the session object if you wish to
+Alternately, call $session->table_name('new_name') just after creating the session object if you wish to
 change the session table's name.
 
 =head1 LICENSING

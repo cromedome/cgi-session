@@ -153,7 +153,7 @@ ok(ref($opt_dsn) eq 'HASH', '$opt_dsn is HASH');
 
 # Clean up /tmp as per RT#29969.
 
-$s -> delete();
+$s->delete();
 
 undef($s);
 
