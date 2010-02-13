@@ -1,7 +1,5 @@
 package CGI::Session::Driver::sqlite;
 
-# $Id$
-
 use strict;
 
 use File::Spec;
@@ -53,7 +51,7 @@ sub DESTROY {
     unless ( defined( $self->{Handle} ) && $self->{Handle}->ping ) {
         $self->set_error(__PACKAGE__ . '::DESTROY(). Database handle has gone away');
         return;
-	}
+    }
 
     unless ( $self->{Handle}->{AutoCommit} ) {
         $self->{Handle}->commit;

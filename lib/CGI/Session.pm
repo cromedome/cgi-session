@@ -1,7 +1,5 @@
 package CGI::Session;
 
-# $Id$
-
 use strict;
 use Carp;
 use CGI::Session::ErrorHandler;
@@ -95,10 +93,10 @@ sub new {
 } # End of new.
 
 sub DESTROY {
-	my $self = $_[0]; # Can't use @_.
-	if ($self->{_AUTO_FLUSH}) {
-		$self->flush();
-	}
+    my $self = $_[0]; # Can't use @_.
+    if ($self->{_AUTO_FLUSH}) {
+        $self->flush();
+    }
 }
 
 sub close              {   $_[0]->flush()      }
@@ -170,24 +168,24 @@ sub query {
         return $self->{_QUERY};
     }
 
-	eval "require $self->{_QUERY_CLASS}";
+    eval "require $self->{_QUERY_CLASS}";
 
-	if ($@) {
-		croak "Error. Unable to 'require' $self->{_QUERY_CLASS}: $@";
-	}
+    if ($@) {
+        croak "Error. Unable to 'require' $self->{_QUERY_CLASS}: $@";
+    }
 
     return $self->{_QUERY} = $self->{_QUERY_CLASS}->new();
 }
 
 sub name {
-	my($self, $name) = @_;
+    my($self, $name) = @_;
 
-	if (ref $self) {
-		if ($name) {
-			$self->{_NAME} = $name;
-		}
-		return $self->{_NAME} || $CGI::Session::NAME;
-	}
+    if (ref $self) {
+        if ($name) {
+            $self->{_NAME} = $name;
+        }
+        return $self->{_NAME} || $CGI::Session::NAME;
+    }
 
     $CGI::Session::NAME = $name if ($name);
 
@@ -227,30 +225,30 @@ sub _test_status {
 }
 
 sub _report_status {
-	my(@status) = 'Status:';
-	if (! defined $_[0]->{_STATUS}) {
-		push @status, 'Not defined';
-	}
-	else
-	{
-		my(%status) =
-			(
-				UNSET    => STATUS_UNSET,
-				NEW      => STATUS_NEW,
-				MODIFIED => STATUS_MODIFIED,
-				DELETED  => STATUS_DELETED,
-				EXPIRED  => STATUS_EXPIRED,
-				IGNORE   => STATUS_IGNORE,
-			);
-		for (keys %status)
-		{
-			if ($_[0]->_test_status($status{$_}) ) {
-				push @status, $_;
-			}
-		}
-	}
+    my(@status) = 'Status:';
+    if (! defined $_[0]->{_STATUS}) {
+        push @status, 'Not defined';
+    }
+    else
+    {
+        my(%status) =
+            (
+                UNSET    => STATUS_UNSET,
+                NEW      => STATUS_NEW,
+                MODIFIED => STATUS_MODIFIED,
+                DELETED  => STATUS_DELETED,
+                EXPIRED  => STATUS_EXPIRED,
+                IGNORE   => STATUS_IGNORE,
+            );
+        for (keys %status)
+        {
+            if ($_[0]->_test_status($status{$_}) ) {
+                push @status, $_;
+            }
+        }
+    }
 
-	return join(' ', @status);
+    return join(' ', @status);
 }
 
 sub flush {
@@ -344,13 +342,13 @@ sub param {
     # DESC:  updates one or more **public** records using simple syntax
     if ((@args % 2) == 0) {
         my $modified_cnt = 0;
-	ARG_PAIR:
+    ARG_PAIR:
         while (my ($name, $value) = each %args) {
             if ( $name =~ m/^_SESSION_/) {
                 carp "param(): attempt to write to private parameter";
                 next ARG_PAIR;
             }
-	        $self->_set_value($name, $value);
+            $self->_set_value($name, $value);
             ++$modified_cnt;
         }
         return $modified_cnt;
@@ -402,11 +400,11 @@ my $avoid_single_use_warning_again = *header;
 sub http_header {
     my $self = shift;
     if ($self->{_QUERY_CAN_COOKIE}) {
-		return $self->query->header(-cookie=>$self->cookie, -type=>'text/html', @_);
+        return $self->query->header(-cookie=>$self->cookie, -type=>'text/html', @_);
     }
     else {
-		return $self->query->header(-type=>'text/html', @_);
-	}
+        return $self->query->header(-type=>'text/html', @_);
+    }
 }
 
 sub cookie {
@@ -519,7 +517,7 @@ sub find {
           # Ignore. IP_MATCH set and IPs do not match.
           # Ensure we don't accidently think the session has been modified.
             $session->_reset_status(STATUS_IGNORE);
-		}
+        }
         else {
             $coderef->( $session );
         }
@@ -530,8 +528,6 @@ sub find {
     return 1;
 
 } # End of find.
-
-# $Id$
 
 =pod
 
@@ -927,7 +923,7 @@ sub load {
             return $class->set_error( "4th parameter to load() must be hashref (or undef)");
         }
 
-		# Must use defined here because the value can be 0.
+        # Must use defined here because the value can be 0.
 
         if (defined $params->{'auto_flush'}) {
             $self->{_AUTO_FLUSH} = $params->{'auto_flush'};
@@ -937,7 +933,7 @@ sub load {
             $self->{_NAME} = $params->{'name'};
         }
 
-		# Must use defined here because the value can be 0.
+        # Must use defined here because the value can be 0.
 
         if (defined $params->{'query_can_cookie'}) {
             $self->{_QUERY_CAN_COOKIE} = $params->{'query_can_cookie'};
@@ -947,7 +943,7 @@ sub load {
             $self->{_QUERY_CLASS} = $params->{'query_class'};
         }
 
-		# Must use defined here because the value can be 0.
+        # Must use defined here because the value can be 0.
 
         if (defined $params->{'update_atime'}) {
             $self->{_UPDATE_ATIME} = $params->{'update_atime'};
@@ -1011,7 +1007,7 @@ sub load {
       elsif ($params->{find_is_caller}) {
         # Ignore. Caller (find) must check if to be ignored.
           $self->_set_status( STATUS_IGNORE );
-		  return $self;
+          return $self;
       }
       else {
         # IP does not match. Caller is not find. Delete.
@@ -1034,12 +1030,12 @@ sub load {
     # checking expiration tickers of individuals parameters, if any:
     my @expired_params = ();
     if ($self->{_DATA}->{_SESSION_EXPIRE_LIST}) {
-		while (my ($param, $max_exp_interval) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
-			if ( ($self->{_DATA}->{_SESSION_ATIME} + $max_exp_interval) <= time() ) {
-				push @expired_params, $param;
-			}
-		}
-	}
+        while (my ($param, $max_exp_interval) = each %{ $self->{_DATA}->{_SESSION_EXPIRE_LIST} } ) {
+            if ( ($self->{_DATA}->{_SESSION_ATIME} + $max_exp_interval) <= time() ) {
+                push @expired_params, $param;
+            }
+        }
+    }
     $self->clear(\@expired_params) if @expired_params;
 
     if ( $self->{_UPDATE_ATIME} ) {
@@ -1255,11 +1251,11 @@ sub expire {
         my $time = $_[0];
         # If 0 is passed, cancel expiration
         if ( defined $time && ($time =~ m/^\d$/) && ($time == 0) ) {
- 	        $self->_set_value('_SESSION_ETIME', undef);
+            $self->_set_value('_SESSION_ETIME', undef);
         }
         # set the expiration to this time
         else {
- 	        $self->_set_value('_SESSION_ETIME', $self->_str2seconds( $time ) );
+            $self->_set_value('_SESSION_ETIME', $self->_str2seconds( $time ) );
         }
     }
     # If we get this far, we expect expire($param,$time)
@@ -1470,7 +1466,7 @@ This method, used internally, takes the name of any field within the object's da
 and a value to be stored there, but only updates the data structure if the current
 value differs from the new value. Hence:
 
-	$session->set_value(some_key => $some_value)
+    $session->set_value(some_key => $some_value)
 
 means $self->{_DATA}->{'some_key'} I<may> be updated.
 
@@ -1674,7 +1670,7 @@ For details, see: http://rt.cpan.org/Public/Bug/Display.html?id=28516 (and ...id
 Lastly, note that parameters such as 'utf-8' can be passed to the C<header()> method
 when C<header()> is used to send a cookie. E.g.:
 
-	print $session->header(charset => 'utf-8');
+    print $session->header(charset => 'utf-8');
 
 See L</header()> for a fuller discussion of the use of the C<header()> method in conjunction with cookies.
 

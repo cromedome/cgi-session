@@ -1,7 +1,5 @@
 package CGI::Session::ID::static;
 
-# $Id$
-
 use strict;
 use Carp ("croak");
 use CGI::Session::ErrorHandler;

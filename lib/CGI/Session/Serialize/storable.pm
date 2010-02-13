@@ -1,7 +1,5 @@
 package CGI::Session::Serialize::storable;
 
-# $Id$
-
 use strict;
 use Storable;
 require CGI::Session::ErrorHandler;

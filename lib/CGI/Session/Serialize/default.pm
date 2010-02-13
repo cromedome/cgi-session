@@ -1,7 +1,5 @@
 package CGI::Session::Serialize::default;
 
-# $Id$ 
-
 use strict;
 use Safe;
 use Data::Dumper;
@@ -17,7 +15,7 @@ $CGI::Session::Serialize::default::VERSION = '4.45';
 
 sub freeze {
     my ($class, $data) = @_;
-    
+
     my $d =
     new Data::Dumper([$data], ["D"]);
     $d->Indent( 0 );
@@ -26,7 +24,7 @@ sub freeze {
     $d->Deepcopy( 0 );
     $d->Quotekeys( 1 );
     $d->Terse( 0 );
-    
+
     # ;$D added to make certain we get our data structure back when we thaw
     return $d->Dump() . ';$D';
 }
@@ -53,7 +51,7 @@ sub __walk {
     # Hence the defined() test is not in the while().
 
     while (@filter) {
-		defined(my $x = shift @filter) or next;
+        defined(my $x = shift @filter) or next;
         $seen{refaddr $x || ''}++ and next;
           
         my $r = reftype $x or next;

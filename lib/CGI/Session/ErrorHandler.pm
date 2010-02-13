@@ -1,7 +1,5 @@
 package CGI::Session::ErrorHandler;
 
-# $Id$
-
 use strict;
 $CGI::Session::ErrorHandler::VERSION = '4.45';
 

@@ -1,4 +1,3 @@
-#$Id$
 
 #
 # Re: [cpan #14414] method remote_addr() was removed in version 4.01

@@ -1,18 +1,16 @@
-# $Id: api3_file.t,v 1.3.4.1 2003/07/26 13:37:36 sherzodr Exp $
-
 use strict;
 use diagnostics;
 
-BEGIN {     
+BEGIN {
     use Test::More;
-    plan(tests => 17); 
+    plan(tests => 17);
     use_ok('CGI::Session');
 };
 
 my $s = CGI::Session->new("dr:File;ser:Default;id:MD5", undef, {Directory=>"t"} );
 
 ok($s);
-    
+
 ok($s->id);
 
 $s->param(author=>'Sherzod Ruzmetov', name => 'CGI::Session', version=>'1'   );

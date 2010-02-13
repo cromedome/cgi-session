@@ -1,7 +1,5 @@
 package CGI::Session::Driver::mysql;
 
-# $Id$
-
 use strict;
 use Carp;
 use CGI::Session::Driver::DBI;
@@ -48,8 +46,8 @@ sub store {
 
     my $dbh = $self->{Handle};
     $dbh->do("INSERT INTO " . $self->table_name .
-			 " ($self->{IdColName}, $self->{DataColName}) VALUES(?, ?) ON DUPLICATE KEY UPDATE $self->{DataColName} = ?",
-			 undef, $sid, $datastr, $datastr)
+             " ($self->{IdColName}, $self->{DataColName}) VALUES(?, ?) ON DUPLICATE KEY UPDATE $self->{DataColName} = ?",
+             undef, $sid, $datastr, $datastr)
         or return $self->set_error( "store(): \$dbh->do failed " . $dbh->errstr );
     return 1;
 }

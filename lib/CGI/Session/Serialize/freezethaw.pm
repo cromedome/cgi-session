@@ -1,7 +1,5 @@
 package CGI::Session::Serialize::freezethaw;
 
-# $Id$ 
-
 use strict;
 use FreezeThaw;
 use CGI::Session::ErrorHandler;

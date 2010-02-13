@@ -1,7 +1,5 @@
 package CGI::Session::Driver::file;
 
-# $Id$
-
 use strict;
 
 use Carp;

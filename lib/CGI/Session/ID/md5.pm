@@ -1,7 +1,5 @@
 package CGI::Session::ID::md5;
 
-# $Id$
-
 use strict;
 use Digest::MD5;
 use CGI::Session::ErrorHandler;

@@ -1,5 +1,3 @@
-# $Id: api3_file_storable_incr.t,v 1.2 2002/11/22 22:54:41 sherzodr Exp $
-
 use strict;
 use diagnostics;
 

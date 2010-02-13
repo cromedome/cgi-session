@@ -1,7 +1,5 @@
 package CGI::Session::Driver;
 
-# $Id$
-
 use strict;
 #use diagnostics;
 

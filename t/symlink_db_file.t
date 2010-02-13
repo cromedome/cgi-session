@@ -1,5 +1,4 @@
 #/usr/bin/perl -T
-# $Id: $
 
 use strict;
 use Carp;

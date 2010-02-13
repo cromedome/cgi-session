@@ -1,7 +1,5 @@
 package CGI::Session::ID::incr;
 
-# $Id$
-
 use strict;
 use File::Spec;
 use Carp "croak";

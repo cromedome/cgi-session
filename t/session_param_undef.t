@@ -2,37 +2,37 @@
 
 package Container;
 sub new {
-	my $class = shift;
-	my $self  = {
-		items => [],
-	};
-	bless ($self, $class);
-	return $self;
+    my $class = shift;
+    my $self  = {
+        items => [],
+    };
+    bless ($self, $class);
+    return $self;
 }
 sub add_item {
-	my ($self,$item) = @_;
-	push @{$self->{items}}, $item;
-	return;
+    my ($self,$item) = @_;
+    push @{$self->{items}}, $item;
+    return;
 }
 sub get_items {
-	my $self = shift;
-	return @{$self->{items}};
+    my $self = shift;
+    return @{$self->{items}};
 }
 
 package Item;
 sub new {
-	my $class = shift;
-	my $name  = shift;
-	my $self = {
-		name => $name,
-	};
-	bless ($self, $class);
-	return $self;
+    my $class = shift;
+    my $name  = shift;
+    my $self = {
+        name => $name,
+    };
+    bless ($self, $class);
+    return $self;
 }
 
 sub get_name {
-	my $self = shift;
-	return $self->{name};
+    my $self = shift;
+    return $self->{name};
 }
 
 package main;
@@ -76,13 +76,13 @@ test_can($container,$item, 'Check in LOAD after loading from session');
 }
 
 sub test_can {
-	my ($container, $item, $descr) = @_;
-	diag "$descr\n";
-	can_ok('Container', 'add_item');
-	isa_ok($container,  'Container');
-	can_ok($container,  'add_item');
+    my ($container, $item, $descr) = @_;
+    diag "$descr\n";
+    can_ok('Container', 'add_item');
+    isa_ok($container,  'Container');
+    can_ok($container,  'add_item');
 
-	can_ok('Item', 'get_name');
-	isa_ok($item, 'Item');
-	can_ok($item, 'get_name');
+    can_ok('Item', 'get_name');
+    isa_ok($item, 'Item');
+    can_ok($item, 'get_name');
 }

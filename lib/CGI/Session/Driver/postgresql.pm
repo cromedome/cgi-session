@@ -1,7 +1,5 @@
 package CGI::Session::Driver::postgresql;
 
-# $Id$
-
 # CGI::Session::Driver::postgresql - PostgreSQL driver for CGI::Session
 #
 # Copyright (C) 2002 Cosimo Streppone, cosimo@cpan.org
