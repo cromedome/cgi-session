@@ -360,6 +360,28 @@ sub param {
 
 } # End of param.
 
+
+# =head2 _set_value($name, $new_value)
+# 
+# This method takes the name of any field within the object's data structure,
+# and a value to be stored there, but only updates the data structure if the current
+# value differs from the new value. Hence:
+# 
+#     $session->_set_value(some_key => $some_value)
+# 
+# means $self->{_DATA}->{'some_key'} I<may> be updated.
+# 
+# If the update takes place, this method sets the modified flag on the session.
+# 
+# Note: All objects loaded via a call to load() - either from within the object or by the user -
+# have their access time set, and hence have their modified flag set. This in turn means all such
+# object are written to disk by flush(). This behaviour has not changed.
+# 
+# Return value: 0 if the object was not modified, and 1 if it was.
+# 
+# This method is private because users should not base any code on knowing the internal
+# structure of session objects.
+
 sub _set_value {
     my($self, $key, $new_value) = @_;
     my($old_value) = $self->{_DATA}->{$key};
@@ -1188,8 +1210,7 @@ Also see L<A Warning about Auto-flushing>
 
 =head2 atime()
 
-Read-only method. Returns the last access time of the session in seconds from epoch. This time is used internally while
-auto-expiring sessions and/or session parameters.
+Read-only method. Returns the last access time of the session in seconds from epoch.
 
 =head2 ctime()
 
@@ -1459,27 +1480,6 @@ Return value: The current query or cookie parameter name.
 =head2 remote_addr()
 
 Returns the remote address of the user who created the session for the first time. Returns undef if variable REMOTE_ADDR wasn't present in the environment when the session was created.
-
-=head2 _set_value($name, $new_value)
-
-This method, used internally, takes the name of any field within the object's data structure,
-and a value to be stored there, but only updates the data structure if the current
-value differs from the new value. Hence:
-
-    $session->set_value(some_key => $some_value)
-
-means $self->{_DATA}->{'some_key'} I<may> be updated.
-
-If the update takes place, this method sets the modified flag on the session.
-
-Note: All objects loaded via a call to load() - either from within the object or by the user -
-have their access time set, and hence have their modified flag set. This in turn means all such
-object are written to disk by flush(). This behaviour has not changed.
-
-Return value: 0 if the object was not modified, and 1 if it was.
-
-This method is private because - naturally - you should not base any code on knowing the internal
-structure of session objects.
 
 =cut
 
