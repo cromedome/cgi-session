@@ -31,7 +31,7 @@ CGI::Session Change Log
 		Patch CGI::Session to pass this parameter to the storage mechanism called within flush().
 		Note: The code shipped in this module does not yet make any use of this parameter.
 		Thanx to Pavel V. Rochnyack.
-	* Patch: Add _set_value(), documented under MISCELLANEOUS METHODS, to avoid setting the modified
+	* Patch: Add _set_value(), to avoid setting the modified
 		flag when a value being stored into the object is the same as the current value.
 		Note: All objects loaded via a call to load() - either from within the object or by the user -
 		have their access time set, and hence have the modified flag set. This in turn means all such
