@@ -816,21 +816,8 @@ Notice: All I<expired> sessions are empty, but not all I<empty> sessions are exp
 
 The 4th parameter to load() must be a hashref (or undef).
 
-In the past, there was an undocumented case where load() would accept a scalar as the 4th parameter.
-This scalar was used to stop L<find()|/"find( \&code )">, which calls load(), from updating
-the session's atime.
-That is, by default, this value is not defined, so the atime gets updated.
-L<find()|/"find( \&code )"> used to specify a scalar (value 0, and thus defined) to stop this happening at the end of load().
-Now L<find()|/"find( \&code )"> sets the update_atime key to the value 1 in the hashref documented under \%session_params.
-
 Brief summary: C<new()> will return an initialized session object with a valid id, whereas C<load()> may return
 an empty session object with an undefined id.
-
-Tests are provided (t/new_with_undef.t and t/load_with_undef.t) to clarify the result of calling C<new()> and C<load()>
-with undef, or with an initialized CGI-like object with an undefined or fake CGISESSID.
-
-You are strongly advised to run the old-fashioned 'make test TEST_FILES=t/new_with_undef.t TEST_VERBOSE=1'
-or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, and examine the output.
 
 =cut
 
