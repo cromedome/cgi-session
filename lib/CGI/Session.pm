@@ -668,51 +668,6 @@ Set to a false value to disable the historical default behavior of automatically
 session when the script exits or the object has gone out of scope. Auto-flushing has proven
 unreliable, and explicitly flushing your session is recommended.
 
-=item find_is_caller
-
-The value (0 or 1) says whether or not the caller of C<load()> is L<find()|/"find()">.
-
-{find_is_caller => 0} means the caller is not L<find()|/"find()">.
-
-This (0) is the default.
-
-{find_is_caller => 1} means the caller is L<find()|/"find()">.
-
-L<find()|/"find()"> sets the find_is_caller key in this hashref, so C<load()> knows not to
-delete sessions whose IP addresses don't match, when called by L<find()|/"find()">.
-This only matters when $CGI::Session::IP_MATCH is set to 1, which can be achieved by
-either setting the global variable directly, or loading the module with:
-
-    use CGI::session qw/ip_match/;
-
-The purpose is so that when $CGI::Session::IP_MATCH is reset (the default), sessions are loaded as normal.
-But, when $CGI::Session::IP_MATCH is set to 1, there are 3 situations:
-
-=over 4
-
-=item The IP of the client and the session match
-
-Load the session as normal.
-
-The client's IP is determined by $ENV{REMOTE_ADDR}.
-
-=item The IPs don't match, and C<find> is the caller.
-
-Ignore the session (i.e. don't load it).
-
-This is new code. Previously, the code deleted the session as in the next point.
-
-=item The IPs don't match, and C<find> is not the caller.
-
-Delete the session.
-
-The POD for CGI::Session::Tutorial used to say (falsely) that the code died in this case.
-
-=back
-
-This is actually a design fault in the module: It should be possible to specify the IP matching behaviour of the module on a
-session-by-session basis, rather than having to set it globally, and hence have it on or off for all objects.
-
 =item name
 
 The value defines the name of the query parameter or cookie name to be used.
@@ -767,7 +722,7 @@ The default is {update_atime => 1}, since C<load()> always did that in the past.
 
 If undef is supplied for \%session_params, it is converted into the default.
 
-Default: {auto_flush => 1, find_is_caller => 0, query_can_cookie => 1, query_class => 'CGI', update_atime => 1}.
+Default: {auto_flush => 1, query_can_cookie => 1, query_class => 'CGI', update_atime => 1}.
 
 =back
 
@@ -882,6 +837,21 @@ or the new-fangled 'prove -v t/new_with_undef.t', for both new*.t and load*.t, a
 # pass a true value as the fourth parameter if you want to skip the changing of
 # access time This isn't documented more formally, because it only called by
 # find().
+
+# find_is_caller is a session option that is only used internally, so is not documented publically. 
+# L<find()|/"find()"> sets the find_is_caller key in this hashref, so C<load()> knows not to
+# delete sessions whose IP addresses don't match, when called by L<find()|/"find()">.
+# This only matters when $CGI::Session::IP_MATCH is set to 1, which can be achieved by
+# either setting the global variable directly, or loading the module with:
+# 
+#     use CGI::session qw/ip_match/;
+# 
+# The purpose is so that when $CGI::Session::IP_MATCH is reset (the default), sessions are loaded as normal.
+# But, when $CGI::Session::IP_MATCH is set to 1, there are 3 situations:
+# 
+# * The IP of the client and the session match -> Load the session
+# * The IPs don't match, and C<find> is the caller. -> don't load the session
+# * The IPs don't match, and C<find> is not the caller -> delete the session.
 
 sub load {
     my $class = shift;
