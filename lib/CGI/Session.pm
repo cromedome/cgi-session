@@ -662,15 +662,11 @@ Keys in \%session_params:
 
 =over 4
 
-=item auto_flush
+=item auto_flush  (1|0)
 
-The value (0 or 1) determines whether or not the C<DESTROY()> method calls L<flush()|/"flush()">.
-
-{auto_flush => 0} means C<DESTROY()> does not call L<flush()|/"flush()">.
-
-{auto_flush => 1} means C<DESTROY()> calls L<flush()|/"flush()">.
-
-This (1) is the default, since C<DESTROY()> call always called L<flush()|/"flush()"> in the past.
+Set to a false value to disable the historical default behavior of automatically flushing the
+session when the script exits or the object has gone out of scope. Auto-flushing has proven
+unreliable, and explicitly flushing your session is recommended.
 
 =item find_is_caller
 
