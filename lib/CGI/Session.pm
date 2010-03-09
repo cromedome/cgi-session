@@ -362,23 +362,23 @@ sub param {
 
 
 # =head2 _set_value($name, $new_value)
-# 
+#
 # This method takes the name of any field within the object's data structure,
 # and a value to be stored there, but only updates the data structure if the current
 # value differs from the new value. Hence:
-# 
+#
 #     $session->_set_value(some_key => $some_value)
-# 
+#
 # means $self->{_DATA}->{'some_key'} I<may> be updated.
-# 
+#
 # If the update takes place, this method sets the modified flag on the session.
-# 
+#
 # Note: All objects loaded via a call to load() - either from within the object or by the user -
 # have their access time set, and hence have their modified flag set. This in turn means all such
 # object are written to disk by flush(). This behaviour has not changed.
-# 
+#
 # Return value: 0 if the object was not modified, and 1 if it was.
-# 
+#
 # This method is private because users should not base any code on knowing the internal
 # structure of session objects.
 
@@ -421,7 +421,7 @@ sub delete {    $_[0]->_set_status( STATUS_DELETED )    }
 my $avoid_single_use_warning_again = *header;
 sub http_header {
     my $self = shift;
-    if ($self->{_QUERY_CAN_COOKIE}) {
+    if ($self->query->can('cookie') ) {
         return $self->query->header(-cookie=>$self->cookie, -type=>'text/html', @_);
     }
     else {
@@ -679,22 +679,6 @@ The current value of the query parameter or cookie name can be set and queried w
 You are strongly discouraged from using the global variable I<$CGI::Session::NAME>, since it is
 deprecated (as are all global variables) and will be removed in a future version of this module.
 
-=item query_can_cookie
-
-The value (0 or 1) determines whether or not the session object calls the C<cookie()> method,
-- and failing that, the C<param()> method - on the query object, to find the session's id.
-
-{query_can_cookie => 0} means the session object does not call the query object's C<cookie()> method.
-It only calls the C<param()> method on the query object.
-
-By setting the value to 0, the query object no longer needs to support a C<cookie()> method.
-
-{query_can_cookie => 1} means the session object calls the query object's C<cookie()> method.
-And, if that returns a false value, it calls the query object's C<param()> method.
-
-This (1) is the default, since the session object has always called the query object's C<cookie()>
-method, and (if necessary) C<param()> method, in the past.
-
 =item query_class
 
 The value specifies the class of the query object, when the second parameter to L<new()|/"new()">
@@ -722,7 +706,7 @@ The default is {update_atime => 1}, since C<load()> always did that in the past.
 
 If undef is supplied for \%session_params, it is converted into the default.
 
-Default: {auto_flush => 1, query_can_cookie => 1, query_class => 'CGI', update_atime => 1}.
+Default: {auto_flush => 1, query_class => 'CGI', update_atime => 1}.
 
 =back
 
@@ -825,17 +809,17 @@ an empty session object with an undefined id.
 # access time This isn't documented more formally, because it only called by
 # find().
 
-# find_is_caller is a session option that is only used internally, so is not documented publically. 
+# find_is_caller is a session option that is only used internally, so is not documented publically.
 # L<find()|/"find()"> sets the find_is_caller key in this hashref, so C<load()> knows not to
 # delete sessions whose IP addresses don't match, when called by L<find()|/"find()">.
 # This only matters when $CGI::Session::IP_MATCH is set to 1, which can be achieved by
 # either setting the global variable directly, or loading the module with:
-# 
+#
 #     use CGI::session qw/ip_match/;
-# 
+#
 # The purpose is so that when $CGI::Session::IP_MATCH is reset (the default), sessions are loaded as normal.
 # But, when $CGI::Session::IP_MATCH is set to 1, there are 3 situations:
-# 
+#
 # * The IP of the client and the session match -> Load the session
 # * The IPs don't match, and C<find> is the caller. -> don't load the session
 # * The IPs don't match, and C<find> is not the caller -> delete the session.
@@ -859,17 +843,16 @@ sub load {
 #            _SESSION_ETIME  => undef,
 #            _SESSION_EXPIRE_LIST => {}
         },          # session data
-        _AUTO_FLUSH       => 1,           # Set to 1 for DESTROY() to call flush().
-        _CLAIMED_ID       => undef,       # id **claimed** by client
-        _DRIVER_ARGS      => {},          # arguments to be passed to driver
-        _DSN              => {},          # parsed DSN params
-        _NAME             => $CGI::SESSION::NAME, # Default query parameter or cookie name.
-        _OBJECTS          => {},          # keeps necessary objects
-        _QUERY            => undef,       # query object
-        _QUERY_CAN_COOKIE => 1,           # Set to 0 to never call cookie() on the query object.
-        _QUERY_CLASS      => 'CGI',       # The class of the query object.
-        _STATUS           => STATUS_UNSET,# status of the session object
-        _UPDATE_ATIME     => 1,           # Set to 1 to update atime upon loading, hence causing flushing.
+        _AUTO_FLUSH   => 1,           # Set to 1 for DESTROY() to call flush().
+        _CLAIMED_ID   => undef,       # id **claimed** by client
+        _DRIVER_ARGS  => {},          # arguments to be passed to driver
+        _DSN          => {},          # parsed DSN params
+        _NAME         => $CGI::SESSION::NAME, # Default query parameter or cookie name.
+        _OBJECTS      => {},          # keeps necessary objects
+        _QUERY        => undef,       # query object
+        _QUERY_CLASS  => 'CGI',       # The class of the query object.
+        _STATUS       => STATUS_UNSET,# status of the session object
+        _UPDATE_ATIME => 1,           # Set to 1 to update atime upon loading, hence causing flushing.
     }, $class;
 
     my ($dsn, $query_or_sid, $dsn_args);
@@ -892,7 +875,7 @@ sub load {
         }
 
         if (! defined $params) {
-            $params = {auto_flush => 1, find_is_caller => 0, query_can_cookie => 1, query_class => 'CGI', update_atime => 1};
+            $params = {auto_flush => 1, find_is_caller => 0, query_class => 'CGI', update_atime => 1};
         }
         elsif ( ! (ref $params && (ref $params eq 'HASH') ) ) {
             return $class->set_error( "4th parameter to load() must be hashref (or undef)");
@@ -909,10 +892,6 @@ sub load {
         }
 
         # Must use defined here because the value can be 0.
-
-        if (defined $params->{'query_can_cookie'}) {
-            $self->{_QUERY_CAN_COOKIE} = $params->{'query_can_cookie'};
-        }
 
         if ($params->{'query_class'}) {
             $self->{_QUERY_CLASS} = $params->{'query_class'};
@@ -942,7 +921,7 @@ sub load {
     if (not defined $self->{_CLAIMED_ID}) {
         my $query = $self->query();
         eval {
-            $self->{_CLAIMED_ID} = $self->{_QUERY_CAN_COOKIE} ? ($query->cookie( $self->name ) || $query->param( $self->name ) ) : $query->param( $self->name );
+            $self->{_CLAIMED_ID} = $query->can('cookie') ? ($query->cookie( $self->name ) || $query->param( $self->name ) ) : $query->param( $self->name );
         };
         if ( my $errmsg = $@ ) {
             return $class->set_error( "query object $query does not support cookie() or param() methods: " .  $errmsg );

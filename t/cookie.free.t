@@ -12,7 +12,7 @@ use Test::More tests => 3;
 # We use a separate directory so these test sessions are kept separate.
 
 my($dsn_opt)     = {Directory => File::Spec->tmpdir};
-my($session_opt) = {query_can_cookie => 0, query_class => 'CookieFree'};
+my($session_opt) = {query_class => 'CookieFree'};
 
 my($loaded_id);
 my($new_id);

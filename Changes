@@ -11,12 +11,9 @@ CGI::Session Change Log
 	* NEW: Add {auto_flush => 0|1} to the \%session_params in the calls to new() and load().
 		This determines whether or not DESTROY() calls flush().
 		The default (1) is to call flush(), as always.
-	* NEW: Add {query_can_cookie => 0|1} to the \%session_params in the calls to new() and load().
-		This determines whether or not load() calls cookie() on the query object.
-		The default (1) is to call cookie(), as always, on the query object. If that returns a
-		false value, then the param() method is called on the query object.
-		When set to 0, only the param() method is called. This means the query object does not
-		have to have a cookie() method.
+	* NEW: Call query->can('cookie') before trying to call query->cookie().
+		This means the query object does not have to have a cookie() method.
+		Add corresponding test t/cookie.free.t.
 	* NEW: Add {query_class => 'Some::Class'} to the \%session_params in the calls to new() and load().
 		This determines what class other than CGI is 'require'd in the query() method.
 		The default ('CGI') is to 'require' CGI, as always.
