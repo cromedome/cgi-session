@@ -44,7 +44,7 @@ use_ok('CGI::Session');
 
 STORE:{
 
-my $session = CGI::Session->new('serializer:default;id:static','testname',{Directory=>'.'});
+my $session = CGI::Session->new('serializer:default;id:static','testname',{Directory=>'t'});
 ok($session);
 
 my $item1 = Item->new("test 123");
@@ -68,7 +68,7 @@ $session->flush();
 
 LOAD:{
 
-my $session   = CGI::Session->load('serializer:default;id:static','testname',{Directory=>'.'});
+my $session   = CGI::Session->load('serializer:default;id:static','testname',{Directory=>'t'});
 my $container = $session->param('container');
 my ($item) = $container->get_items();
 test_can($container,$item, 'Check in LOAD after loading from session');
