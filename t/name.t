@@ -3,12 +3,16 @@
 use strict;
 use diagnostics;
 
+use File::Spec;
+
 use Test::More tests => 15;
 use CGI;
 
 use_ok('CGI::Session');
 
-my $session = CGI::Session->new('id:static','testname',{Directory=>'t'});
+my $dir_name = File::Spec->tmpdir();
+
+my $session = CGI::Session->new('id:static','testname',{Directory=>$dir_name});
 ok($session);
 
 # as class method
@@ -31,7 +35,7 @@ ok(CGI::Session->name eq 'fluffy','instance method did not affect class method')
 my $s2 = CGI::Session->new(
     'id:static',
     'testname',
-    { Directory => 't' },
+    { Directory => $dir_name },
     { name => 'itchy' }
 );
 
@@ -43,7 +47,7 @@ is $session->name, 'spot', 'constructor on new session not affecting old';
 $s2 = CGI::Session->new(
     'id:static',
     CGI->new( 'itchy=2001' ),
-    { Directory => 't' },
+    { Directory => $dir_name },
     { name => 'itchy' }
 );
 
@@ -54,7 +58,7 @@ eval {
     $s2 = CGI::Session->new(
         'id:static',
         CGI->new( 'CGISESSID=2001' ),
-        { Directory => 't' },
+        { Directory => $dir_name },
         { name => 'itchy' }
     );
 };
