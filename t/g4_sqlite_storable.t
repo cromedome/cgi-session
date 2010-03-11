@@ -15,7 +15,7 @@ for ( "DBI", "DBD::SQLite", "Storable", "MIME::Base64" ) {
 
 my %dsn = (
     DataSource  => "dbi:SQLite:dbname=" . File::Spec->catfile('t', 'sessiondata', 'sessions.sqlt'),
-    TableName   => 'main.sessions'
+    TableName   => 'sessions'
 );
 
 my $dbh = DBI->connect($dsn{DataSource}, '', '', {RaiseError=>0, PrintError=>0, sqlite_handle_binary_nulls=>1});
