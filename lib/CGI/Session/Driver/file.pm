@@ -45,8 +45,7 @@ sub _file {
     my $id = $sid;
     $id =~ s|\\|/|g;
 
-	if ($id =~ m|/|)
-    {
+    if ($id =~ m|/|) {
         return $self->set_error( "_file(): Session ids cannot contain \\ or / chars: $sid" );
     }
 

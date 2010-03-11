@@ -228,9 +228,7 @@ sub _report_status {
     my(@status) = 'Status:';
     if (! defined $_[0]->{_STATUS}) {
         push @status, 'Not defined';
-    }
-    else
-    {
+    } else {
         my(%status) =
             (
                 UNSET    => STATUS_UNSET,
@@ -240,8 +238,7 @@ sub _report_status {
                 EXPIRED  => STATUS_EXPIRED,
                 IGNORE   => STATUS_IGNORE,
             );
-        for (keys %status)
-        {
+        for (keys %status) {
             if ($_[0]->_test_status($status{$_}) ) {
                 push @status, $_;
             }
