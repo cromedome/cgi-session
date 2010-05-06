@@ -13,9 +13,10 @@ for ( "DB_File", "Storable" ) {
     }
 }
 
+my $dir_name = File::Spec->tmpdir;
 my $t = CGI::Session::Test::Default->new(
     dsn => "d:DB_File;s:Storable;id:md5",
-    args=>{FileName => File::Spec->catfile('t', 'sessiondata', 'cgisess.db')});
+    args=>{FileName => File::Spec->catfile($dir_name, 'cgisess.db')});
 
 plan tests => $t->number_of_tests;
 $t->run();

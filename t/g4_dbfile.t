@@ -11,9 +11,10 @@ if ( $@ ) {
     exit(0);
 }
 
+my $dir_name = File::Spec->tmpdir;
 my $t = CGI::Session::Test::Default->new(
     dsn => "DR:db_file",
-    args=>{FileName => File::Spec->catfile('t', 'sessiondata', 'cgisess.db')});
+    args=>{FileName => File::Spec->catfile($dir_name, 'cgisess.db')});
 
 plan tests => $t->number_of_tests;
 $t->run();
