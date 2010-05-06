@@ -1,3 +1,4 @@
+use File::Path;
 use File::Spec;
 use Test::More qw/no_plan/;
 use strict;
@@ -12,3 +13,5 @@ my $id;
 }
 
 ok(-r "$dir/cgisess_".$id, "found session data file");
+
+rmtree $dir;

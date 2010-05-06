@@ -26,7 +26,7 @@ is($CGI::Session::IP_MATCH,0,'ip_match off by default');
 ok($session=CGI::Session->new,'create new session');
 $save_id_1 = $session->id;
 
-diag "1st id (new): $save_id_1 / $ENV{REMOTE_ADDR}";
+diag "\n1st id (new): $save_id_1 / $ENV{REMOTE_ADDR}";
 
 # Save a value.
 

@@ -13,8 +13,10 @@ for ( "DBI", "DBD::SQLite", "FreezeThaw", "MIME::Base64" ) {
     }
 }
 
+my $dir_name = File::Spec->tmpdir;
+
 my %dsn = (
-    DataSource  => "dbi:SQLite:dbname=" . File::Spec->catfile('t', 'sessiondata', 'sessions.sqlt'),
+    DataSource  => "dbi:SQLite:dbname=" . File::Spec->catfile($dir_name, 'sessions.sqlt'),
     TableName   => 'sessions'
 );
 

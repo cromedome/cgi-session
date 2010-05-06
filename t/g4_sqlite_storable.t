@@ -1,6 +1,7 @@
 use strict;
 use diagnostics;
 
+use File::Path;
 use File::Spec;
 use Test::More;
 use CGI::Session::Test::Default;
@@ -13,14 +14,17 @@ for ( "DBI", "DBD::SQLite", "Storable", "MIME::Base64" ) {
     }
 }
 
+my $dir_name = File::Spec->tmpdir();
+my $file_name= File::Spec->catfile($dir_name, 'sessions.sqlt');
+
 my %dsn = (
-    DataSource  => "dbi:SQLite:dbname=" . File::Spec->catfile('t', 'sessiondata', 'sessions.sqlt'),
+    DataSource  => "dbi:SQLite:dbname=$file_name",
     TableName   => 'sessions'
 );
 
 my $dbh = DBI->connect($dsn{DataSource}, '', '', {RaiseError=>0, PrintError=>0, sqlite_handle_binary_nulls=>1});
 unless ( $dbh ) {
-    plan(skip_all=>"Couldn't establish connection with the server");
+    plan(skip_all=>"Couldn't establish connection with the server. " . DBI->errstr);
     exit(0);
 }
 
@@ -38,7 +42,7 @@ unless ( defined $count ) {
 
 
 my $t = CGI::Session::Test::Default->new(
-    dsn => "driver:sqlite;seRializer:storable",
+    dsn => "driver:sqlite;serializer:storable",
     args=>{Handle=>$dbh, TableName=>$dsn{TableName}});
 
 plan tests => $t->number_of_tests;
@@ -48,3 +52,4 @@ TODO: {
     $t->run();
 }
 
+unlink $file_name;

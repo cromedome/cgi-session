@@ -93,10 +93,7 @@ sub new {
 } # End of new.
 
 sub DESTROY {
-    my $self = $_[0]; # Can't use @_.
-    if ($self->{_AUTO_FLUSH}) {
-        $self->flush();
-    }
+    $_[0]->flush();
 }
 
 sub close              {   $_[0]->flush()      }
@@ -571,7 +568,9 @@ CGI::Session - persistent session data in CGI applications
     $session->param(-name=>'l_name', -value=>'Ruzmetov');
 
     # Flush the data from memory to the storage driver at least before your
-    # program finishes since auto-flushing can be unreliable.
+    # program finishes since auto-flushing can be client code errors
+    # such as circular references or attempted use of out-of-scope
+    # database handles.
     $session->flush();
 
     # Retrieving data:
@@ -659,12 +658,6 @@ Keys in \%session_params:
 
 =over 4
 
-=item auto_flush  (1|0)
-
-Set to a false value to disable the historical default behavior of automatically flushing the
-session when the script exits or the object has gone out of scope. Auto-flushing has proven
-unreliable, and explicitly flushing your session is recommended.
-
 =item name
 
 The value defines the name of the query parameter or cookie name to be used.
@@ -703,7 +696,7 @@ The default is {update_atime => 1}, since C<load()> always did that in the past.
 
 If undef is supplied for \%session_params, it is converted into the default.
 
-Default: {auto_flush => 1, query_class => 'CGI', update_atime => 1}.
+Default: {query_class => 'CGI', update_atime => 1}.
 
 =back
 
@@ -840,7 +833,6 @@ sub load {
 #            _SESSION_ETIME  => undef,
 #            _SESSION_EXPIRE_LIST => {}
         },          # session data
-        _AUTO_FLUSH   => 1,           # Set to 1 for DESTROY() to call flush().
         _CLAIMED_ID   => undef,       # id **claimed** by client
         _DRIVER_ARGS  => {},          # arguments to be passed to driver
         _DSN          => {},          # parsed DSN params
@@ -872,16 +864,10 @@ sub load {
         }
 
         if (! defined $params) {
-            $params = {auto_flush => 1, find_is_caller => 0, query_class => 'CGI', update_atime => 1};
+            $params = {find_is_caller => 0, query_class => 'CGI', update_atime => 1};
         }
         elsif ( ! (ref $params && (ref $params eq 'HASH') ) ) {
             return $class->set_error( "4th parameter to load() must be hashref (or undef)");
-        }
-
-        # Must use defined here because the value can be 0.
-
-        if (defined $params->{'auto_flush'}) {
-            $self->{_AUTO_FLUSH} = $params->{'auto_flush'};
         }
 
         if ($params->{'name'}) {
@@ -1129,7 +1115,7 @@ call flush() sometime before your program exits.
 As a last resort, CGI::Session will automatically call flush for you just
 before the program terminates or session object goes out of scope. Automatic
 flushing has proven to be unreliable, and in some cases is now required
-in places that worked with CGI::Session 3.x.
+in places that worked with CGI::Session 3.x. See L<A Warning about Auto-flushing>.
 
 Always explicitly calling C<flush()> on the session before the
 program exits is recommended. For extra safety, call it immediately after
@@ -1457,10 +1443,7 @@ This can be overridden in the call to L<new()|/"new()"> or L<load()|/"load()"> w
 
 When the session object goes out of scope, Perl calls the C<DESTROY()> method.
 
-By default, this calls L<flush()|/"flush()">.
-
-However, if L<new()|/"new()"> or L<load()|/"load()"> is called with {auto_flush => 0}
-as the value for \%session_params, then L<flush()|/"flush()"> is not called.
+This calls L<flush()|/"flush()">.
 
 =head2 DEPRECATED METHODS
 

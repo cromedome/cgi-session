@@ -39,12 +39,16 @@ package main;
 
 use strict;
 
+use File::Spec;
+
 use Test::More tests => 21;
 use_ok('CGI::Session');
 
+my $dir_name = File::Spec->tmpdir();
+
 STORE:{
 
-my $session = CGI::Session->new('serializer:default;id:static','testname',{Directory=>'t'});
+my $session = CGI::Session->new('serializer:default;id:static','testname',{Directory=>$dir_name});
 ok($session);
 
 my $item1 = Item->new("test 123");
@@ -68,7 +72,7 @@ $session->flush();
 
 LOAD:{
 
-my $session   = CGI::Session->load('serializer:default;id:static','testname',{Directory=>'t'});
+my $session   = CGI::Session->load('serializer:default;id:static','testname',{Directory=>$dir_name});
 my $container = $session->param('container');
 my ($item) = $container->get_items();
 test_can($container,$item, 'Check in LOAD after loading from session');
