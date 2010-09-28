@@ -16,6 +16,7 @@ CGI::Session Change Log
 		This determines what class other than CGI is 'require'd in the query() method.
 		The default ('CGI') is to 'require' CGI, as always.
 	* FIX: Fix a bug in parameter validation in load(). This required a corresponding patch to t/load.t.
+	* FIX: Rewrite the part of the POD which discusses UTF8.
 	* FIX: RT#51192. In load(), check the existence of SESSION_EXPIRE_LIST before building
 		the list of expired paramters. Thanx to Pavel V. Rochnyack.
 	* INTERNAL: Add _set_value(), to avoid setting the modified
