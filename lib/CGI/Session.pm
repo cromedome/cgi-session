@@ -1021,7 +1021,7 @@ sub _load_pluggables {
             my $prefix = join '::', (__PACKAGE__, $SUBDIR_FOR{ $plug }, q{});
             $mod_name = $prefix . $mod_name;
 
-            ## See if we can load load it
+            ## See if we can load it
             eval "require $mod_name";
             if ($@) {
                 my $msg = $@;
@@ -1447,7 +1447,7 @@ This calls L<flush()|/"flush()">.
 
 =head2 DEPRECATED METHODS
 
-These methods exist solely for for compatibility with CGI::Session 3.x.
+These methods exist solely for compatibility with CGI::Session 3.x.
 
 =head3 close()
 
