@@ -337,12 +337,12 @@ sub param {
     if ((@args % 2) == 0) {
         my $modified_cnt = 0;
     ARG_PAIR:
-        while (my ($name, $value) = each %args) {
+        while (my ($name, $val) = each %args) {
             if ( $name =~ m/^_SESSION_/) {
                 carp "param(): attempt to write to private parameter";
                 next ARG_PAIR;
             }
-            $self->_set_value($name, $value);
+            $self->_set_value($name, $val);
             ++$modified_cnt;
         }
         return $modified_cnt;
@@ -1007,7 +1007,7 @@ sub _load_pluggables {
                        id         => "ID",
                        );
     my $dsn = $self->{_DSN};
-    foreach my $plug qw(driver serializer id) {
+    for my $plug ( qw(driver serializer id) ) {
         my $mod_name = $dsn->{ $plug };
         if (not defined $mod_name) {
             $mod_name = $DEFAULT_FOR{ $plug };
