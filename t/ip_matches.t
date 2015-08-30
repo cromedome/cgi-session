@@ -50,7 +50,7 @@ is($session->param('TEST'),'VALUE','TEST param still set');
 
 # Test with ip_match set.
 
-CGI::Session->import qw/-ip_match/;
+CGI::Session->import ( qw/-ip_match/ );
 
 is($CGI::Session::IP_MATCH,1,'ip_match switched on');
 
