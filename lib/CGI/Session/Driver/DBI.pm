@@ -131,15 +131,12 @@ sub remove {
 sub DESTROY {
     my $self = shift;
 
-    unless ( defined $self->{Handle} && $self->{Handle}->ping ) {
-        $self->set_error(__PACKAGE__ . '::DESTROY(). Database handle has gone away');
-        return;
-    }
-
-    unless ( $self->{Handle}->{AutoCommit} ) {
-        $self->{Handle}->commit;
-    }
     if ( $self->{_disconnect} ) {
+        unless ( defined $self->{Handle} && $self->{Handle}->ping ) {
+            $self->set_error(__PACKAGE__ . '::DESTROY(). Database handle has gone away');
+            return;
+        }
+
         $self->{Handle}->disconnect;
     }
 }
